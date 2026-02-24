@@ -41,8 +41,8 @@ export default function Matches() {
             {isLoading
               ? "טוען התאמות..."
               : activeMatches.length > 0
-              ? 
-              : "אין עדיין התאמות — המשך להסוויפ"}
+                ? `יש לך ${activeMatches.length} התאמות`
+                : "אין עדיין התאמות — המשך להסוויפ"}
           </p>
         </div>
 

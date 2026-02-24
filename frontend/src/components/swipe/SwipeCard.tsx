@@ -12,7 +12,9 @@ interface SwipeCardProps {
   currentUserSalary?: SalaryRange | null;
 }
 
-: Record<string, string> = {
+const NEW_PROFILE_DAYS = 3;
+
+const jobTypeLabels: Record<string, string> = {
   daily: "יומי",
   temporary: "זמני",
   permanent: "קבוע",
@@ -149,7 +151,8 @@ export function SwipeCard({
 
       <Card className={`h-full overflow-hidden shadow-2xl rounded-xl flex flex-col ${isUrgent ? 'border-2 border-orange-500' : 'border-0'}`}>
         {/* Avatar / Image */}
-        <div className="relative" style={{ height: "45%" }}><div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent to-primary/10 flex items-center justify-center flex-shrink-0">
+        <div className="relative" style={{ height: "45%" }}>
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent to-primary/10 flex items-center justify-center">
           {profile.imageUrl ? (
             <img
               src={profile.imageUrl}
@@ -205,7 +208,7 @@ export function SwipeCard({
 
           {/* Experience Badge - for workers (below role) */}
           {!isClinic && profile.experienceYears && profile.experienceYears > 0 && (
-            <Badge 
+            <Badge
               variant="outline"
               className="absolute top-12 right-3 bg-background/80 backdrop-blur-sm"
             >
@@ -213,6 +216,7 @@ export function SwipeCard({
               {profile.experienceYears} שנים
             </Badge>
           )}
+          </div>
         </div>
 
         {/* Content */}

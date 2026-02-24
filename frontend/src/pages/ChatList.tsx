@@ -64,7 +64,7 @@ export default function ChatList() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Link to={}>
+                  <Link to={`/chat/${match.id}`}>
                     <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer">
                       <div className="flex items-center gap-4">
                         <Avatar className="w-12 h-12">
