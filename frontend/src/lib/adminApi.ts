@@ -10,7 +10,7 @@ import {
   ToggleBlockResponse 
 } from "@/types/admin";
 
-const API_BASE_URL = "https://clinicmatch.onrender.com/api";
+const API_BASE_URL = "https://clinic-match.onrender.com/api";
 
 // Helper function for API calls
 async function adminApiCall<T>(

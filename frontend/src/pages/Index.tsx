@@ -45,8 +45,7 @@ const Index = () => {
   const fetchFeed = async (userId: string) => {
     try {
       // שים לב: זה הנתיב לשרת שלך ב-Render. וודא שזה ה-URL הנכון!
-      // אם אתה עובד לוקאלית לפעמים זה http://localhost:10000
-      const response = await fetch(`https://clinicmatch.onrender.com/api/feed/${userId}`);
+      const response = await fetch(`https://clinic-match.onrender.com/api/feed/${userId}`);
       
       if (!response.ok) throw new Error("Failed to fetch feed");
       
@@ -75,7 +74,7 @@ const Index = () => {
     setProfiles(newProfiles);
 
     try {
-      const response = await fetch(`https://clinicmatch.onrender.com/api/swipe`, {
+      const response = await fetch(`https://clinic-match.onrender.com/api/swipe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
