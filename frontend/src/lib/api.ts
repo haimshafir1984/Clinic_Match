@@ -12,7 +12,7 @@ import {
   AuthResponse
 } from "@/types";
 
-const API_BASE_URL = "https://clinicmatch.onrender.com/api";
+const API_BASE_URL = "https://clinic-match.onrender.com/api";
 const API_TIMEOUT_MS = 15_000;
 
 const CURRENT_PROFILE_STORAGE_KEY = "current_profile";
