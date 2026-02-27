@@ -84,10 +84,27 @@ interface BackendFeedProfile {
 
 // Transform backend feed profile to MatchCardData
 function transformToMatchCardData(profile: BackendFeedProfile): MatchCardData {
+  // salary_info is stored as a numeric average in the backend (e.g. 7500),
+  // but may also arrive as { min, max } if the backend changes.
+  const salaryRaw = profile.salary_info as unknown;
+  let salaryMin: number | null = null;
+  let salaryMax: number | null = null;
+  if (typeof salaryRaw === 'number') {
+    salaryMin = salaryRaw; // use the stored average as the displayed value
+  } else if (salaryRaw && typeof salaryRaw === 'object') {
+    const s = salaryRaw as { min?: number; max?: number };
+    salaryMin = s.min || null;
+    salaryMax = s.max || null;
+  }
+
+  // position may not be in the feed response; fall back to first item of positions array
+  const positionsArr = (profile as any).positions as string[] | undefined;
+  const position = profile.position || (positionsArr && positionsArr.length > 0 ? positionsArr[0] : null) || null;
+
   return {
     id: profile.id,
     name: profile.name,
-    position: profile.position || null,
+    position,
     location: profile.location || null,
     availability: {
       days: profile.availability?.days || [],
@@ -95,8 +112,8 @@ function transformToMatchCardData(profile: BackendFeedProfile): MatchCardData {
       startDate: profile.availability?.start_date || null,
     },
     salaryRange: {
-      min: profile.salary_info?.min || null,
-      max: profile.salary_info?.max || null,
+      min: salaryMin,
+      max: salaryMax,
     },
     imageUrl: profile.image_url || null,
     role: normalizeUserRole(profile.role),

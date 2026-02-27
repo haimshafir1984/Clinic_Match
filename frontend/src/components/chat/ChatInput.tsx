@@ -25,9 +25,12 @@ export function ChatInput({ onSend, value, onChange }: ChatInputProps) {
 
     setSending(true);
     setMessage("");
-    
+
     try {
       await onSend(content);
+    } catch (err) {
+      setMessage(content); // restore message if send failed
+      throw err;
     } finally {
       setSending(false);
     }

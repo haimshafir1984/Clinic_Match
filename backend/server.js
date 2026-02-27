@@ -176,7 +176,7 @@ app.post('/api/profiles', async (req, res) => {
 app.get('/api/feed/:userId', authenticateToken, async (req, res) => {
   try {
     const { userId } = req.params;
-    if (req.user.id !== userId && !req.user.is_admin) return res.status(403).json({ error: "Access denied" });
+    if (String(req.user.id) !== String(userId) && !req.user.is_admin) return res.status(403).json({ error: "Access denied" });
 
     const userRes = await pool.query('SELECT role, positions, workplace_types, location FROM profiles WHERE id = $1', [userId]);
     if (userRes.rows.length === 0) return res.json([]);
@@ -185,12 +185,12 @@ app.get('/api/feed/:userId', authenticateToken, async (req, res) => {
     const targetRole = user.role === 'STAFF' ? 'CLINIC' : 'STAFF';
 
     const query = `
-      SELECT id, name, positions, workplace_types, location, salary_info, availability, is_urgent, created_at
-      FROM profiles 
-      WHERE role = $1 
-      AND (workplace_types && $2 OR $2 = '{}') 
+      SELECT id, name, position, positions, workplace_types, location, salary_info, availability, is_urgent, created_at
+      FROM profiles
+      WHERE role = $1
+      AND (workplace_types && $2 OR $2 = '{}')
       AND (positions && $3 OR $3 = '{}')
-      AND location = $4
+      AND ($4::text IS NULL OR location = $4::text)
       AND id NOT IN (SELECT swiped_id FROM swipes WHERE swiper_id = $5)
       AND id != $5
       ORDER BY is_urgent DESC, created_at DESC LIMIT 20;
@@ -213,7 +213,8 @@ app.get('/api/feed/:userId', authenticateToken, async (req, res) => {
 // סוויפ (Swipe) + בוט סינון אוטומטי
 app.post('/api/swipe', authenticateToken, async (req, res) => {
   const { swiper_id, swiped_id, type } = req.body;
-  if (req.user.id !== swiper_id) return res.status(403).json({ error: "Identity mismatch" });
+  if (String(req.user.id) !== String(swiper_id)) return res.status(403).json({ error: "Identity mismatch" });
+  if (!['LIKE', 'PASS'].includes(type)) return res.status(400).json({ error: "Invalid swipe type" });
 
   try {
     await pool.query('INSERT INTO swipes (swiper_id, swiped_id, type) VALUES ($1, $2, $3)', [swiper_id, swiped_id, type]);
@@ -261,10 +262,11 @@ app.post('/api/swipe', authenticateToken, async (req, res) => {
 
 // מאצ'ים
 app.get('/api/matches/:userId', authenticateToken, async (req, res) => {
-    if (req.user.id !== req.params.userId) return res.status(403).json({ error: "Access denied" });
+    if (String(req.user.id) !== String(req.params.userId)) return res.status(403).json({ error: "Access denied" });
     try {
         const query = `
-          SELECT m.id as match_id, p.id as profile_id, p.name, p.positions, p.location
+          SELECT m.id as match_id, m.is_closed, m.created_at,
+                 p.id as profile_id, p.name, p.position, p.positions, p.location, p.role
           FROM matches m
           JOIN profiles p ON (p.id = m.user_one_id OR p.id = m.user_two_id)
           WHERE (m.user_one_id = $1 OR m.user_two_id = $1) AND p.id != $1
@@ -273,6 +275,21 @@ app.get('/api/matches/:userId', authenticateToken, async (req, res) => {
         const result = await pool.query(query, [req.params.userId]);
         res.json(result.rows);
       } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// סגירת match
+app.post('/api/matches/:matchId/close', authenticateToken, async (req, res) => {
+    try {
+        const { matchId } = req.params;
+        // וודא שהמשתמש הוא חלק מהmatch לפני סגירה
+        const check = await pool.query(
+            'SELECT id FROM matches WHERE id = $1 AND (user_one_id = $2 OR user_two_id = $2)',
+            [matchId, String(req.user.id)]
+        );
+        if (check.rows.length === 0) return res.status(403).json({ error: "Access denied" });
+        await pool.query('UPDATE matches SET is_closed = true WHERE id = $1', [matchId]);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // הודעות
@@ -284,7 +301,7 @@ app.get('/api/messages/:matchId', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/messages', authenticateToken, async (req, res) => {
-    if (req.user.id !== req.body.sender_id) return res.status(403).json({ error: "Identity mismatch" });
+    if (String(req.user.id) !== String(req.body.sender_id)) return res.status(403).json({ error: "Identity mismatch" });
     const { match_id, sender_id, content } = req.body;
     try {
       const result = await pool.query(

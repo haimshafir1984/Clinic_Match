@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
@@ -158,9 +159,9 @@ export default function Insights() {
     );
   }
   
-  const stats = calculateStats(profile, matches.length);
-  const insights = generateInsights(profile, matches.length, role);
-  const suggestions = getOptimizationSuggestions(profile, role);
+  const stats = useMemo(() => calculateStats(profile, matches.length), [profile, matches.length]);
+  const insights = useMemo(() => generateInsights(profile, matches.length, role), [profile, matches.length, role]);
+  const suggestions = useMemo(() => getOptimizationSuggestions(profile, role), [profile, role]);
   
   return (
     <AppLayout>

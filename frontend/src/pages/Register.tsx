@@ -84,7 +84,7 @@ export default function Register() {
     e.preventDefault();
     setNetworkError(null);
     
-    if (!email || !name) {
+    if (!email || !name || !city) {
       toast.error("נא למלא את כל השדות החובה");
       return;
     }

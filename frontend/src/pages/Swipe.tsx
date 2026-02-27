@@ -171,7 +171,7 @@ export default function Swipe() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col h-[calc(100vh-9rem)] max-w-md mx-auto p-4">
+      <div className="flex flex-col h-[calc(100dvh-9rem)] max-w-md mx-auto p-4">
         {/* Header */}
         <div className="text-center mb-2">
           <h1 className="text-2xl font-bold text-foreground">גלו התאמות</h1>
