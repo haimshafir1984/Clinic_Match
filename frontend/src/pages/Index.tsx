@@ -125,7 +125,7 @@ const Index = () => {
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white p-4 shadow-sm flex justify-between items-center sticky top-0 z-10">
-        <h1 className="text-xl font-bold text-blue-600">ClinicMatch</h1>
+        <h1 className="text-xl font-bold text-blue-600">ShiftMatch</h1>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => navigate("/matches")}>
             ההתאמות שלי

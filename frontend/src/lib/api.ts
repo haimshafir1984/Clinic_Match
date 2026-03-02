@@ -79,6 +79,7 @@ interface BackendFeedProfile {
   availability?: { days?: string[]; hours?: string; start_date?: string } | null;
   image_url?: string | null;
   role?: string;
+  industry?: string | null;
   created_at?: string | null;
 }
 
@@ -124,6 +125,7 @@ function transformToMatchCardData(profile: BackendFeedProfile): MatchCardData {
     radiusKm: null,
     createdAt: profile.created_at || null,
     isUrgent: (profile as any).is_urgent || null,
+    industry: profile.industry || null,
   };
 }
 
@@ -443,6 +445,7 @@ export interface ProfileCreateData {
   positions?: string[]; // Array of positions (new multi-select)
   required_position?: string; // Required for clinics
   workplace_types?: string[]; // Array of domains (e.g., "dental", "optics")
+  industry?: string | null;
   location?: string;
   salary_info?: {
     min?: number;
@@ -481,6 +484,9 @@ export async function createProfile(
     if (data.workplace_types && data.workplace_types.length > 0) {
       payload.workplace_types = data.workplace_types;
     }
+
+    // Pass industry
+    payload.industry = data.industry || null;
 
     if (data.required_position) {
       payload.required_position = data.required_position;

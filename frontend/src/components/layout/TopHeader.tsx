@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Heart, User, LogOut, Stethoscope } from "lucide-react";
+import { Heart, User, LogOut, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -25,9 +25,9 @@ export function TopHeader() {
         {/* Logo */}
         <Link to="/swipe" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-            <Stethoscope className="w-4 h-4 text-primary-foreground" />
+            <Briefcase className="w-4 h-4 text-primary-foreground" />
           </div>
-          <span className="font-bold text-lg text-foreground">ClinicMatch</span>
+          <span className="font-bold text-lg text-foreground">ShiftMatch</span>
         </Link>
 
         {/* Navigation Icons */}

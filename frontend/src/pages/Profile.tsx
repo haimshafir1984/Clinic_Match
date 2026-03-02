@@ -97,7 +97,7 @@ export default function Profile() {
                 <Sparkles className="w-8 h-8 text-primary" />
               </div>
               <h1 className="text-2xl font-bold text-foreground mb-2">
-                ברוכים הבאים ל-ClinicMatch! 👋
+                ברוכים הבאים ל-ShiftMatch! 👋
               </h1>
               <p className="text-muted-foreground">
                 בואו ניצור את הפרופיל שלכם כדי להתחיל לקבל התאמות מותאמות אישית

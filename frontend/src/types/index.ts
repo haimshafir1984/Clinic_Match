@@ -3,6 +3,7 @@
 export type UserRole = "clinic" | "worker";
 export type JobType = "daily" | "temporary" | "permanent";
 export type SwipeType = "LIKE" | "PASS";
+export type Industry = "medical" | "tech" | "education" | "construction" | "daily";
 
 // Availability JSON structure
 export interface Availability {
@@ -33,6 +34,7 @@ export interface MatchCardData {
   radiusKm: number | null;
   createdAt: string | null; // For "New" badge
   isUrgent?: boolean | null; // For "Urgent Hiring" badge (clinics only)
+  industry?: Industry | null;
 }
 
 // Current User object
@@ -46,6 +48,7 @@ export interface CurrentUser {
   /** Cached fields from backend profile (used when backend has no GET /profiles/:id). */
   position?: string | null;
   location?: string | null;
+  industry?: Industry | null;
   isProfileComplete: boolean;
   isAdmin: boolean;
 }

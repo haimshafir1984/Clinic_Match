@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Loader2, Heart, Stethoscope, AlertCircle } from "lucide-react";
+import { Loader2, Heart, Briefcase, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Login() {
@@ -72,13 +72,13 @@ export default function Login() {
         <div className="flex flex-col items-center mb-8">
           <div className="relative">
             <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center mb-4 shadow-lg shadow-primary/30">
-              <Stethoscope className="w-10 h-10 text-primary-foreground" />
+              <Briefcase className="w-10 h-10 text-primary-foreground" />
             </div>
             <Heart className="absolute -bottom-1 -left-1 w-6 h-6 text-destructive fill-destructive" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground">ClinicMatch</h1>
+          <h1 className="text-3xl font-bold text-foreground">ShiftMatch</h1>
           <p className="text-muted-foreground mt-1 text-center">
-            הפלטפורמה המובילה להתאמות בתחום הרפואה
+            התאמות עבודה בכל תחום
           </p>
           <p className="text-sm text-primary/80 mt-2 text-center font-medium">
             מרפאות ↔ עובדים מקצועיים

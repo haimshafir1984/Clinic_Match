@@ -9,11 +9,11 @@ import { CityCombobox } from "@/components/ui/city-combobox";
 import { DomainSelector } from "@/components/registration/DomainSelector";
 import { RoleMultiSelector } from "@/components/registration/RoleMultiSelector";
 import { toast } from "sonner";
-import { Loader2, Heart, Stethoscope, Building2, UserRound, AlertCircle, ArrowRight, ArrowLeft } from "lucide-react";
+import { Loader2, Heart, Briefcase, Building2, UserRound, AlertCircle, ArrowRight, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { WorkplaceDomain } from "@/constants/domains";
+import { WorkplaceDomain, Industry } from "@/constants/domains";
 
 type UserRole = "CLINIC" | "STAFF";
 
@@ -31,6 +31,7 @@ export default function Register() {
   const [name, setName] = useState("");
   const [positions, setPositions] = useState<string[]>([]);
   const [workplaceDomain, setWorkplaceDomain] = useState<WorkplaceDomain | null>(null);
+  const [industry, setIndustry] = useState<Industry | null>(null);
   const [city, setCity] = useState("");
   const [role, setRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(false);
@@ -61,9 +62,9 @@ export default function Register() {
     goToNextStep();
   };
 
-  const handleDomainSelect = (domain: WorkplaceDomain) => {
+  const handleDomainSelect = (domain: WorkplaceDomain, selectedIndustry: Industry) => {
     setWorkplaceDomain(domain);
-    // Reset positions when domain changes
+    setIndustry(selectedIndustry);
     setPositions([]);
     goToNextStep();
   };
@@ -108,6 +109,7 @@ export default function Register() {
         name,
         positions, // Array of positions
         workplace_types: workplaceDomain ? [workplaceDomain] : [],
+        industry: industry || undefined,
         location: city || undefined,
       });
 
@@ -157,7 +159,7 @@ export default function Register() {
           >
             <div className="text-center mb-4">
               <h3 className="font-semibold text-lg text-foreground mb-1">
-                איך תרצו להשתמש ב-ClinicMatch?
+                איך תרצו להשתמש ב-ShiftMatch?
               </h3>
               <p className="text-sm text-muted-foreground">
                 בחרו את הסוג שמתאים לכם
@@ -326,19 +328,19 @@ export default function Register() {
         <div className="flex flex-col items-center mb-6">
           <div className="relative">
             <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center mb-3 shadow-lg shadow-primary/30">
-              <Stethoscope className="w-8 h-8 text-primary-foreground" />
+              <Briefcase className="w-8 h-8 text-primary-foreground" />
             </div>
             <Heart className="absolute -bottom-1 -left-1 w-5 h-5 text-destructive fill-destructive" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">ClinicMatch</h1>
+          <h1 className="text-2xl font-bold text-foreground">ShiftMatch</h1>
           <p className="text-xs text-muted-foreground mt-1 text-center">
-            הפלטפורמה להתאמות בתחום הרפואה
+            הפלטפורמה להתאמות בכל תחום
           </p>
         </div>
 
         <Card className="border-0 shadow-xl">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl">הצטרפו ל-ClinicMatch</CardTitle>
+            <CardTitle className="text-2xl">הצטרפו ל-ShiftMatch</CardTitle>
             <CardDescription>
               תהליך קצר של 4 שלבים – ותתחילו לקבל התאמות
             </CardDescription>

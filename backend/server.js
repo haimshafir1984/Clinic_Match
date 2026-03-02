@@ -110,10 +110,10 @@ app.post('/api/auth/login', async (req, res) => {
 app.post('/api/profiles', async (req, res) => {
   console.log("Saving Profile:", req.body.email); 
 
-  const { 
-      email, role, name, position, location, salary_info, availability, 
-      workplace_types, positions, 
-      screening_questions, is_auto_screener_active, is_urgent 
+  const {
+      email, role, name, position, location, salary_info, availability,
+      workplace_types, positions, industry,
+      screening_questions, is_auto_screener_active, is_urgent
   } = req.body;
   
   if (!email) return res.status(400).json({ error: "Email required" });
@@ -129,37 +129,39 @@ app.post('/api/profiles', async (req, res) => {
   try {
     const query = `
       INSERT INTO profiles (
-        email, role, name, position, location, salary_info, availability, 
-        workplace_types, positions, 
+        email, role, name, position, location, salary_info, availability,
+        workplace_types, positions, industry,
         screening_questions, is_auto_screener_active, is_urgent
-      ) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
-      ON CONFLICT (email) DO UPDATE SET 
-        name = EXCLUDED.name, 
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      ON CONFLICT (email) DO UPDATE SET
+        name = EXCLUDED.name,
         position = EXCLUDED.position,
         location = EXCLUDED.location,
         salary_info = EXCLUDED.salary_info,
         availability = EXCLUDED.availability,
         workplace_types = EXCLUDED.workplace_types,
         positions = EXCLUDED.positions,
+        industry = EXCLUDED.industry,
         screening_questions = EXCLUDED.screening_questions,
         is_auto_screener_active = EXCLUDED.is_auto_screener_active,
         is_urgent = EXCLUDED.is_urgent
       RETURNING *`;
-      
+
     const values = [
-        email.toLowerCase().trim(), 
-        role, 
-        name, 
-        position || "", 
-        location, 
+        email.toLowerCase().trim(),
+        role,
+        name,
+        position || "",
+        location,
         finalSalary,
         JSON.stringify(availability),
-        Array.isArray(workplace_types) ? workplace_types : [], 
+        Array.isArray(workplace_types) ? workplace_types : [],
         Array.isArray(positions) ? positions : [],
-        Array.isArray(screening_questions) ? screening_questions : [], // $10 - שאלות סינון
-        is_auto_screener_active || false, // $11 - האם הבוט פעיל
-        is_urgent || false                // $12 - האם זה חיפוש דחוף
+        industry || null,                 // $10 - industry
+        Array.isArray(screening_questions) ? screening_questions : [], // $11 - שאלות סינון
+        is_auto_screener_active || false, // $12 - האם הבוט פעיל
+        is_urgent || false                // $13 - האם זה חיפוש דחוף
     ];
     
     const result = await pool.query(query, values);
@@ -180,7 +182,7 @@ app.get('/api/feed/:userId', authenticateToken, async (req, res) => {
     const { userId } = req.params;
     if (String(req.user.id) !== String(userId) && !req.user.is_admin) return res.status(403).json({ error: "Access denied" });
 
-    const userRes = await pool.query('SELECT role, positions, workplace_types, location FROM profiles WHERE id = $1', [userId]);
+    const userRes = await pool.query('SELECT role, positions, workplace_types, location, industry FROM profiles WHERE id = $1', [userId]);
     if (userRes.rows.length === 0) return res.json([]);
     const user = userRes.rows[0];
     
@@ -193,17 +195,19 @@ app.get('/api/feed/:userId', authenticateToken, async (req, res) => {
       AND (workplace_types && $2 OR $2 = '{}')
       AND (positions && $3 OR $3 = '{}')
       AND ($4::text IS NULL OR location = $4::text)
+      AND ($6::text IS NULL OR industry = $6::text)
       AND id NOT IN (SELECT swiped_id FROM swipes WHERE swiper_id = $5)
       AND id != $5
       ORDER BY is_urgent DESC, created_at DESC LIMIT 20;
     `;
-    
+
     const feed = await pool.query(query, [
-        targetRole, 
-        user.workplace_types || [], 
-        user.positions || [],       
-        user.location, 
-        userId
+        targetRole,
+        user.workplace_types || [],
+        user.positions || [],
+        user.location,
+        userId,
+        user.industry || null
     ]);
     
     res.json(feed.rows);
