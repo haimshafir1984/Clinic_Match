@@ -3,7 +3,8 @@
     "allow": [
       "Bash(git add backend/server.js frontend/src/components/chat/ChatInput.tsx frontend/src/lib/api.ts frontend/src/pages/Chat.tsx frontend/src/pages/Insights.tsx frontend/src/pages/Register.tsx frontend/src/pages/Swipe.tsx)",
       "Bash(git commit:*)",
-      "Bash(git add -A)"
+      "Bash(git add -A)",
+      "Bash(git push)"
     ]
   }
 }

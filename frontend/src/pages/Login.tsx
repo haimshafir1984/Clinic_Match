@@ -81,7 +81,7 @@ export default function Login() {
             התאמות עבודה בכל תחום
           </p>
           <p className="text-sm text-primary/80 mt-2 text-center font-medium">
-            מרפאות ↔ עובדים מקצועיים
+            מעסיקים ↔ אנשי מקצוע
           </p>
         </div>
 

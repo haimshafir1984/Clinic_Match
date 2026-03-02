@@ -178,7 +178,7 @@ export default function Register() {
                 )}
               >
                 <Building2 className="w-10 h-10" />
-                <span className="font-semibold">מרפאה</span>
+                <span className="font-semibold">מעסיק</span>
                 <span className="text-xs text-muted-foreground text-center">
                   מחפשים עובדים מקצועיים
                 </span>
