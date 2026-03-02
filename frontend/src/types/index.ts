@@ -47,7 +47,7 @@ export interface CurrentUser {
   position?: string | null;
   location?: string | null;
   isProfileComplete: boolean;
-  isAdmin?: boolean;
+  isAdmin: boolean;
 }
 
 // Swipe request payload

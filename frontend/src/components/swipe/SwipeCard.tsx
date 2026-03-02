@@ -77,9 +77,10 @@ export function SwipeCard({
   const passOpacity = useTransform(x, [-100, 0], [1, 0]);
 
   const handleDragEnd = (_: any, info: PanInfo) => {
-    if (info.offset.x > 100) {
+    const threshold = typeof window !== 'undefined' ? window.innerWidth * 0.28 : 100;
+    if (info.offset.x > threshold) {
       onSwipeRight();
-    } else if (info.offset.x < -100) {
+    } else if (info.offset.x < -threshold) {
       onSwipeLeft();
     }
   };

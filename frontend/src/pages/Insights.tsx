@@ -93,19 +93,15 @@ function generateInsights(profile: any, matchesCount: number, role: string) {
   return insights;
 }
 
-// Calculate simulated stats
+// Calculate stats from real data only
 function calculateStats(profile: any, matchesCount: number) {
   const completion = calculateProfileCompletion(profile);
-  
-  // Simulated stats based on profile data
-  const baseViews = Math.floor(Math.random() * 50) + 20;
-  const viewMultiplier = completion.percentage / 100;
-  
+
   return {
-    views: Math.floor(baseViews * viewMultiplier),
-    likes: Math.floor((baseViews * viewMultiplier) * 0.3),
+    views: 0,        // placeholder until real analytics API exists
+    likes: 0,        // placeholder
     matches: matchesCount,
-    responseRate: matchesCount > 0 ? Math.floor(Math.random() * 30) + 70 : 0,
+    responseRate: 0, // placeholder
     profileScore: completion.percentage,
   };
 }
@@ -180,6 +176,11 @@ export default function Insights() {
             ניתוח חכם של הפרופיל וההתאמות שלך
           </p>
         </motion.div>
+
+        {/* Analytics placeholder banner */}
+        <div className="rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground text-center">
+          נתוני צפיות ולייקים יתווספו בקרוב
+        </div>
 
         {/* Profile Score */}
         <motion.div

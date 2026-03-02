@@ -6,7 +6,7 @@ const OpenAI = require('openai'); // וודא שהתקנת: npm install openai
 require('dotenv').config();
 
 const app = express();
-app.use(cors()); 
+app.use(cors({ origin: process.env.ALLOWED_ORIGIN || 'https://your-frontend.vercel.app' }));
 app.use(express.json()); 
 
 // הגדרת החיבור ל-DB
@@ -20,7 +20,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY 
 });
 
-const JWT_SECRET = process.env.JWT_SECRET || 'my_super_secret_key_12345';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) { console.error("FATAL: JWT_SECRET not set"); process.exit(1); }
 
 // --- Middleware: אימות משתמש ---
 const authenticateToken = (req, res, next) => {
@@ -94,6 +95,7 @@ app.post('/api/auth/login', async (req, res) => {
     const result = await pool.query('SELECT * FROM profiles WHERE email = $1', [email.toLowerCase().trim()]);
     if (result.rows.length > 0) {
       const user = result.rows[0];
+      if (user.is_blocked) return res.status(403).json({ error: "Account is suspended" });
       const token = jwt.sign({ id: user.id, role: user.role, is_admin: user.is_admin }, JWT_SECRET, { expiresIn: '7d' });
       res.json({ success: true, user, token });
     } else {
@@ -217,7 +219,10 @@ app.post('/api/swipe', authenticateToken, async (req, res) => {
   if (!['LIKE', 'PASS'].includes(type)) return res.status(400).json({ error: "Invalid swipe type" });
 
   try {
-    await pool.query('INSERT INTO swipes (swiper_id, swiped_id, type) VALUES ($1, $2, $3)', [swiper_id, swiped_id, type]);
+    await pool.query(
+      'INSERT INTO swipes (swiper_id, swiped_id, type) VALUES ($1, $2, $3) ON CONFLICT (swiper_id, swiped_id) DO UPDATE SET type = EXCLUDED.type',
+      [swiper_id, swiped_id, type]
+    );
     
     if (type === 'LIKE') {
       const matchCheck = await pool.query('SELECT * FROM swipes WHERE swiper_id = $1 AND swiped_id = $2 AND type = $3', [swiped_id, swiper_id, 'LIKE']);
@@ -304,6 +309,11 @@ app.post('/api/messages', authenticateToken, async (req, res) => {
     if (String(req.user.id) !== String(req.body.sender_id)) return res.status(403).json({ error: "Identity mismatch" });
     const { match_id, sender_id, content } = req.body;
     try {
+      const matchCheck = await pool.query(
+        'SELECT id FROM matches WHERE id = $1 AND (user_one_id = $2 OR user_two_id = $2)',
+        [match_id, sender_id]
+      );
+      if (matchCheck.rows.length === 0) return res.status(403).json({ error: "Not part of this match" });
       const result = await pool.query(
         'INSERT INTO messages (match_id, sender_id, content) VALUES ($1, $2, $3) RETURNING *',
         [match_id, sender_id, content]
