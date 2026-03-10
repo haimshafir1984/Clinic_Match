@@ -1,33 +1,22 @@
-// Admin API Layer for ClinicMatch
-// Connects to the Render backend admin endpoints
-
-import { 
-  AdminStats, 
-  AdminUser, 
-  AdminStatsResponse, 
-  AdminUsersResponse,
+import {
+  AdminStats,
+  AdminUser,
   ToggleBlockRequest,
-  ToggleBlockResponse 
+  ToggleBlockResponse,
 } from "@/types/admin";
 
-const API_BASE_URL = "https://clinic-match.onrender.com/api";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") || "http://localhost:10000/api";
 
-// Helper function for API calls
-async function adminApiCall<T>(
-  endpoint: string, 
-  options: RequestInit = {},
-  timeoutMs: number = 15000
-): Promise<T> {
+async function adminApiCall<T>(endpoint: string, options: RequestInit = {}, timeoutMs: number = 15_000): Promise<T> {
   const token = localStorage.getItem("auth_token");
-  
   const headers: HeadersInit = {
     "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -36,28 +25,23 @@ async function adminApiCall<T>(
       signal: controller.signal,
     });
 
-    clearTimeout(timeoutId);
+    window.clearTimeout(timeoutId);
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: "שגיאת שרת" }));
-      throw new Error(error.message || `שגיאה ${response.status}`);
+      const error = await response.json().catch(() => ({ error: "Server error" }));
+      throw new Error(error.error || error.message || `Request failed (${response.status})`);
     }
 
-    return response.json();
+    return response.json() as Promise<T>;
   } catch (error) {
-    clearTimeout(timeoutId);
-    
-    if (error instanceof Error) {
-      if (error.name === "AbortError") {
-        throw new Error("הבקשה נכשלה - השרת לא מגיב. נסה שוב.");
-      }
-      throw error;
+    window.clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("����� ����� - ���� �� ����. ��� ���.");
     }
-    throw new Error("שגיאה בתקשורת עם השרת");
+    throw error;
   }
 }
 
-// Backend response types (snake_case)
 interface BackendAdminStats {
   total_users?: number;
   totalUsers?: number;
@@ -81,7 +65,6 @@ interface BackendAdminUser {
   createdAt?: string;
 }
 
-// Transform backend stats to frontend format
 function transformStats(stats: BackendAdminStats): AdminStats {
   return {
     totalUsers: stats.total_users ?? stats.totalUsers ?? 0,
@@ -91,71 +74,47 @@ function transformStats(stats: BackendAdminStats): AdminStats {
   };
 }
 
-// Transform backend user to frontend format
 function transformUser(user: BackendAdminUser): AdminUser {
   return {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: (user.role?.toLowerCase() as "clinic" | "worker") || "worker",
+    role: user.role?.toLowerCase() === "clinic" ? "clinic" : "worker",
     position: user.position || null,
     isBlocked: user.is_blocked ?? user.isBlocked ?? false,
     createdAt: user.created_at ?? user.createdAt ?? new Date().toISOString(),
   };
 }
 
-// POST /api/admin/stats - Get admin statistics
 export async function getAdminStats(adminId: string): Promise<AdminStats> {
-  try {
-    const response = await adminApiCall<BackendAdminStats | { stats: BackendAdminStats }>("/admin/stats", {
-      method: "POST",
-      body: JSON.stringify({ adminId }),
-    });
-    
-    // Handle both direct stats object and nested { stats: ... } format
-    const stats = "stats" in response ? response.stats : response;
-    return transformStats(stats);
-  } catch (error) {
-    console.error("Error fetching admin stats:", error);
-    throw error;
-  }
+  const response = await adminApiCall<BackendAdminStats | { stats: BackendAdminStats }>("/admin/stats", {
+    method: "POST",
+    body: JSON.stringify({ adminId }),
+  });
+  return transformStats("stats" in response ? response.stats : response);
 }
 
-// POST /api/admin/users - Get all users for admin
 export async function getAdminUsers(adminId: string): Promise<AdminUser[]> {
-  try {
-    const response = await adminApiCall<BackendAdminUser[] | { users: BackendAdminUser[] }>("/admin/users", {
-      method: "POST",
-      body: JSON.stringify({ adminId }),
-    });
-    
-    // Handle both array and { users: [...] } format
-    const users = Array.isArray(response) ? response : (response.users || []);
-    return users.map(transformUser);
-  } catch (error) {
-    console.error("Error fetching admin users:", error);
-    throw error;
-  }
+  const response = await adminApiCall<BackendAdminUser[] | { users: BackendAdminUser[] }>("/admin/users", {
+    method: "POST",
+    body: JSON.stringify({ adminId }),
+  });
+  const users = Array.isArray(response) ? response : response.users || [];
+  return users.map(transformUser);
 }
 
-// POST /api/admin/toggle-block - Block/Unblock a user
 export async function toggleUserBlock(request: ToggleBlockRequest): Promise<ToggleBlockResponse> {
-  try {
-    const response = await adminApiCall<ToggleBlockResponse>("/admin/toggle-block", {
-      method: "POST",
-      body: JSON.stringify({
-        adminId: request.adminId,
-        userIdToBlock: request.userIdToBlock,
-        blockStatus: request.blockStatus,
-      }),
-    });
-    
-    return {
-      success: response.success ?? true,
-      message: response.message,
-    };
-  } catch (error) {
-    console.error("Error toggling user block:", error);
-    throw error;
-  }
+  const response = await adminApiCall<ToggleBlockResponse>("/admin/toggle-block", {
+    method: "POST",
+    body: JSON.stringify({
+      adminId: request.adminId,
+      userIdToBlock: request.userIdToBlock,
+      blockStatus: request.blockStatus,
+    }),
+  });
+
+  return {
+    success: response.success ?? true,
+    message: response.message,
+  };
 }

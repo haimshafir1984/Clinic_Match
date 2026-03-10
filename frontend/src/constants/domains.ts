@@ -1,18 +1,13 @@
-// ShiftMatch â€” Multi-Industry Domains Configuration
-
-export type Industry = "medical" | "tech" | "education" | "construction" | "daily";
+export type Industry = "medical" | "tech" | "education" | "construction" | "daily" | "communication" | "insurance";
 
 export type WorkplaceDomain =
-  // medical
   | "dental" | "optics" | "aesthetics" | "physio"
-  // tech
   | "software" | "design" | "devops" | "product"
-  // education
   | "school" | "tutoring" | "kindergarten" | "higher_ed"
-  // construction
   | "electrical" | "plumbing" | "carpentry" | "general_contractor"
-  // daily
-  | "restaurant" | "bar" | "events" | "cleaning";
+  | "restaurant" | "bar" | "events" | "cleaning"
+  | "call_center" | "digital_media" | "telecom" | "public_relations"
+  | "health_insurance" | "claims" | "underwriting" | "pension";
 
 export interface DomainConfig {
   id: WorkplaceDomain;
@@ -30,81 +25,68 @@ export interface IndustryConfig {
 }
 
 export const INDUSTRIES: IndustryConfig[] = [
-  { id: "medical",      label: "×¨×¤×•××” ×•×‘×¨×™××•×ª",       icon: "ðŸ¥", domains: ["dental","optics","aesthetics","physio"] },
-  { id: "tech",         label: "×”×™×™×˜×§ ×•×˜×›× ×•×œ×•×’×™×”",    icon: "ðŸ’»", domains: ["software","design","devops","product"] },
-  { id: "education",    label: "×—×™× ×•×š ×•×”×•×¨××”",        icon: "ðŸ“š", domains: ["school","tutoring","kindergarten","higher_ed"] },
-  { id: "construction", label: "×‘× ×™×™×” ×•×ª×—×–×•×§×”",       icon: "ðŸ”¨", domains: ["electrical","plumbing","carpentry","general_contractor"] },
-  { id: "daily",        label: "×ž×§×¦×•×¢×•×ª ×™×•×ž×™×™×",      icon: "ðŸº", domains: ["restaurant","bar","events","cleaning"] },
+  { id: "medical", label: "øôåàä åáøéàåú", icon: "??", domains: ["dental", "optics", "aesthetics", "physio"] },
+  { id: "tech", label: "äééè÷ åèëðåìåâéä", icon: "??", domains: ["software", "design", "devops", "product"] },
+  { id: "education", label: "çéðåê åäåøàä", icon: "??", domains: ["school", "tutoring", "kindergarten", "higher_ed"] },
+  { id: "construction", label: "áðééä åúçæå÷ä", icon: "???", domains: ["electrical", "plumbing", "carpentry", "general_contractor"] },
+  { id: "daily", label: "î÷öåòåú éåîééí", icon: "???", domains: ["restaurant", "bar", "events", "cleaning"] },
+  { id: "communication", label: "ú÷ùåøú åùéøåú", icon: "??", domains: ["call_center", "digital_media", "telecom", "public_relations"] },
+  { id: "insurance", label: "áéèåç åôéððñéí", icon: "???", domains: ["health_insurance", "claims", "underwriting", "pension"] },
 ];
 
 export const DOMAINS: DomainConfig[] = [
-  // â”€â”€ MEDICAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  { id: "dental",    label: "×¨×¤×•××ª ×©×™× ×™×™×", icon: "ðŸ¦·", industry: "medical",
-    roles: ["×¨×•×¤× ×©×™× ×™×™×","×¡×™×™×¢/×ª ×©×™× ×™×™×","×©×™× × ×™×ª","×ž×–×›×™×¨×” ×¨×¤×•××™×ª","×ž× ×”×œ/×ª ×ž×¨×¤××”"] },
-  { id: "optics",    label: "××•×¤×˜×™×§×”",      icon: "ðŸ‘“", industry: "medical",
-    roles: ["××•×¤×˜×•×ž×˜×¨×™×¡×˜","××•×¤×˜×™×§××™","×™×•×¢×¥/×ª ×ž×›×™×¨×•×ª","×ž× ×”×œ/×ª ×—× ×•×ª"] },
-  { id: "aesthetics",label: "××¡×ª×˜×™×§×”",     icon: "ðŸ’‰", industry: "medical",
-    roles: ["×¨×•×¤× ××¡×ª×˜×™×§×”","××—×•×ª","×§×•×¡×ž×˜×™×§××™×ª","×™×•×¢×¥/×ª ×™×•×¤×™"] },
-  { id: "physio",    label: "×¤×™×–×™×•×ª×¨×¤×™×”",  icon: "ðŸ¦´", industry: "medical",
-    roles: ["×¤×™×–×™×•×ª×¨×¤×™×¡×˜","×”×™×“×¨×•×ª×¨×¤×™×¡×˜","×ž×¢×¡×”","×ž×–×›×™×¨/×”"] },
+  { id: "dental", label: "øôåàú ùéðééí", icon: "??", industry: "medical", roles: ["øåôà ùéðééí", "ñééò/ú ùéðééí", "ùéððéú", "îæëéøä øôåàéú", "îðäì/ú îøôàä"] },
+  { id: "optics", label: "àåôèé÷ä", icon: "??", industry: "medical", roles: ["àåôèåîèøéñè/éú", "àåôèé÷àé/ú", "éåòõ/ú îëéøåú", "îðäì/ú çðåú"] },
+  { id: "aesthetics", label: "àñúèé÷ä", icon: "??", industry: "medical", roles: ["îèôì/ú àñúèé÷ä", "àçåú", "÷åñîèé÷àé/ú", "éåòõ/ú éåôé"] },
+  { id: "physio", label: "ôéæéåúøôéä", icon: "??", industry: "medical", roles: ["ôéæéåúøôéñè/éú", "äéãøåúøôéñè/éú", "îèôì/ú", "îæëéø/ä"] },
 
-  // â”€â”€ TECH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  { id: "software",  label: "×¤×™×ª×•×— ×ª×•×›× ×”",  icon: "ðŸ‘¨â€ðŸ’»", industry: "tech",
-    roles: ["×ž×¤×ª×—/×ª Full Stack","×ž×¤×ª×—/×ª Backend","×ž×¤×ª×—/×ª Frontend","×ž×¤×ª×—/×ª Mobile","×ž×¤×ª×—/×ª ML/AI"] },
-  { id: "design",    label: "×¢×™×¦×•×‘ UX/UI",  icon: "ðŸŽ¨", industry: "tech",
-    roles: ["×ž×¢×¦×‘/×ª UI","×ž×¢×¦×‘/×ª UX","×ž×¢×¦×‘/×ª ×’×¨×¤×™","Illustrator"] },
-  { id: "devops",    label: "DevOps ×•×ª×©×ª×™×•×ª",icon: "âš™ï¸", industry: "tech",
-    roles: ["DevOps Engineer","Cloud Architect","SRE","Network Engineer"] },
-  { id: "product",   label: "× ×™×”×•×œ ×ž×•×¦×¨",   icon: "ðŸ“‹", industry: "tech",
-    roles: ["×ž× ×”×œ/×ª ×ž×•×¦×¨","Product Analyst","Scrum Master","QA Engineer"] },
+  { id: "software", label: "ôéúåç úåëðä", icon: "?????", industry: "tech", roles: ["îôúç/ú Full Stack", "îôúç/ú Backend", "îôúç/ú Frontend", "îôúç/ú Mobile", "îôúç/ú AI"] },
+  { id: "design", label: "òéöåá UX/UI", icon: "??", industry: "tech", roles: ["îòöá/ú UI", "îòöá/ú UX", "îòöá/ú âøôé", "Illustrator"] },
+  { id: "devops", label: "DevOps åúùúéåú", icon: "??", industry: "tech", roles: ["DevOps Engineer", "Cloud Architect", "SRE", "Network Engineer"] },
+  { id: "product", label: "ðéäåì îåöø", icon: "??", industry: "tech", roles: ["îðäì/ú îåöø", "Product Analyst", "Scrum Master", "QA Engineer"] },
 
-  // â”€â”€ EDUCATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  { id: "school",       label: "×‘×™×ª ×¡×¤×¨",       icon: "ðŸ«", industry: "education",
-    roles: ["×ž×•×¨×” ×œ×× ×’×œ×™×ª","×ž×•×¨×” ×œ×ž×ª×ž×˜×™×§×”","×ž×•×¨×” ×œ×ž×“×¢×™×","×ž×—× ×š/×ª","×™×•×¢×¥/×ª ×—×™× ×•×›×™/×ª"] },
-  { id: "tutoring",     label: "×©×™×¢×•×¨×™× ×¤×¨×˜×™×™×",icon: "ðŸ“–", industry: "education",
-    roles: ["×ž×•×¨×” ×¤×¨×˜×™/×ª","×ž×ª×¨×’×œ/×ª","×ž×“×¨×™×š/×” ××§×“×ž×™/×ª"] },
-  { id: "kindergarten", label: "×’×Ÿ ×™×œ×“×™×",      icon: "ðŸ§’", industry: "education",
-    roles: ["×’× × ×ª","×¡×™×™×¢×ª ×’×Ÿ","×ž×˜×¤×œ×ª"] },
-  { id: "higher_ed",    label: "×”×©×›×œ×” ×’×‘×•×”×”",   icon: "ðŸŽ“", industry: "education",
-    roles: ["×ž×¨×¦×”","×¢×•×–×¨/×ª ×”×•×¨××”","×—×•×§×¨/×ª","×ž× ×”×œ/×ª ×ž×—×œ×§×”"] },
+  { id: "school", label: "áéú ñôø", icon: "??", industry: "education", roles: ["îåøä ìàðâìéú", "îåøä ìîúîèé÷ä", "îåøä ìîãòéí", "îçðê/ú", "éåòõ/ú çéðåëé/ú"] },
+  { id: "tutoring", label: "ùéòåøéí ôøèééí", icon: "??", industry: "education", roles: ["îåøä ôøèé/ú", "îúøâì/ú", "îãøéê/ä à÷ãîé/ú"] },
+  { id: "kindergarten", label: "âï éìãéí", icon: "??", industry: "education", roles: ["âððú", "ñééòú âï", "îèôìú"] },
+  { id: "higher_ed", label: "äùëìä âáåää", icon: "??", industry: "education", roles: ["îøöä", "òåæø/ú äåøàä", "çå÷ø/ú", "îðäì/ú îçì÷ä"] },
 
-  // â”€â”€ CONSTRUCTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  { id: "electrical",        label: "×—×©×ž×œ",         icon: "âš¡", industry: "construction",
-    roles: ["×—×©×ž×œ××™/×ª","×˜×›× ××™/×ª ×—×©×ž×œ","×ž×ª×§×™×Ÿ/×ª ×ž×¢×¨×›×•×ª","×ž× ×”×œ/×ª ×¢×‘×•×“×”"] },
-  { id: "plumbing",          label: "××™× ×¡×˜×œ×¦×™×”",    icon: "ðŸ”§", industry: "construction",
-    roles: ["××™× ×¡×˜×œ×˜×•×¨/×™×ª","×˜×›× ××™/×ª ×ž×™×","×ž×ª×§×™×Ÿ/×ª ×’×–"] },
-  { id: "carpentry",         label: "× ×’×¨×•×ª ×•×¨×”×™×˜×™×",icon: "ðŸªµ", industry: "construction",
-    roles: ["× ×’×¨/×™×ª","×ž×¢×¦×‘/×ª ×¤× ×™×","×ž×ª×§×™×Ÿ/×ª ×¨×™×¦×•×£","×ž×ª×§×™×Ÿ/×ª ×ž×˜×‘×—×™×"] },
-  { id: "general_contractor",label: "×§×‘×œ× ×•×ª ×›×œ×œ×™×ª", icon: "ðŸ—ï¸", industry: "construction",
-    roles: ["×§×‘×œ×Ÿ/×™×ª","×ž× ×”×œ/×ª ×¤×¨×•×™×§×˜","×¤×•×¢×œ/×ª ×‘× ×™×™×Ÿ","×˜×™×™×—/×™×ª"] },
+  { id: "electrical", label: "çùîì", icon: "?", industry: "construction", roles: ["çùîìàé/ú", "èëðàé/ú çùîì", "îú÷éï/ú îòøëåú", "îðäì/ú òáåãä"] },
+  { id: "plumbing", label: "àéðñèìöéä", icon: "??", industry: "construction", roles: ["àéðñèìèåø/éú", "èëðàé/ú îéí", "îú÷éï/ú âæ"] },
+  { id: "carpentry", label: "ðâøåú åøäéèéí", icon: "??", industry: "construction", roles: ["ðâø/éú", "îòöá/ú ôðéí", "îú÷éï/ú øéäåè", "îú÷éï/ú îèáçéí"] },
+  { id: "general_contractor", label: "÷áìðåú ëììéú", icon: "???", industry: "construction", roles: ["÷áìï/éú", "îðäì/ú ôøåé÷è", "ôåòì/ú áðééï", "èééç/éú"] },
 
-  // â”€â”€ DAILY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  { id: "restaurant",label: "×ž×¡×¢×“×•×ª",          icon: "ðŸ½ï¸", industry: "daily",
-    roles: ["×ž×œ×¦×¨/×™×ª","×©×£/×©×¤×™×ª","×¢×•×–×¨/×ª ×©×£","×§×•×¤××™/×ª","×ž××¨×—/×ª"] },
-  { id: "bar",       label: "×‘×¨ ×•×ž×•×¢×“×•×Ÿ",      icon: "ðŸ¸", industry: "daily",
-    roles: ["×‘×¨×ž×Ÿ/×™×ª","DJ","×ž××‘×˜×—/×ª","×ž× ×”×œ/×ª ×ž×©×ž×¨×ª"] },
-  { id: "events",    label: "××™×¨×•×¢×™×",          icon: "ðŸŽ‰", industry: "daily",
-    roles: ["×ž×œ×¦×¨/×™×ª ××™×¨×•×¢×™×","×ž××¨×—/×ª ××™×¨×•×¢×™×","×˜×‘×—/×™×ª","×ž× ×”×œ/×ª ××™×¨×•×¢","×¦×œ×/×ª"] },
-  { id: "cleaning",  label: "× ×™×§×™×•×Ÿ ×•×ª×—×–×•×§×”",  icon: "ðŸ§¹", industry: "daily",
-    roles: ["×¢×•×‘×“/×ª × ×™×§×™×•×Ÿ","×ž× ×”×œ/×ª ×¦×•×•×ª","×˜×›× ××™/×ª ×ª×—×–×•×§×”"] },
+  { id: "restaurant", label: "îñòãåú", icon: "???", industry: "daily", roles: ["îìöø/éú", "ùó/ùôéú", "òåæø/ú ùó", "÷åôàé/ú", "îàøç/ú"] },
+  { id: "bar", label: "áø åîåòãåï", icon: "??", industry: "daily", roles: ["áøîï/éú", "DJ", "îàáèç/ú", "îðäì/ú îùîøú"] },
+  { id: "events", label: "àéøåòéí", icon: "??", industry: "daily", roles: ["îìöø/éú àéøåòéí", "îàøç/ú àéøåòéí", "èáç/éú", "îðäì/ú àéøåò", "öìí/ú"] },
+  { id: "cleaning", label: "ðé÷éåï åúçæå÷ä", icon: "??", industry: "daily", roles: ["òåáã/ú ðé÷éåï", "îðäì/ú öååú", "èëðàé/ú úçæå÷ä"] },
+
+  { id: "call_center", label: "îå÷ã åùéøåú ì÷åçåú", icon: "??", industry: "communication", roles: ["ðöéâ/ú ùéøåú", "ðöéâ/ú îëéøåú", "øàù öååú îå÷ã", "ðöéâ/ú úîéëä"] },
+  { id: "digital_media", label: "îãéä åúåëï", icon: "??", industry: "communication", roles: ["éåöø/ú úåëï", "îðäì/ú ñåùéàì", "÷åôéøééèø/éú", "òåøê/ú åéãàå"] },
+  { id: "telecom", label: "èì÷åí åúùúéåú ú÷ùåøú", icon: "??", industry: "communication", roles: ["èëðàé/ú ú÷ùåøú", "îú÷éï/ú ñéáéí", "îäðãñ/ú øùú", "ðöéâ/ú úôòåì"] },
+  { id: "public_relations", label: "éçñé öéáåø åãåáøåú", icon: "??", industry: "communication", roles: ["àéù/àùú éçñé öéáåø", "ãåáø/ú", "îðäì/ú ÷îôééðéí", "ú÷öéáàé/ú"] },
+
+  { id: "health_insurance", label: "áéèåç áøéàåú", icon: "??", industry: "insurance", roles: ["ðöéâ/ú áéèåç áøéàåú", "çúí/ú øôåàé", "îééùá/ú úáéòåú áøéàåú", "îðäì/ú úé÷é ì÷åçåú"] },
+  { id: "claims", label: "úáéòåú åùéøåú", icon: "??", industry: "insurance", roles: ["îééùá/ú úáéòåú", "øëæ/ú ùéøåú", "áåã÷/ú îñîëéí", "îðäì/ú ì÷åçåú"] },
+  { id: "underwriting", label: "çéúåí åñéëåðéí", icon: "??", industry: "insurance", roles: ["çúí/ú", "àðìéñè/éú ñéëåðéí", "à÷èåàø/éú", "øëæ/ú çéúåí"] },
+  { id: "pension", label: "ôðñéä åçéñëåï", icon: "??", industry: "insurance", roles: ["éåòõ/ú ôðñéåðé/ú", "ðöéâ/ú ùéîåø", "îðäì/ú úé÷ ì÷åç", "øëæ/ú úôòåì"] },
 ];
 
 export function getRolesByDomain(domain: WorkplaceDomain): string[] {
-  return DOMAINS.find((d) => d.id === domain)?.roles || [];
+  return DOMAINS.find((item) => item.id === domain)?.roles || [];
 }
 
 export function getDomainConfig(domain: WorkplaceDomain): DomainConfig | undefined {
-  return DOMAINS.find((d) => d.id === domain);
+  return DOMAINS.find((item) => item.id === domain);
 }
 
 export function getDomainsByIndustry(industry: Industry): DomainConfig[] {
-  return DOMAINS.filter((d) => d.industry === industry);
+  return DOMAINS.filter((item) => item.industry === industry);
 }
 
 export function getIndustryConfig(industry: Industry): IndustryConfig | undefined {
-  return INDUSTRIES.find((i) => i.id === industry);
+  return INDUSTRIES.find((item) => item.id === industry);
 }
 
 export function getAllRoles(): string[] {
-  return Array.from(new Set(DOMAINS.flatMap((d) => d.roles)));
+  return Array.from(new Set(DOMAINS.flatMap((item) => item.roles)));
 }

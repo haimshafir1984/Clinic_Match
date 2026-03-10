@@ -1,7 +1,7 @@
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, ChevronUp, Lightbulb, Loader2, MessageSquare, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, MessageSquare, Lightbulb, X, Loader2, ChevronDown, ChevronUp } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { MatchCardData } from "@/types";
 
 interface AIChatAssistantProps {
@@ -10,179 +10,108 @@ interface AIChatAssistantProps {
   isFirstMessage: boolean;
 }
 
-// AI-generated icebreakers based on profile context
 function generateIcebreakers(profile: MatchCardData, isFirstMessage: boolean): string[] {
-  const name = profile.name || "Χ©Χ";
-  const position = profile.position || "";
-  const isClinic = profile.role === "clinic";
-  
+  const name = profile.name || "ων";
+  const position = profile.position || "δϊτχιγ";
+  const isBusiness = profile.role === "clinic";
+
   if (isFirstMessage) {
-    if (isClinic) {
+    if (isBusiness) {
       return [
-        `Χ©ΧΧ•Χ! Χ¨ΧΧ™ΧªΧ™ Χ©ΧΧªΧ ΧΧ—Χ¤Χ©Χ™Χ ${position || "ΧΆΧ•Χ‘Χ“/Χª"} - ΧΧ©ΧΧ— ΧΧ©ΧΧ•ΧΆ ΧΆΧ•Χ“ ΧΆΧ Χ”ΧΧ©Χ¨Χ” π™‚`,
-        `Χ”Χ™Χ™! Χ”ΧΧ¨Χ¤ΧΧ” Χ©ΧΧ›Χ Χ Χ¨ΧΧ™Χª ΧΧΆΧ Χ™Χ™Χ Χª. ΧΧ” Χ”Χ“Χ‘Χ¨ Χ”Χ›Χ™ Χ—Χ©Χ•Χ‘ ΧΧ›Χ Χ‘ΧΆΧ•Χ‘Χ“ Χ—Χ“Χ©?`,
-        `Χ©ΧΧ•Χ ${name}! ΧΧ©ΧΧ— ΧΧ“ΧΆΧª ΧΆΧ•Χ“ ΧΆΧ Χ΅Χ‘Χ™Χ‘Χª Χ”ΧΆΧ‘Χ•Χ“Χ” Χ•Χ”Χ¦Χ•Χ•Χª.`,
-        `Χ”Χ™Χ™, Χ”ΧªΧΧΧ Χ•! π‰ ΧΧ” ΧΧ™Χ™Χ—Χ“ ΧΧª Χ”ΧΧ¨Χ¤ΧΧ” Χ©ΧΧ›Χ?`,
-      ];
-    } else {
-      return [
-        `Χ©ΧΧ•Χ ${name}! Χ¨ΧΧ™ΧªΧ™ Χ©Χ™Χ© ΧΧ Χ Χ™Χ΅Χ™Χ•Χ Χ‘${position || "Χ”ΧªΧ—Χ•Χ"} - ΧΧΆΧ Χ™Χ™Χ ΧΧ©ΧΧ•ΧΆ ΧΆΧ•Χ“!`,
-        `Χ”Χ™Χ™! ΧΧ” Χ”Χ›Χ™ Χ—Χ©Χ•Χ‘ ΧΧ Χ‘ΧΧ§Χ•Χ ΧΆΧ‘Χ•Χ“Χ” Χ—Χ“Χ©?`,
-        `Χ©ΧΧ•Χ! Χ©ΧΧ—ΧªΧ™ ΧΧ”ΧªΧΧΧ” π‰ Χ΅Χ¤Χ¨/Χ™ ΧΧ™ Χ§Χ¦Χª ΧΆΧ ΧΆΧ¦ΧΧ`,
-        `Χ”Χ™Χ™ ${name}, ΧΧªΧ™ ΧªΧ”Χ™Χ”/Χ™ Χ–ΧΧ™Χ/Χ” ΧΧ”ΧªΧ—Χ™Χ?`,
+        `ωμεν! ψΰιϊι ωΰϊν ξητωιν ${position}. ΰωξη μωξες ςεγ ςμ δϊτχιγ.`,
+        `διι ${name}, ξδ δλι ηωεα μλν αςεαγ/ϊ ηγω/δ?`,
+        `ΰωξη μδαιο χφϊ ιεϊψ ςμ δφεεϊ εςμ ραιαϊ δςαεγδ ΰφμλν.`,
       ];
     }
+
+    return [
+      `ωμεν ${name}, ψΰιϊι ΰϊ δπιριεο ωμκ α-${position}. ΰωξη μωξες ςεγ.`,
+      `διι! ξδ ηωεα μκ αξχεν δςαεγδ δαΰ ωμκ?`,
+      `πςιν ξΰεγ, ξϊι ϊδιδ/ι ζξιο/δ μδϊημδ?`,
+    ];
   }
-  
-  // Follow-up suggestions
+
   return [
-    "ΧΧ©ΧΧ— ΧΧ§Χ‘Χ•ΧΆ Χ©Χ™Χ—Χª Χ”Χ™Χ›Χ¨Χ•Χª Χ§Χ¦Χ¨Χ” - ΧΧªΧ™ Χ Χ•Χ— ΧΧ?",
-    "Χ”ΧΧ Χ™Χ© ΧΧ Χ©ΧΧΧ•Χª Χ Χ•Χ΅Χ¤Χ•Χª ΧΆΧ Χ”ΧªΧ¤Χ§Χ™Χ“?",
-    "ΧΧ” Χ“ΧΆΧªΧ ΧΧ”ΧΧ©Χ™Χ Χ‘ΧΧΧ¤Χ•Χ ΧΧ• Χ‘Χ–Χ•Χ?",
-    "ΧªΧ•Χ“Χ” ΧΆΧ Χ”Χ©Χ™Χ—Χ”! Χ Χ©ΧΧ— ΧΧ”ΧªΧ¨ΧΧ•Χª Χ‘Χ§Χ¨Χ•Χ‘",
+    "ξδ γςϊκ μχαες ωιηϊ διλψεϊ χφψδ?",
+    "ιω μκ ςεγ ωΰμεϊ ςμ δϊτχιγ?",
+    "ΰτωψ μςαεψ μωιηϊ θμτεο ΰε ζεν ΰν πεη μκ.",
   ];
 }
 
-// Conversation tips based on context
-function getConversationTips(isClinic: boolean, messageCount: number): string[] {
-  if (messageCount === 0) {
-    return isClinic 
-      ? ["Χ”ΧªΧ—Χ™ΧΧ• Χ‘Χ©ΧΧΧ” Χ¤ΧªΧ•Χ—Χ” ΧΆΧ Χ”Χ Χ™Χ΅Χ™Χ•Χ Χ©ΧΧ”Χ", "Χ”Χ¦Χ™Χ’Χ• ΧΧª Χ”Χ™ΧªΧ¨Χ•Χ Χ•Χª Χ”Χ™Χ™Χ—Χ•Χ“Χ™Χ™Χ Χ©Χ Χ”ΧΧ¨Χ¤ΧΧ”"]
-      : ["Χ©ΧΧΧ• ΧΆΧ ΧªΧ¨Χ‘Χ•Χª Χ”ΧΆΧ‘Χ•Χ“Χ”", "Χ¦Χ™Χ™Χ Χ• ΧΧª Χ”Χ–ΧΧ™Χ Χ•Χª Χ©ΧΧ›Χ"];
+function getConversationTips(isBusiness: boolean, isFirstMessage: boolean): string[] {
+  if (isFirstMessage) {
+    return isBusiness
+      ? ["τϊηε αωΰμδ ςμ δπιριεο ωμ δξεςξγ/ϊ.", "δφιβε αχφψδ ΰϊ ραιαϊ δςαεγδ εδιϊψεπεϊ ωμλν."]
+      : ["ωΰμε ςμ ΰετι δςαεγδ εδφεεϊ.", "φιιπε ζξιπεϊ εωλψ ΰν ζδ ψμεεπθι."];
   }
-  
-  if (messageCount < 5) {
-    return isClinic
-      ? ["Χ‘Χ¨Χ¨Χ• ΧΆΧ Χ¦Χ™Χ¤Χ™Χ•Χª Χ©Χ›Χ¨", "Χ©ΧΧΧ• ΧΆΧ Χ–ΧΧ™Χ Χ•Χª ΧΧ”ΧªΧ—ΧΧ”"]
-      : ["Χ”ΧªΧΆΧ Χ™Χ™Χ Χ• Χ‘Χ΅Χ•Χ’ Χ”ΧΆΧ‘Χ•Χ“Χ”", "Χ©ΧΧΧ• ΧΆΧ ΧΧ¤Χ©Χ¨Χ•Χ™Χ•Χª Χ§Χ™Χ“Χ•Χ"];
-  }
-  
+
   return [
-    "Χ–Χ” Χ”Χ–ΧΧ Χ”Χ Χ›Χ•Χ ΧΧ”Χ¦Χ™ΧΆ Χ©Χ™Χ—Χª ΧΧΧ¤Χ•Χ",
-    "Χ΅Χ›ΧΧ• ΧΧª ΧΆΧ™Χ§Χ¨Χ™ Χ”Χ©Χ™Χ—Χ”",
+    "λγΰι μρλν ΰϊ ςιχψι δωιηδ αφεψδ χφψδ.",
+    "ΰν ιω ςπιιο δγγι, ζδ ζξο θεα μδφις ωιηϊ δξωκ.",
   ];
 }
 
-export function AIChatAssistant({ 
-  otherProfile, 
-  onSelectSuggestion,
-  isFirstMessage 
-}: AIChatAssistantProps) {
+export function AIChatAssistant({ otherProfile, onSelectSuggestion, isFirstMessage }: AIChatAssistantProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showTips, setShowTips] = useState(false);
-  
-  const icebreakers = generateIcebreakers(otherProfile, isFirstMessage);
-  const tips = getConversationTips(otherProfile.role === "clinic", isFirstMessage ? 0 : 5);
-  
+
+  const suggestions = generateIcebreakers(otherProfile, isFirstMessage);
+  const tips = getConversationTips(otherProfile.role === "clinic", isFirstMessage);
+
   const handleSelectSuggestion = (suggestion: string) => {
     setIsGenerating(true);
-    // Small delay to show loading state
-    setTimeout(() => {
+    window.setTimeout(() => {
       onSelectSuggestion(suggestion);
       setIsGenerating(false);
-    }, 300);
+    }, 250);
   };
-  
+
   if (!isExpanded) {
     return (
-      <motion.button
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        onClick={() => setIsExpanded(true)}
-        className="fixed bottom-24 left-4 z-10 p-3 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
-      >
-        <Sparkles className="w-5 h-5" />
+      <motion.button initial={{ scale: 0 }} animate={{ scale: 1 }} onClick={() => setIsExpanded(true)} className="fixed bottom-24 left-4 z-10 rounded-full bg-primary p-3 text-primary-foreground shadow-lg transition-colors hover:bg-primary/90">
+        <Sparkles className="h-5 w-5" />
       </motion.button>
     );
   }
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 20, scale: 0.95 }}
-        className="bg-gradient-to-br from-primary/5 to-accent/10 border border-primary/20 rounded-xl p-3 mx-4 mb-2"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-3">
+      <motion.div initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.95 }} className="mx-4 mb-2 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/10 p-3">
+        <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-primary/10">
-              <Sparkles className="w-4 h-4 text-primary" />
-            </div>
-            <span className="text-sm font-medium text-foreground">ΧΆΧ•Χ–Χ¨ AI</span>
+            <div className="rounded-lg bg-primary/10 p-1.5"><Sparkles className="h-4 w-4 text-primary" /></div>
+            <span className="text-sm font-medium">ςεζψ πιρεη</span>
           </div>
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setShowTips(!showTips)}
-            >
-              <Lightbulb className={`w-4 h-4 ${showTips ? 'text-warning' : 'text-muted-foreground'}`} />
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowTips((value) => !value)}>
+              {showTips ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <Lightbulb className="h-4 w-4 text-warning" />}
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setIsExpanded(false)}
-            >
-              <X className="w-4 h-4 text-muted-foreground" />
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsExpanded(false)}>
+              <X className="h-4 w-4 text-muted-foreground" />
             </Button>
           </div>
         </div>
 
-        {/* Tips Section */}
         <AnimatePresence>
           {showTips && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden mb-3"
-            >
-              <div className="p-2 rounded-lg bg-warning/10 border border-warning/20">
-                <p className="text-xs font-medium text-warning mb-1.5 flex items-center gap-1">
-                  <Lightbulb className="w-3 h-3" />
-                  ΧΧ™Χ¤Χ™Χ ΧΧ©Χ™Χ—Χ”
-                </p>
-                <ul className="text-xs text-muted-foreground space-y-1">
-                  {tips.map((tip, i) => (
-                    <li key={i} className="flex items-start gap-1.5">
-                      <span className="text-warning mt-0.5">β€Ά</span>
-                      {tip}
-                    </li>
-                  ))}
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="mb-3 overflow-hidden">
+              <div className="rounded-lg border border-warning/20 bg-warning/10 p-2">
+                <p className="mb-1.5 flex items-center gap-1 text-xs font-medium text-warning"><Lightbulb className="h-3 w-3" />θιτιν μωιηδ</p>
+                <ul className="space-y-1 text-xs text-muted-foreground">
+                  {tips.map((tip) => <li key={tip}>• {tip}</li>)}
                 </ul>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Suggestions */}
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground flex items-center gap-1">
-            <MessageSquare className="w-3 h-3" />
-            {isFirstMessage ? "Χ”Χ¦ΧΆΧ•Χª ΧΧ¤ΧªΧ™Χ—Χª Χ©Χ™Χ—Χ”:" : "Χ”Χ¦ΧΆΧ•Χª ΧΧ”ΧΧ©Χ:"}
-          </p>
-          
+          <p className="flex items-center gap-1 text-xs text-muted-foreground"><MessageSquare className="h-3 w-3" />{isFirstMessage ? "τϊιηιν ξεφςιν" : "δφςεϊ μδξωκ"}</p>
           <div className="flex flex-wrap gap-2">
-            {icebreakers.map((suggestion, index) => (
-              <motion.button
-                key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => handleSelectSuggestion(suggestion)}
-                disabled={isGenerating}
-                className="text-xs px-3 py-1.5 rounded-full bg-card border border-border hover:border-primary hover:bg-primary/5 transition-all text-foreground disabled:opacity-50"
-              >
-                {isGenerating ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : (
-                  suggestion.length > 40 ? suggestion.slice(0, 40) + "..." : suggestion
-                )}
+            {suggestions.map((suggestion) => (
+              <motion.button key={suggestion} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} onClick={() => handleSelectSuggestion(suggestion)} disabled={isGenerating} className="rounded-full border border-border bg-card px-3 py-1.5 text-xs text-foreground transition-all hover:border-primary hover:bg-primary/5 disabled:opacity-50">
+                {isGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : suggestion.length > 42 ? `${suggestion.slice(0, 42)}...` : suggestion}
               </motion.button>
             ))}
           </div>

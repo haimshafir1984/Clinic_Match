@@ -1,74 +1,66 @@
-import { useState } from "react";
+import { useMemo, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useCreateProfile, useUpdateProfile } from "@/hooks/useProfile";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CityCombobox } from "@/components/ui/city-combobox";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { motion } from "framer-motion";
+import { Building2, Calendar, CheckCircle2, Loader2, MapPin, Sparkles, Upload, User, UserRound, X } from "lucide-react";
+import { useCreateProfile, useUpdateProfile, ProfileFormInput } from "@/hooks/useProfile";
 import { DomainSelector } from "@/components/registration/DomainSelector";
 import { RoleMultiSelector } from "@/components/registration/RoleMultiSelector";
-import { MagicWriteModal } from "@/components/profile/MagicWriteModal";
 import { RecruitmentAutomationTab } from "@/components/profile/RecruitmentAutomationTab";
+import { MagicWriteModal } from "@/components/profile/MagicWriteModal";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CityCombobox } from "@/components/ui/city-combobox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, Building2, UserRound, User, MapPin, Calendar, Banknote, CheckCircle2, ArrowLeft, Briefcase, X, Sparkles, BotMessageSquare } from "lucide-react";
-import { ProfileFormInput } from "@/hooks/useProfile";
-import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { DOMAINS, WorkplaceDomain, getDomainConfig } from "@/constants/domains";
+import { WorkplaceDomain, getDomainConfig } from "@/constants/domains";
 
 type UserRole = "clinic" | "worker";
 type JobType = "daily" | "temporary" | "permanent";
 
 const days = [
-  { value: "sunday", label: "Χ¨ΧΧ©Χ•Χ" },
-  { value: "monday", label: "Χ©Χ Χ™" },
-  { value: "tuesday", label: "Χ©ΧΧ™Χ©Χ™" },
-  { value: "wednesday", label: "Χ¨Χ‘Χ™ΧΆΧ™" },
-  { value: "thursday", label: "Χ—ΧΧ™Χ©Χ™" },
-  { value: "friday", label: "Χ©Χ™Χ©Χ™" },
-  { value: "saturday", label: "Χ©Χ‘Χª" },
+  { value: "sunday", label: "ψΰωεο" },
+  { value: "monday", label: "ωπι" },
+  { value: "tuesday", label: "ωμιωι" },
+  { value: "wednesday", label: "ψαιςι" },
+  { value: "thursday", label: "ηξιωι" },
+  { value: "friday", label: "ωιωι" },
+  { value: "saturday", label: "ωαϊ" },
 ];
 
 const profileSchema = z.object({
-  name: z.string().min(2, "Χ©Χ Χ—Χ™Χ™Χ‘ ΧΧ”Χ›Χ™Χ ΧΧ¤Χ—Χ•Χª 2 ΧªΧ•Χ•Χ™Χ").max(50, "Χ©Χ ΧΧ¨Χ•Χ ΧΧ“Χ™"),
+  name: z.string().min(2, "ων ηιια μδλιμ μτηεϊ 2 ϊεειν").max(50, "ων ΰψεκ ξγι"),
   role: z.enum(["clinic", "worker"]),
-  position: z.string().optional(),
-  positions: z.array(z.string()).optional(),
-  workplace_types: z.array(z.string()).optional(),
-  required_position: z.string().optional(),
-  description: z.string().max(500, "ΧªΧ™ΧΧ•Χ¨ ΧΧ¨Χ•Χ ΧΧ“Χ™ (ΧΧ§Χ΅Χ™ΧΧ•Χ 500 ΧªΧ•Χ•Χ™Χ)").optional(),
+  description: z.string().max(500, "ϊιΰεψ ΰψεκ ξγι").optional().or(z.literal("")),
   city: z.string().optional(),
   preferred_area: z.string().optional(),
-  radius_km: z.number().min(1).max(100).optional(),
-  experience_years: z.number().min(0).max(50).optional(),
+  radius_km: z.number().min(1).max(100).nullable().optional(),
+  experience_years: z.number().min(0).max(50).nullable().optional(),
   availability_date: z.string().optional(),
   availability_days: z.array(z.string()).optional(),
   availability_hours: z.string().optional(),
-  salary_min: z.number().min(0).optional(),
-  salary_max: z.number().min(0).optional(),
-  job_type: z.enum(["daily", "temporary", "permanent"]).optional(),
+  salary_min: z.number().min(0).nullable().optional(),
+  salary_max: z.number().min(0).nullable().optional(),
+  job_type: z.enum(["daily", "temporary", "permanent"]).nullable().optional(),
 }).refine((data) => {
-  // Validate salary range
-  if (data.salary_min && data.salary_max && data.salary_min > data.salary_max) {
-    return false;
+  if (data.salary_min != null && data.salary_max != null) {
+    return data.salary_min <= data.salary_max;
   }
   return true;
 }, {
-  message: "Χ©Χ›Χ¨ ΧΧ™Χ Χ™ΧΧ•Χ Χ—Χ™Χ™Χ‘ ΧΧ”Χ™Χ•Χª Χ§ΧΧ ΧΧ©Χ›Χ¨ ΧΧ§Χ΅Χ™ΧΧ•Χ",
+  message: "ωλψ ξιπιξεν ηιια μδιεϊ χθο ΰε ωεεδ μωλψ ξχριξεν",
   path: ["salary_min"],
 });
 
 type FormData = z.infer<typeof profileSchema>;
 
-// Profile type for initial data (matches what API returns)
 interface Profile {
   id: string;
   user_id: string;
@@ -88,14 +80,11 @@ interface Profile {
   availability_hours?: string | null;
   salary_min?: number | null;
   salary_max?: number | null;
-  job_type?: "daily" | "temporary" | "permanent" | null;
+  job_type?: JobType | null;
   avatar_url?: string | null;
-  created_at?: string;
-  updated_at?: string;
-  // Recruitment settings (clinic only)
+  logo_url?: string | null;
   screening_questions?: string[] | null;
   is_auto_screener_active?: boolean | null;
-  // Boost profile (clinic only)
   is_urgent?: boolean | null;
 }
 
@@ -104,608 +93,406 @@ interface ProfileFormProps {
   onSuccess: () => void;
 }
 
-interface FormSectionProps {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
+async function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("χψιΰϊ δχεαυ πλωμδ"));
+    reader.readAsDataURL(file);
+  });
 }
 
-function FormSection({ title, icon, children }: FormSectionProps) {
-  return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-3 bg-muted/30">
-        <CardTitle className="text-base font-medium flex items-center gap-2">
-          {icon}
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-4 space-y-4">
-        {children}
-      </CardContent>
-    </Card>
-  );
-}
-
-interface FormFieldProps {
+function MediaPicker({
+  label,
+  value,
+  fallbackIcon,
+  onChange,
+}: {
   label: string;
-  required?: boolean;
-  error?: string;
-  hint?: string;
-  children: React.ReactNode;
-}
+  value: string | null;
+  fallbackIcon: React.ReactNode;
+  onChange: (value: string | null) => void;
+}) {
+  const [loading, setLoading] = useState(false);
 
-function FormField({ label, required, error, hint, children }: FormFieldProps) {
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("ΰτωψ μδςμεϊ ψχ χεαυ ϊξεπδ");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("βεγμ δϊξεπδ δξχριξμι δεΰ 2MB");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      onChange(dataUrl);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "δςμΰϊ δϊξεπδ πλωμδ");
+    } finally {
+      setLoading(false);
+      event.target.value = "";
+    }
+  };
+
   return (
-    <div className="space-y-1.5">
-      <Label className="text-sm font-medium">
-        {label}
-        {required && <span className="text-destructive mr-1">*</span>}
-      </Label>
-      {children}
-      {error && (
-        <motion.p 
-          initial={{ opacity: 0, y: -5 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-sm text-destructive flex items-center gap-1"
-        >
-          {error}
-        </motion.p>
-      )}
-      {hint && !error && (
-        <p className="text-xs text-muted-foreground">{hint}</p>
-      )}
+    <div className="space-y-3">
+      <Label>{label}</Label>
+      <div className="flex items-center gap-4">
+        <Avatar className="h-20 w-20 border">
+          <AvatarImage src={value || undefined} />
+          <AvatarFallback>{fallbackIcon}</AvatarFallback>
+        </Avatar>
+        <div className="flex flex-col gap-2">
+          <Label className="cursor-pointer">
+            <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+            <span className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              δςμΰϊ χεαυ
+            </span>
+          </Label>
+          {value && (
+            <Button type="button" variant="ghost" size="sm" onClick={() => onChange(null)} className="justify-start px-0 text-destructive">
+              <X className="mr-1 h-4 w-4" />
+              δρψ ϊξεπδ
+            </Button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
 export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
-  const [role, setRole] = useState<UserRole | null>(
-    initialData?.role || (localStorage.getItem("pendingRole") as UserRole | null)
-  );
-  
-  // Domain and positions state for editing
-  const [selectedDomain, setSelectedDomain] = useState<WorkplaceDomain | null>(
-    (initialData?.workplace_types?.[0] as WorkplaceDomain) || null
-  );
-  const [selectedPositions, setSelectedPositions] = useState<string[]>(
-    initialData?.positions || (initialData?.position ? [initialData.position] : [])
-  );
-  const [showDomainSelector, setShowDomainSelector] = useState(false);
-  
-  // Magic Write modal state
+  const [role, setRole] = useState<UserRole | null>(initialData?.role || null);
+  const [selectedDomain, setSelectedDomain] = useState<WorkplaceDomain | null>((initialData?.workplace_types?.[0] as WorkplaceDomain) || null);
+  const [selectedPositions, setSelectedPositions] = useState<string[]>(initialData?.positions || (initialData?.position ? [initialData.position] : []));
+  const [screeningQuestions, setScreeningQuestions] = useState<string[]>(initialData?.screening_questions || []);
+  const [isAutoScreenerActive, setIsAutoScreenerActive] = useState(initialData?.is_auto_screener_active || false);
+  const [isUrgent, setIsUrgent] = useState(initialData?.is_urgent || false);
+  const [avatarUrl, setAvatarUrl] = useState(initialData?.avatar_url || null);
+  const [logoUrl, setLogoUrl] = useState(initialData?.logo_url || null);
   const [showMagicWrite, setShowMagicWrite] = useState(false);
-  
-  // Recruitment settings state (clinic only)
-  const [screeningQuestions, setScreeningQuestions] = useState<string[]>(
-    initialData?.screening_questions || []
-  );
-  const [isAutoScreenerActive, setIsAutoScreenerActive] = useState(
-    initialData?.is_auto_screener_active || false
-  );
-  const [isUrgent, setIsUrgent] = useState(
-    initialData?.is_urgent || false
-  );
-  
+
   const createProfile = useCreateProfile();
   const updateProfile = useUpdateProfile();
-  const isEditing = !!initialData;
+  const isEditing = Boolean(initialData);
 
-  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: initialData?.name || "",
-      role: initialData?.role || role || undefined,
-      position: initialData?.position || "",
-      positions: initialData?.positions || [],
-      workplace_types: initialData?.workplace_types || [],
-      required_position: initialData?.required_position || "",
+      role: initialData?.role || undefined,
       description: initialData?.description || "",
       city: initialData?.city || "",
       preferred_area: initialData?.preferred_area || "",
-      radius_km: initialData?.radius_km || 10,
-      experience_years: initialData?.experience_years || 0,
+      radius_km: initialData?.radius_km ?? 10,
+      experience_years: initialData?.experience_years ?? 0,
       availability_date: initialData?.availability_date || "",
       availability_days: initialData?.availability_days || [],
       availability_hours: initialData?.availability_hours || "",
-      salary_min: initialData?.salary_min || undefined,
-      salary_max: initialData?.salary_max || undefined,
-      job_type: initialData?.job_type || undefined,
+      salary_min: initialData?.salary_min ?? null,
+      salary_max: initialData?.salary_max ?? null,
+      job_type: initialData?.job_type || null,
     },
   });
 
-  const selectedDays = watch("availability_days") || [];
   const currentRole = watch("role") || role;
+  const isClinic = currentRole === "clinic";
+  const isLoading = createProfile.isPending || updateProfile.isPending || isSubmitting;
+  const selectedDays = watch("availability_days") || [];
 
-  const onSubmit = async (data: FormData) => {
+  const previewName = watch("name") || "";
+  const primaryImage = isClinic ? logoUrl : avatarUrl;
+  const primaryLabel = isClinic ? "μεβε αιϊ δςρχ" : "ϊξεπϊ δςεαγ/ϊ";
+  const previewIcon = isClinic ? <Building2 className="h-8 w-8 text-primary" /> : <UserRound className="h-8 w-8 text-primary" />;
+
+  const domainLabel = useMemo(() => (selectedDomain ? getDomainConfig(selectedDomain)?.label : null), [selectedDomain]);
+
+  const submit = async (data: FormData) => {
+    if (!currentRole) {
+      toast.error("αηψ ρεβ ξωϊξω");
+      return;
+    }
+    if (!selectedDomain) {
+      toast.error("αηψ ϊηεν");
+      return;
+    }
+    if (selectedPositions.length === 0) {
+      toast.error("αηψ μτηεϊ ϊτχιγ ΰηγ");
+      return;
+    }
+
+    const payload: ProfileFormInput = {
+      name: data.name,
+      role: currentRole,
+      position: selectedPositions[0] || null,
+      positions: selectedPositions,
+      required_position: currentRole === "clinic" ? selectedPositions[0] || null : null,
+      workplace_types: [selectedDomain],
+      description: data.description || null,
+      city: isClinic ? watch("city") || null : null,
+      preferred_area: !isClinic ? watch("preferred_area") || null : null,
+      radius_km: isClinic ? data.radius_km ?? null : null,
+      experience_years: !isClinic ? data.experience_years ?? null : null,
+      availability_date: data.availability_date || null,
+      availability_days: data.availability_days || [],
+      availability_hours: data.availability_hours || null,
+      salary_min: data.salary_min ?? null,
+      salary_max: data.salary_max ?? null,
+      job_type: data.job_type || null,
+      screening_questions: screeningQuestions.filter(Boolean),
+      is_auto_screener_active: isAutoScreenerActive,
+      is_urgent: isUrgent,
+      avatar_url: avatarUrl,
+      logo_url: logoUrl,
+    };
+
     try {
       if (isEditing) {
-        await updateProfile.mutateAsync({
-          ...data,
-          positions: selectedPositions.length > 0 ? selectedPositions : null,
-          workplace_types: selectedDomain ? [selectedDomain] : null,
-          // Include recruitment settings for clinics
-          screening_questions: screeningQuestions.filter(q => q.trim()).length > 0 
-            ? screeningQuestions.filter(q => q.trim()) 
-            : null,
-          is_auto_screener_active: isAutoScreenerActive,
-          is_urgent: isUrgent,
-        });
+        await updateProfile.mutateAsync(payload);
       } else {
-        if (!data.name || !data.role) {
-          toast.error("Χ Χ ΧΧΧΧ ΧΧª Χ›Χ Χ”Χ©Χ“Χ•Χª Χ”Χ Χ“Χ¨Χ©Χ™Χ");
-          return;
-        }
-        await createProfile.mutateAsync({
-          name: data.name,
-          role: data.role,
-          position: selectedPositions[0] || data.position || null,
-          positions: selectedPositions.length > 0 ? selectedPositions : null,
-          workplace_types: selectedDomain ? [selectedDomain] : null,
-          required_position: data.required_position || null,
-          description: data.description || null,
-          city: data.city || null,
-          preferred_area: data.preferred_area || null,
-          radius_km: data.radius_km || null,
-          experience_years: data.experience_years || null,
-          availability_date: data.availability_date || null,
-          availability_days: data.availability_days || null,
-          availability_hours: data.availability_hours || null,
-          salary_min: data.salary_min || null,
-          salary_max: data.salary_max || null,
-          job_type: data.job_type || null,
-        });
-        localStorage.removeItem("pendingRole");
+        await createProfile.mutateAsync(payload);
       }
       onSuccess();
-    } catch (error: any) {
-      toast.error("Χ©Χ’Χ™ΧΧ” Χ‘Χ©ΧΧ™Χ¨Χ”", { description: error.message });
+    } catch (error) {
+      toast.error("ωβιΰδ αωξιψδ", { description: error instanceof Error ? error.message : "μΰ πιϊο μωξεψ λψβς" });
     }
   };
 
-  const isLoading = createProfile.isPending || updateProfile.isPending || isSubmitting;
-  const isClinic = currentRole === "clinic";
-
-  const handleRemovePosition = (posToRemove: string) => {
-    setSelectedPositions(selectedPositions.filter(p => p !== posToRemove));
-  };
-
-  // Role selection for new profiles
   if (!role && !initialData) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-4"
-      >
-        <p className="text-muted-foreground text-center">Χ‘Χ—Χ¨ ΧΧª Χ΅Χ•Χ’ Χ”ΧΧ©ΧªΧΧ© Χ©ΧΧ:</p>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+        <p className="text-center text-muted-foreground">ΰικ πψφδ μςαεγ ςν ShiftMatch?</p>
         <div className="grid grid-cols-2 gap-4">
-          <motion.button
-            type="button"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setRole("clinic");
-              setValue("role", "clinic");
-            }}
-            className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-primary/5 transition-all"
-          >
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <Building2 className="w-8 h-8 text-primary" />
-            </div>
-            <span className="font-semibold text-lg">ΧΧ¨Χ¤ΧΧ”</span>
-            <span className="text-xs text-muted-foreground text-center">ΧΧ—Χ¤Χ©Χ™Χ ΧΆΧ•Χ‘Χ“Χ™Χ</span>
-          </motion.button>
-          <motion.button
-            type="button"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setRole("worker");
-              setValue("role", "worker");
-            }}
-            className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-primary/5 transition-all"
-          >
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <UserRound className="w-8 h-8 text-primary" />
-            </div>
-            <span className="font-semibold text-lg">ΧΆΧ•Χ‘Χ“/Χª</span>
-            <span className="text-xs text-muted-foreground text-center">ΧΧ—Χ¤Χ©/Χª ΧΆΧ‘Χ•Χ“Χ”</span>
-          </motion.button>
+          <Button type="button" variant="outline" className="h-auto flex-col gap-3 py-6" onClick={() => { setRole("clinic"); setValue("role", "clinic"); }}>
+            <Building2 className="h-8 w-8 text-primary" />
+            <span>αιϊ ςρχ</span>
+          </Button>
+          <Button type="button" variant="outline" className="h-auto flex-col gap-3 py-6" onClick={() => { setRole("worker"); setValue("role", "worker"); }}>
+            <UserRound className="h-8 w-8 text-primary" />
+            <span>ςεαγ/ϊ</span>
+          </Button>
         </div>
       </motion.div>
     );
   }
 
-  // For clinics in edit mode, use tabs layout
-  const renderClinicTabs = isClinic && isEditing;
+  return (
+    <form onSubmit={handleSubmit(submit)} className="space-y-4 pb-8">
+      <input type="hidden" {...register("role")} value={currentRole || ""} />
 
-  // Form sections JSX (reusable for both regular form and tabs)
-  const formSections = (
-    <>
-      {/* Basic Info */}
-      <FormSection title="Χ¤Χ¨ΧΧ™Χ Χ‘Χ΅Χ™Χ΅Χ™Χ™Χ" icon={<User className="w-4 h-4 text-primary" />}>
-        <FormField 
-          label={isClinic ? "Χ©Χ Χ”ΧΧ¨Χ¤ΧΧ”" : "Χ©Χ ΧΧΧ"} 
-          required 
-          error={errors.name?.message}
-        >
-          <Input
-            {...register("name")}
-            placeholder={isClinic ? "ΧΧ¨Χ¤ΧΧª Χ©Χ™Χ Χ™Χ™Χ..." : "Χ™Χ©Χ¨ΧΧ Χ™Χ©Χ¨ΧΧΧ™"}
-            className={cn(errors.name && "border-destructive focus-visible:ring-destructive")}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5 text-primary" />
+            τψετιμ
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <MediaPicker
+            label={primaryLabel}
+            value={primaryImage}
+            fallbackIcon={previewIcon}
+            onChange={(value) => {
+              if (isClinic) {
+                setLogoUrl(value);
+              } else {
+                setAvatarUrl(value);
+              }
+            }}
           />
-        </FormField>
 
-        {/* Positions Section */}
-        <FormField 
-          label={isClinic ? "ΧªΧ¤Χ§Χ™Χ“Χ™Χ ΧΧ‘Χ•Χ§Χ©Χ™Χ" : "Χ”ΧªΧ¤Χ§Χ™Χ“Χ™Χ Χ©ΧΧ"}
-          required
-          hint="Χ Χ™ΧªΧ ΧΧ‘Χ—Χ•Χ¨ ΧΧ΅Χ¤Χ¨ ΧªΧ¤Χ§Χ™Χ“Χ™Χ"
-        >
-          {/* Selected Positions Display */}
-          {selectedPositions.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
-              {selectedPositions.map((pos) => (
-                <Badge 
-                  key={pos} 
-                  variant="secondary"
-                  className="flex items-center gap-1 px-3 py-1"
-                >
-                  {pos}
-                  <button
-                    type="button"
-                    onClick={() => handleRemovePosition(pos)}
-                    className="mr-1 hover:text-destructive transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </Badge>
-              ))}
+          <div className="rounded-lg border bg-muted/20 p-4">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-16 w-16 border">
+                <AvatarImage src={primaryImage || undefined} />
+                <AvatarFallback>{previewIcon}</AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="font-semibold">{previewName || (isClinic ? "αιϊ δςρχ ωμκ" : "δτψετιμ ωμκ")}</div>
+                <div className="text-sm text-muted-foreground">{domainLabel || "αηψ ϊηεν εϊτχιγιν"}</div>
+                {selectedPositions.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {selectedPositions.map((position) => (
+                      <Badge key={position} variant="secondary">{position}</Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="name">{isClinic ? "ων αιϊ δςρχ" : "ων ξμΰ"}</Label>
+            <Input id="name" {...register("name")} />
+            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label>ϊηεν</Label>
+            <DomainSelector
+              value={selectedDomain}
+              onChange={(domain, _industry) => {
+                setSelectedDomain(domain);
+                setSelectedPositions([]);
+              }}
+            />
+          </div>
+
+          {selectedDomain && (
+            <div className="space-y-2">
+              <Label>ϊτχιγιν</Label>
+              <RoleMultiSelector domain={selectedDomain} selectedRoles={selectedPositions} onChange={setSelectedPositions} />
             </div>
           )}
-          
-          {/* Domain Selector Toggle */}
-          {!showDomainSelector ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowDomainSelector(true)}
-              className="w-full"
-            >
-              <Briefcase className="w-4 h-4 ml-2" />
-              {selectedPositions.length > 0 ? "Χ”Χ•Χ΅Χ£ ΧªΧ¤Χ§Χ™Χ“Χ™Χ Χ Χ•Χ΅Χ¤Χ™Χ" : "Χ‘Χ—Χ¨ ΧªΧ—Χ•Χ Χ•ΧªΧ¤Χ§Χ™Χ“Χ™Χ"}
-            </Button>
-          ) : (
-            <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
-              {!selectedDomain ? (
-                <DomainSelector
-                  value={selectedDomain}
-                  onChange={(domain) => setSelectedDomain(domain)}
-                />
-              ) : (
-                <>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span>{getDomainConfig(selectedDomain)?.icon}</span>
-                      <span className="font-medium">{getDomainConfig(selectedDomain)?.label}</span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedDomain(null)}
-                    >
-                      Χ©Χ Χ” ΧªΧ—Χ•Χ
-                    </Button>
-                  </div>
-                  <RoleMultiSelector
-                    domain={selectedDomain}
-                    selectedRoles={selectedPositions}
-                    onChange={setSelectedPositions}
-                  />
-                </>
-              )}
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setShowDomainSelector(false)}
-                className="w-full"
-              >
-                Χ΅Χ’Χ•Χ¨
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="description">ϊιΰεψ</Label>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setShowMagicWrite(true)} className="gap-2">
+                <Sparkles className="h-4 w-4" />
+                λϊιαδ ηλξδ
               </Button>
             </div>
-          )}
-        </FormField>
+            <Textarea id="description" rows={4} {...register("description")} />
+            {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
+          </div>
+        </CardContent>
+      </Card>
 
-        {!isClinic && (
-          <FormField 
-            label="Χ©Χ Χ•Χª Χ Χ™Χ΅Χ™Χ•Χ"
-            hint="Χ›ΧΧ” Χ©Χ Χ•Χª Χ Χ™Χ΅Χ™Χ•Χ Χ™Χ© ΧΧ Χ‘ΧªΧ—Χ•Χ?"
-          >
-            <Input
-              type="number"
-              min={0}
-              max={50}
-              {...register("experience_years", { valueAsNumber: true })}
-              placeholder="3"
-              className="w-32"
-            />
-          </FormField>
-        )}
-
-        <FormField 
-          label="ΧªΧ™ΧΧ•Χ¨" 
-          error={errors.description?.message}
-          hint={`${watch("description")?.length || 0}/500 ΧªΧ•Χ•Χ™Χ`}
-        >
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-primary" />
+            ξιχεν εδςγτεϊ
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="space-y-2">
-            <div className="flex gap-2">
-              <Textarea
-                {...register("description")}
-                placeholder={isClinic 
-                  ? "Χ΅Χ¤Χ¨ ΧΆΧ Χ”ΧΧ¨Χ¤ΧΧ”, Χ”ΧΧ•Χ•Χ™Χ¨Χ”, Χ•Χ”Χ¦Χ™Χ¤Χ™Χ•Χª..." 
-                  : "Χ΅Χ¤Χ¨ ΧΆΧ ΧΆΧ¦ΧΧ, Χ”Χ Χ™Χ΅Χ™Χ•Χ Χ•Χ”Χ™Χ›Χ•ΧΧ•Χª Χ©ΧΧ..."}
-                rows={3}
-                className={cn("flex-1", errors.description && "border-destructive")}
-              />
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowMagicWrite(true)}
-              className="gap-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              Χ›ΧªΧ™Χ‘Χ” Χ§Χ΅Χ•ΧΧ” β¨
-            </Button>
-          </div>
-        </FormField>
-      </FormSection>
-
-      {/* Magic Write Modal */}
-      <MagicWriteModal
-        open={showMagicWrite}
-        onOpenChange={setShowMagicWrite}
-        role={currentRole as "clinic" | "worker"}
-        onGenerated={(bio) => setValue("description", bio)}
-      />
-
-      {/* Location */}
-      <FormSection title="ΧΧ™Χ§Χ•Χ" icon={<MapPin className="w-4 h-4 text-primary" />}>
-        <FormField 
-          label={isClinic ? "ΧΆΧ™Χ¨" : "ΧΆΧ™Χ¨ ΧΧ•ΧΆΧ“Χ¤Χª"}
-          required
-          hint="Χ—Χ©Χ•Χ‘ ΧΧ‘Χ—Χ•Χ¨ ΧΧª Χ©Χ Χ”ΧΆΧ™Χ¨ Χ”ΧΧ“Χ•Χ™Χ§ ΧΧ”ΧªΧΧΧ” ΧΧ•Χ‘Χ” Χ™Χ•ΧªΧ¨"
-        >
-          <CityCombobox
-            value={watch(isClinic ? "city" : "preferred_area") || ""}
-            onChange={(value) => setValue(isClinic ? "city" : "preferred_area", value)}
-            placeholder={isClinic ? "Χ‘Χ—Χ¨ ΧΆΧ™Χ¨" : "Χ‘Χ—Χ¨ ΧΆΧ™Χ¨ ΧΧ•ΧΆΧ“Χ¤Χª"}
-          />
-        </FormField>
-
-        {isClinic && (
-          <FormField 
-            label="Χ¨Χ“Χ™Χ•Χ΅ Χ—Χ™Χ¤Χ•Χ©"
-            hint="Χ›ΧΧ” Χ¨Χ—Χ•Χ§ ΧΧªΧ ΧΧ•Χ›Χ Χ™Χ Χ©Χ”ΧΆΧ•Χ‘Χ“ Χ™Χ’Χ™ΧΆ?"
-          >
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                min={1}
-                max={100}
-                {...register("radius_km", { valueAsNumber: true })}
-                placeholder="10"
-                className="w-24"
-              />
-              <span className="text-sm text-muted-foreground">Χ§"Χ</span>
-            </div>
-          </FormField>
-        )}
-      </FormSection>
-
-      {/* Availability */}
-      <FormSection title="Χ–ΧΧ™Χ Χ•Χª" icon={<Calendar className="w-4 h-4 text-primary" />}>
-        <FormField label="Χ™ΧΧ™Χ Χ–ΧΧ™Χ Χ™Χ">
-          <div className="flex flex-wrap gap-2">
-            {days.map((day) => (
-              <label
-                key={day.value}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all text-sm",
-                  selectedDays.includes(day.value)
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-border hover:border-primary/50"
-                )}
-              >
-                <Checkbox
-                  checked={selectedDays.includes(day.value)}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setValue("availability_days", [...selectedDays, day.value]);
-                    } else {
-                      setValue("availability_days", selectedDays.filter((d) => d !== day.value));
-                    }
-                  }}
-                  className="sr-only"
-                />
-                <span>{day.label}</span>
-              </label>
-            ))}
-          </div>
-        </FormField>
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField label="Χ©ΧΆΧ•Χª">
-            <Input
-              {...register("availability_hours")}
-              placeholder="08:00 - 16:00"
+            <Label>{isClinic ? "ςιψ" : "ΰζεψ ξεςγσ"}</Label>
+            <CityCombobox
+              value={(isClinic ? watch("city") : watch("preferred_area")) || ""}
+              onChange={(value) => setValue(isClinic ? "city" : "preferred_area", value, { shouldValidate: true })}
+              placeholder={isClinic ? "αηψ ςιψ" : "αηψ ΰζεψ"}
             />
-          </FormField>
+          </div>
 
-          <FormField label="ΧªΧΧ¨Χ™Χ Χ”ΧªΧ—ΧΧ”">
-            <Input
-              type="date"
-              {...register("availability_date")}
-            />
-          </FormField>
-        </div>
-      </FormSection>
-
-      {/* Salary & Job Type */}
-      <FormSection 
-        title={isClinic ? "ΧªΧ ΧΧ™ Χ”ΧΆΧ΅Χ§Χ”" : "Χ¦Χ™Χ¤Χ™Χ•Χª Χ©Χ›Χ¨"} 
-        icon={<Banknote className="w-4 h-4 text-primary" />}
-      >
-        <div className="grid grid-cols-2 gap-4">
-          <FormField 
-            label={isClinic ? "Χ©Χ›Χ¨ ΧΧ™Χ Χ™ΧΧ•Χ" : "Χ©Χ›Χ¨ ΧΧ™Χ Χ™ΧΧΧ™"}
-            error={errors.salary_min?.message}
-          >
-            <div className="relative">
-              <Input
-                type="number"
-                min={0}
-                {...register("salary_min", { valueAsNumber: true })}
-                placeholder="5000"
-                className="pr-8"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">β‚ª</span>
+          {isClinic ? (
+            <div className="space-y-2">
+              <Label htmlFor="radius_km">ψγιερ ηιτεω</Label>
+              <Input id="radius_km" type="number" min={1} max={100} {...register("radius_km", { valueAsNumber: true })} />
             </div>
-          </FormField>
-          
-          <FormField 
-            label={isClinic ? "Χ©Χ›Χ¨ ΧΧ§Χ΅Χ™ΧΧ•Χ" : "Χ©Χ›Χ¨ ΧΧ§Χ΅Χ™ΧΧΧ™"}
-          >
-            <div className="relative">
-              <Input
-                type="number"
-                min={0}
-                {...register("salary_max", { valueAsNumber: true })}
-                placeholder="15000"
-                className="pr-8"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">β‚ª</span>
-            </div>
-          </FormField>
-        </div>
-
-        <FormField label="Χ΅Χ•Χ’ ΧΧ©Χ¨Χ”">
-          <Select
-            value={watch("job_type") || ""}
-            onValueChange={(value) => setValue("job_type", value as JobType)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Χ‘Χ—Χ¨ Χ΅Χ•Χ’ ΧΧ©Χ¨Χ”" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="daily">Χ™Χ•ΧΧ™</SelectItem>
-              <SelectItem value="temporary">Χ–ΧΧ Χ™</SelectItem>
-              <SelectItem value="permanent">Χ§Χ‘Χ•ΧΆ</SelectItem>
-            </SelectContent>
-          </Select>
-        </FormField>
-      </FormSection>
-    </>
-  );
-
-  // Submit button JSX
-  const submitButton = (
-    <div className="pt-4 pb-8">
-      <Button 
-        type="submit" 
-        className="w-full gap-2" 
-        size="lg" 
-        disabled={isLoading}
-      >
-        <AnimatePresence mode="wait">
-          {isLoading ? (
-            <motion.span
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center gap-2"
-            >
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Χ©Χ•ΧΧ¨...
-            </motion.span>
-          ) : isEditing ? (
-            <motion.span
-              key="update"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center gap-2"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              ΧΆΧ“Χ›Χ Χ¤Χ¨Χ•Χ¤Χ™Χ
-            </motion.span>
           ) : (
-            <motion.span
-              key="create"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center gap-2"
-            >
-              Χ”ΧΧ©Χ ΧΧ”ΧªΧΧΧ•Χª
-              <ArrowLeft className="w-4 h-4" />
-            </motion.span>
+            <div className="space-y-2">
+              <Label htmlFor="experience_years">ωπεϊ πιριεο</Label>
+              <Input id="experience_years" type="number" min={0} max={50} {...register("experience_years", { valueAsNumber: true })} />
+            </div>
           )}
-        </AnimatePresence>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-primary" />
+            ζξιπεϊ εϊπΰιν
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>ιξι ζξιπεϊ</Label>
+            <div className="flex flex-wrap gap-2">
+              {days.map((day) => {
+                const checked = selectedDays.includes(day.value);
+                return (
+                  <label key={day.value} className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={(nextChecked) => {
+                        setValue(
+                          "availability_days",
+                          nextChecked ? [...selectedDays, day.value] : selectedDays.filter((value) => value !== day.value),
+                          { shouldValidate: true }
+                        );
+                      }}
+                    />
+                    {day.label}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="availability_hours">ωςεϊ</Label>
+              <Input id="availability_hours" {...register("availability_hours")} placeholder="08:00 - 16:00" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="availability_date">ϊΰψικ δϊημδ</Label>
+              <Input id="availability_date" type="date" {...register("availability_date")} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="salary_min">ωλψ ξιπιξεν</Label>
+              <Input id="salary_min" type="number" min={0} {...register("salary_min", { valueAsNumber: true })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="salary_max">ωλψ ξχριξεν</Label>
+              <Input id="salary_max" type="number" min={0} {...register("salary_max", { valueAsNumber: true })} />
+            </div>
+          </div>
+          {errors.salary_min && <p className="text-sm text-destructive">{errors.salary_min.message}</p>}
+
+          <div className="space-y-2">
+            <Label>ρεβ ξωψδ</Label>
+            <Select value={watch("job_type") || undefined} onValueChange={(value) => setValue("job_type", value as JobType)}>
+              <SelectTrigger>
+                <SelectValue placeholder="αηψ ρεβ ξωψδ" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daily">ιεξι</SelectItem>
+                <SelectItem value="temporary">ζξπι</SelectItem>
+                <SelectItem value="permanent">χαες</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {isClinic && (
+        <RecruitmentAutomationTab
+          screeningQuestions={screeningQuestions}
+          isAutoScreenerActive={isAutoScreenerActive}
+          isUrgent={isUrgent}
+          position={selectedPositions[0] || null}
+          workplaceType={selectedDomain}
+          onQuestionsChange={setScreeningQuestions}
+          onAutoScreenerChange={setIsAutoScreenerActive}
+          onUrgentChange={setIsUrgent}
+        />
+      )}
+
+      <Button type="submit" className="w-full gap-2" size="lg" disabled={isLoading}>
+        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+        {isEditing ? "ςγλεο τψετιμ" : "ωξιψδ εδϊημδ"}
       </Button>
-    </div>
-  );
 
-  // Render with tabs for clinic edit mode
-  if (renderClinicTabs) {
-    return (
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <input type="hidden" {...register("role")} value={currentRole || ""} />
-        
-        <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="profile" className="gap-2">
-              <User className="w-4 h-4" />
-              Χ¤Χ¨Χ•Χ¤Χ™Χ
-            </TabsTrigger>
-            <TabsTrigger value="recruitment" className="gap-2">
-              <BotMessageSquare className="w-4 h-4" />
-              ΧΧ•ΧΧ•ΧΧ¦Χ™Χ™Χª Χ’Χ™Χ•Χ΅
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="profile" className="mt-4 space-y-4">
-            {formSections}
-          </TabsContent>
-          
-          <TabsContent value="recruitment" className="mt-4">
-            <RecruitmentAutomationTab
-              screeningQuestions={screeningQuestions}
-              isAutoScreenerActive={isAutoScreenerActive}
-              isUrgent={isUrgent}
-              position={selectedPositions[0] || null}
-              workplaceType={selectedDomain}
-              onQuestionsChange={setScreeningQuestions}
-              onAutoScreenerChange={setIsAutoScreenerActive}
-              onUrgentChange={setIsUrgent}
-            />
-          </TabsContent>
-        </Tabs>
-
-        {submitButton}
-      </form>
-    );
-  }
-
-  // Regular form for workers or new profiles
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <input type="hidden" {...register("role")} value={currentRole || ""} />
-      {formSections}
-      {submitButton}
+      <MagicWriteModal open={showMagicWrite} onOpenChange={setShowMagicWrite} role={currentRole as UserRole} onGenerated={(bio) => setValue("description", bio)} />
     </form>
   );
 }
+

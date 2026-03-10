@@ -1,133 +1,77 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { TopHeader } from "@/components/layout/TopHeader";
-import { getAdminStats, getAdminUsers, toggleUserBlock } from "@/lib/adminApi";
-import { AdminStats, AdminUser } from "@/types/admin";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Users,
-  Building2,
-  UserRound,
-  Heart,
-  Search,
-  ShieldOff,
-  Shield,
-  Loader2,
-  AlertCircle,
-  RefreshCw,
-} from "lucide-react";
-import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { AlertCircle, Building2, Heart, Loader2, RefreshCw, Search, Shield, ShieldOff, UserRound, Users } from "lucide-react";
+import { TopHeader } from "@/components/layout/TopHeader";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useAuth } from "@/contexts/AuthContext";
+import { getAdminStats, getAdminUsers, toggleUserBlock } from "@/lib/adminApi";
 import { cn } from "@/lib/utils";
+import { AdminStats, AdminUser } from "@/types/admin";
+import { toast } from "sonner";
 
 export default function Admin() {
   const { currentUser, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<AdminUser[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [blockingUserId, setBlockingUserId] = useState<string | null>(null);
 
-  // Check admin access
   useEffect(() => {
-    if (!authLoading && currentUser) {
-      // Check if user has is_admin flag (you may need to add this to CurrentUser type)
-      const isAdmin = (currentUser as any).is_admin === true || (currentUser as any).isAdmin === true;
-      if (!isAdmin) {
-        toast.error("ΧΧ™Χ ΧΧ Χ”Χ¨Χ©ΧΧ•Χª Χ’Χ™Χ©Χ” ΧΧΆΧΧ•Χ“ Χ–Χ”");
-        navigate("/swipe");
-      }
+    if (!authLoading && currentUser && !currentUser.isAdmin) {
+      toast.error("ΰιο μκ δψωΰεϊ βιωδ μςξεγ ζδ");
+      navigate("/swipe", { replace: true });
     }
-  }, [currentUser, authLoading, navigate]);
+  }, [authLoading, currentUser, navigate]);
 
-  // Fetch data
-  const fetchData = async () => {
-    if (!currentUser?.profileId) return;
-    
+  const fetchData = useCallback(async () => {
+    if (!currentUser?.profileId || !currentUser.isAdmin) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
-    
     try {
       const [statsData, usersData] = await Promise.all([
         getAdminStats(currentUser.profileId),
         getAdminUsers(currentUser.profileId),
       ]);
-      
       setStats(statsData);
       setUsers(usersData);
-      setFilteredUsers(usersData);
-    } catch (err) {
-      console.error("Error fetching admin data:", err);
-      setError(err instanceof Error ? err.message : "Χ©Χ’Χ™ΧΧ” Χ‘ΧΧΆΧ™Χ Χª Χ”Χ ΧªΧ•Χ Χ™Χ");
+    } catch (fetchError) {
+      setError(fetchError instanceof Error ? fetchError.message : "ωβιΰδ αθςιπϊ δπϊεπιν");
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser?.isAdmin, currentUser?.profileId]);
 
   useEffect(() => {
-    if (currentUser?.profileId) {
-      fetchData();
-    }
-  }, [currentUser?.profileId]);
+    void fetchData();
+  }, [fetchData]);
 
-  // Filter users by search
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredUsers(users);
-    } else {
-      const query = searchQuery.toLowerCase();
-      setFilteredUsers(
-        users.filter(
-          (user) =>
-            user.name.toLowerCase().includes(query) ||
-            user.email.toLowerCase().includes(query) ||
-            user.position?.toLowerCase().includes(query)
-        )
-      );
-    }
+  const filteredUsers = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return users;
+    return users.filter((user) => user.name.toLowerCase().includes(query) || user.email.toLowerCase().includes(query) || user.position?.toLowerCase().includes(query));
   }, [searchQuery, users]);
 
-  // Handle block/unblock
   const handleToggleBlock = async (user: AdminUser) => {
     if (!currentUser?.profileId) return;
-    
     setBlockingUserId(user.id);
-    
     try {
-      await toggleUserBlock({
-        adminId: currentUser.profileId,
-        userIdToBlock: user.id,
-        blockStatus: !user.isBlocked,
-      });
-      
-      // Update local state
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === user.id ? { ...u, isBlocked: !u.isBlocked } : u
-        )
-      );
-      
-      toast.success(
-        user.isBlocked ? `${user.name} Χ©Χ•Χ—Χ¨Χ¨/Χ” ΧΧ—Χ΅Χ™ΧΧ”` : `${user.name} Χ Χ—Χ΅Χ/Χ”`
-      );
-    } catch (err) {
-      toast.error("Χ©Χ’Χ™ΧΧ” Χ‘ΧΆΧ“Χ›Χ•Χ Χ΅ΧΧΧ•Χ΅ Χ”ΧΧ©ΧªΧΧ©");
+      await toggleUserBlock({ adminId: currentUser.profileId, userIdToBlock: user.id, blockStatus: !user.isBlocked });
+      setUsers((prev) => prev.map((item) => item.id === user.id ? { ...item, isBlocked: !item.isBlocked } : item));
+      toast.success(user.isBlocked ? `${user.name} ωεηψψ/δ` : `${user.name} πηρν/δ`);
+    } catch {
+      toast.error("ωβιΰδ αςγλεο ρθθερ δξωϊξω");
     } finally {
       setBlockingUserId(null);
     }
@@ -137,11 +81,8 @@ export default function Admin() {
     return (
       <div className="min-h-screen bg-background">
         <TopHeader />
-        <div className="flex items-center justify-center h-[80vh]">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">ΧΧ•ΧΆΧ Χ¤ΧΧ Χ Χ Χ™Χ”Χ•Χ...</p>
-          </div>
+        <div className="flex h-[80vh] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </div>
     );
@@ -151,17 +92,14 @@ export default function Admin() {
     return (
       <div className="min-h-screen bg-background">
         <TopHeader />
-        <div className="flex items-center justify-center h-[80vh]">
-          <div className="flex flex-col items-center gap-4 text-center px-4">
-            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
-              <AlertCircle className="w-8 h-8 text-destructive" />
+        <div className="flex h-[80vh] items-center justify-center px-4">
+          <div className="flex max-w-sm flex-col items-center gap-4 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+              <AlertCircle className="h-8 w-8 text-destructive" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground">Χ©Χ’Χ™ΧΧ” Χ‘ΧΧΆΧ™Χ Χª Χ”Χ ΧªΧ•Χ Χ™Χ</h2>
-            <p className="text-muted-foreground max-w-sm">{error}</p>
-            <Button onClick={fetchData} className="gap-2">
-              <RefreshCw className="w-4 h-4" />
-              Χ Χ΅Χ” Χ©Χ•Χ‘
-            </Button>
+            <h2 className="text-xl font-semibold">ωβιΰδ αθςιπϊ δπϊεπιν</h2>
+            <p className="text-muted-foreground">{error}</p>
+            <Button onClick={() => void fetchData()} className="gap-2"><RefreshCw className="h-4 w-4" />πρδ ωεα</Button>
           </div>
         </div>
       </div>
@@ -171,92 +109,31 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-background">
       <TopHeader />
-      
-      <main className="p-4 max-w-4xl mx-auto pb-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
-        >
-          {/* Page Title */}
+      <main className="mx-auto max-w-4xl space-y-6 p-4 pb-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Χ¤ΧΧ Χ Χ Χ™Χ”Χ•Χ</h1>
-              <p className="text-sm text-muted-foreground">Χ Χ™Χ”Χ•Χ ΧΧ©ΧªΧΧ©Χ™Χ Χ•Χ΅ΧΧΧ™Χ΅ΧΧ™Χ§Χ•Χª</p>
+              <h1 className="text-2xl font-bold">τΰπμ πιδεμ</h1>
+              <p className="text-sm text-muted-foreground">πιδεμ ξωϊξωιν ερθθιρθιχεϊ</p>
             </div>
-            <Button variant="outline" size="icon" onClick={fetchData}>
-              <RefreshCw className="w-4 h-4" />
-            </Button>
+            <Button variant="outline" size="icon" onClick={() => void fetchData()}><RefreshCw className="h-4 w-4" /></Button>
           </div>
 
-          {/* Stats Cards */}
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card className="border-0 shadow-md">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    Χ΅Χ”"Χ› ΧΧ©ΧªΧΧ©Χ™Χ
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-foreground">{stats.totalUsers}</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-md">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <Building2 className="w-4 h-4" />
-                    ΧΧ¨Χ¤ΧΧ•Χª
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-primary">{stats.totalClinics}</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-md">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <UserRound className="w-4 h-4" />
-                    ΧΆΧ•Χ‘Χ“Χ™Χ
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-primary">{stats.totalWorkers}</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-md">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                    <Heart className="w-4 h-4" />
-                    Χ”ΧªΧΧΧ•Χª Χ¤ΧΆΧ™ΧΧ•Χª
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-success">{stats.activeMatches}</p>
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <Card><CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground"><Users className="h-4 w-4" />ξωϊξωιν</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold">{stats.totalUsers}</p></CardContent></Card>
+              <Card><CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground"><Building2 className="h-4 w-4" />αϊι ςρχ</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold text-primary">{stats.totalClinics}</p></CardContent></Card>
+              <Card><CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground"><UserRound className="h-4 w-4" />ςεαγιν</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold text-primary">{stats.totalWorkers}</p></CardContent></Card>
+              <Card><CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground"><Heart className="h-4 w-4" />δϊΰξεϊ</CardTitle></CardHeader><CardContent><p className="text-3xl font-bold text-success">{stats.activeMatches}</p></CardContent></Card>
             </div>
           )}
 
-          {/* User Management */}
-          <Card className="border-0 shadow-md">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Χ Χ™Χ”Χ•Χ ΧΧ©ΧªΧΧ©Χ™Χ
-              </CardTitle>
+              <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" />ξωϊξωιν</CardTitle>
               <div className="relative mt-4">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Χ—Χ™Χ¤Χ•Χ© ΧΧ¤Χ™ Χ©Χ, ΧΧ™ΧΧ™Χ™Χ ΧΧ• ΧªΧ¤Χ§Χ™Χ“..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pr-10"
-                />
+                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="ηιτεω μτι ων, ΰιξιιμ ΰε ϊτχιγ" className="pr-10" />
               </div>
             </CardHeader>
             <CardContent>
@@ -264,74 +141,32 @@ export default function Admin() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Χ©Χ</TableHead>
-                      <TableHead>ΧΧ™ΧΧ™Χ™Χ</TableHead>
-                      <TableHead>ΧªΧ¤Χ§Χ™Χ“</TableHead>
-                      <TableHead>ΧΧ§Χ¦Χ•ΧΆ</TableHead>
-                      <TableHead>Χ΅ΧΧΧ•Χ΅</TableHead>
-                      <TableHead className="text-left">Χ¤ΧΆΧ•ΧΧ•Χª</TableHead>
+                      <TableHead>ων</TableHead>
+                      <TableHead>ΰιξιιμ</TableHead>
+                      <TableHead>ρεβ</TableHead>
+                      <TableHead>ϊτχιγ</TableHead>
+                      <TableHead>ρθθερ</TableHead>
+                      <TableHead className="text-left">τςεμεϊ</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredUsers.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                          ΧΧ Χ ΧΧ¦ΧΧ• ΧΧ©ΧªΧΧ©Χ™Χ
+                      <TableRow><TableCell colSpan={6} className="py-8 text-center text-muted-foreground">μΰ πξφΰε ξωϊξωιν</TableCell></TableRow>
+                    ) : filteredUsers.map((user) => (
+                      <TableRow key={user.id} className={cn(user.isBlocked && "bg-destructive/5")}>
+                        <TableCell className="font-medium">{user.name}</TableCell>
+                        <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                        <TableCell><Badge variant={user.role === "clinic" ? "default" : "secondary"}>{user.role === "clinic" ? "αιϊ ςρχ" : "ςεαγ/ϊ"}</Badge></TableCell>
+                        <TableCell className="text-muted-foreground">{user.position || "-"}</TableCell>
+                        <TableCell>{user.isBlocked ? <Badge variant="destructive">ηρεν</Badge> : <Badge variant="outline" className="border-success text-success">τςιμ</Badge>}</TableCell>
+                        <TableCell>
+                          <Button variant={user.isBlocked ? "outline" : "destructive"} size="sm" className="gap-1" disabled={blockingUserId === user.id} onClick={() => void handleToggleBlock(user)}>
+                            {blockingUserId === user.id ? <Loader2 className="h-3 w-3 animate-spin" /> : user.isBlocked ? <Shield className="h-3 w-3" /> : <ShieldOff className="h-3 w-3" />}
+                            {user.isBlocked ? "ωηψψ" : "ηρεν"}
+                          </Button>
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      filteredUsers.map((user) => (
-                        <TableRow
-                          key={user.id}
-                          className={cn(
-                            user.isBlocked && "bg-destructive/5"
-                          )}
-                        >
-                          <TableCell className="font-medium">{user.name}</TableCell>
-                          <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                          <TableCell>
-                            <Badge variant={user.role === "clinic" ? "default" : "secondary"}>
-                              {user.role === "clinic" ? "ΧΧ¨Χ¤ΧΧ”" : "ΧΆΧ•Χ‘Χ“/Χª"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {user.position || "β€”"}
-                          </TableCell>
-                          <TableCell>
-                            {user.isBlocked ? (
-                              <Badge variant="destructive">Χ—Χ΅Χ•Χ</Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-success border-success">
-                                Χ¤ΧΆΧ™Χ
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant={user.isBlocked ? "outline" : "destructive"}
-                              size="sm"
-                              onClick={() => handleToggleBlock(user)}
-                              disabled={blockingUserId === user.id}
-                              className="gap-1"
-                            >
-                              {blockingUserId === user.id ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : user.isBlocked ? (
-                                <>
-                                  <Shield className="w-3 h-3" />
-                                  Χ©Χ—Χ¨Χ¨
-                                </>
-                              ) : (
-                                <>
-                                  <ShieldOff className="w-3 h-3" />
-                                  Χ—Χ΅Χ•Χ
-                                </>
-                              )}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
+                    ))}
                   </TableBody>
                 </Table>
               </div>

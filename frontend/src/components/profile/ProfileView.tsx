@@ -1,16 +1,14 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Building2, UserRound, Briefcase, MapPin, Calendar, Banknote, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Banknote, Briefcase, Building2, Calendar, Clock, MapPin, UserRound } from "lucide-react";
 
-// Profile type that matches API response (not Supabase types)
 interface Profile {
   id?: string;
   name?: string | null;
   role?: "clinic" | "worker" | null;
   position?: string | null;
   positions?: string[] | null;
-  workplace_types?: string[] | null;
   required_position?: string | null;
   description?: string | null;
   city?: string | null;
@@ -24,6 +22,7 @@ interface Profile {
   salary_max?: number | null;
   job_type?: "daily" | "temporary" | "permanent" | null;
   avatar_url?: string | null;
+  logo_url?: string | null;
 }
 
 interface ProfileViewProps {
@@ -31,157 +30,100 @@ interface ProfileViewProps {
 }
 
 const jobTypeLabels: Record<string, string> = {
-  daily: "Χ™Χ•ΧΧ™",
-  temporary: "Χ–ΧΧ Χ™",
-  permanent: "Χ§Χ‘Χ•ΧΆ",
+  daily: "ιεξι",
+  temporary: "ζξπι",
+  permanent: "χαες",
 };
 
 const dayLabels: Record<string, string> = {
-  sunday: "Χ¨ΧΧ©Χ•Χ",
-  monday: "Χ©Χ Χ™",
-  tuesday: "Χ©ΧΧ™Χ©Χ™",
-  wednesday: "Χ¨Χ‘Χ™ΧΆΧ™",
-  thursday: "Χ—ΧΧ™Χ©Χ™",
-  friday: "Χ©Χ™Χ©Χ™",
-  saturday: "Χ©Χ‘Χª",
+  sunday: "ψΰωεο",
+  monday: "ωπι",
+  tuesday: "ωμιωι",
+  wednesday: "ψαιςι",
+  thursday: "ηξιωι",
+  friday: "ωιωι",
+  saturday: "ωαϊ",
 };
 
 export function ProfileView({ profile }: ProfileViewProps) {
   const isClinic = profile.role === "clinic";
   const RoleIcon = isClinic ? Building2 : UserRound;
-
-  const availabilityDays = profile.availability_days
-    ?.map((day) => dayLabels[day] || day)
-    .join(", ");
+  const imageUrl = isClinic ? profile.logo_url || profile.avatar_url : profile.avatar_url || profile.logo_url;
+  const positions = profile.positions && profile.positions.length > 0
+    ? profile.positions
+    : [isClinic ? profile.required_position : profile.position].filter(Boolean) as string[];
 
   return (
     <div className="space-y-4">
-      {/* Header Card */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-center gap-4">
-            <Avatar className="w-20 h-20">
-              <AvatarImage src={profile.avatar_url || undefined} />
+            <Avatar className="h-20 w-20 border">
+              <AvatarImage src={imageUrl || undefined} />
               <AvatarFallback className="bg-primary/10">
-                <RoleIcon className="w-10 h-10 text-primary" />
+                <RoleIcon className="h-10 w-10 text-primary" />
               </AvatarFallback>
             </Avatar>
-            
-            <div>
-              <div className="flex items-center gap-2 mb-1">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold">{profile.name}</h2>
-                <Badge variant={isClinic ? "default" : "secondary"}>
-                  {isClinic ? "ΧΧ¨Χ¤ΧΧ”" : "ΧΆΧ•Χ‘Χ“/Χª"}
-                </Badge>
+                <Badge variant={isClinic ? "default" : "secondary"}>{isClinic ? "αιϊ ςρχ" : "ςεαγ/ϊ"}</Badge>
               </div>
-              
-              {/* Display multiple positions as badges */}
-              {profile.positions && profile.positions.length > 0 ? (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {profile.positions.map((pos) => (
-                    <Badge key={pos} variant="outline" className="text-xs">
-                      <Briefcase className="w-3 h-3 ml-1" />
-                      {pos}
+              {positions.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {positions.map((position) => (
+                    <Badge key={position} variant="outline" className="text-xs">
+                      <Briefcase className="ml-1 h-3 w-3" />
+                      {position}
                     </Badge>
                   ))}
                 </div>
-              ) : (profile.position || profile.required_position) && (
-                <p className="text-muted-foreground flex items-center gap-1">
-                  <Briefcase className="w-4 h-4" />
-                  {isClinic ? profile.required_position : profile.position}
-                </p>
               )}
-              
-              {profile.experience_years && profile.experience_years > 0 && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {profile.experience_years} Χ©Χ Χ•Χª Χ Χ™Χ΅Χ™Χ•Χ
-                </p>
-              )}
+              {!isClinic && profile.experience_years ? <p className="text-sm text-muted-foreground">{profile.experience_years} ωπεϊ πιριεο</p> : null}
             </div>
           </div>
-
-          {profile.description && (
-            <p className="text-muted-foreground mt-4 text-sm">
-              {profile.description}
-            </p>
-          )}
+          {profile.description ? <p className="mt-4 text-sm text-muted-foreground">{profile.description}</p> : null}
         </CardContent>
       </Card>
 
-      {/* Location */}
       {(profile.city || profile.preferred_area) && (
         <Card>
           <CardContent className="pt-6">
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-primary" />
-              ΧΧ™Χ§Χ•Χ
-            </h3>
+            <h3 className="mb-3 flex items-center gap-2 font-semibold"><MapPin className="h-4 w-4 text-primary" />ξιχεν</h3>
             <p>{profile.city || profile.preferred_area}</p>
-            {profile.radius_km && (
-              <p className="text-sm text-muted-foreground">
-                Χ¨Χ“Χ™Χ•Χ΅ Χ—Χ™Χ¤Χ•Χ©: {profile.radius_km} Χ§"Χ
-              </p>
-            )}
+            {profile.radius_km ? <p className="text-sm text-muted-foreground">ψγιερ ηιτεω: {profile.radius_km} χ"ξ</p> : null}
           </CardContent>
         </Card>
       )}
 
-      {/* Availability */}
-      {(availabilityDays || profile.availability_date || profile.availability_hours) && (
+      {(profile.availability_days?.length || profile.availability_hours || profile.availability_date) ? (
         <Card>
           <CardContent className="pt-6">
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-primary" />
-              Χ–ΧΧ™Χ Χ•Χª
-            </h3>
-            
-            {availabilityDays && (
-              <p className="mb-2">{availabilityDays}</p>
-            )}
-            
-            {profile.availability_hours && (
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {profile.availability_hours}
-              </p>
-            )}
-            
-            {profile.availability_date && (
-              <p className="text-sm text-muted-foreground mt-2">
-                ΧªΧΧ¨Χ™Χ Χ”ΧªΧ—ΧΧ”: {new Date(profile.availability_date).toLocaleDateString("he-IL")}
-              </p>
-            )}
+            <h3 className="mb-3 flex items-center gap-2 font-semibold"><Calendar className="h-4 w-4 text-primary" />ζξιπεϊ</h3>
+            {profile.availability_days?.length ? <p>{profile.availability_days.map((day) => dayLabels[day] || day).join(", ")}</p> : null}
+            {profile.availability_hours ? <p className="mt-2 flex items-center gap-1 text-sm text-muted-foreground"><Clock className="h-3 w-3" />{profile.availability_hours}</p> : null}
+            {profile.availability_date ? <p className="mt-2 text-sm text-muted-foreground">ϊΰψικ δϊημδ: {new Date(profile.availability_date).toLocaleDateString("he-IL")}</p> : null}
           </CardContent>
         </Card>
-      )}
+      ) : null}
 
-      {/* Salary */}
-      {(profile.salary_min || profile.salary_max || profile.job_type) && (
+      {(profile.salary_min || profile.salary_max || profile.job_type) ? (
         <Card>
           <CardContent className="pt-6">
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <Banknote className="w-4 h-4 text-primary" />
-              {isClinic ? "ΧªΧ ΧΧ™ Χ”ΧΆΧ΅Χ§Χ”" : "Χ¦Χ™Χ¤Χ™Χ•Χª Χ©Χ›Χ¨"}
-            </h3>
-            
-            {(profile.salary_min || profile.salary_max) && (
-              <p className="mb-2">
+            <h3 className="mb-3 flex items-center gap-2 font-semibold"><Banknote className="h-4 w-4 text-primary" />{isClinic ? "ϊπΰι δςρχδ" : "φιτιεϊ ωλψ"}</h3>
+            {(profile.salary_min || profile.salary_max) ? (
+              <p>
                 {profile.salary_min && profile.salary_max
-                  ? `β‚ª${profile.salary_min.toLocaleString()} - β‚ª${profile.salary_max.toLocaleString()}`
+                  ? `¤${profile.salary_min.toLocaleString()} - ¤${profile.salary_max.toLocaleString()}`
                   : profile.salary_min
-                  ? `Χ-β‚ª${profile.salary_min.toLocaleString()}`
-                  : `ΧΆΧ“ β‚ª${profile.salary_max?.toLocaleString()}`}
+                  ? `ξ-¤${profile.salary_min.toLocaleString()}`
+                  : `ςγ ¤${profile.salary_max?.toLocaleString()}`}
               </p>
-            )}
-            
-            {profile.job_type && (
-              <Badge variant="outline">
-                {jobTypeLabels[profile.job_type]}
-              </Badge>
-            )}
+            ) : null}
+            {profile.job_type ? <Badge variant="outline" className="mt-2">{jobTypeLabels[profile.job_type]}</Badge> : null}
           </CardContent>
         </Card>
-      )}
+      ) : null}
     </div>
   );
 }

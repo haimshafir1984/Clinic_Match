@@ -1,38 +1,26 @@
-// API Layer for ClinicMatch
-// Connects to the Render backend at https://clinic-match.onrender.com/api
-
-import { 
-  MatchCardData, 
-  SwipeRequest, 
-  SwipeResponse, 
-  Match, 
-  Message,
+import {
   CurrentUser,
+  Match,
+  MatchCardData,
+  Message,
+  SwipeRequest,
+  SwipeResponse,
   UserRole,
-  AuthResponse
 } from "@/types";
 
-const API_BASE_URL = "https://clinic-match.onrender.com/api";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") || "http://localhost:10000/api";
 const API_TIMEOUT_MS = 15_000;
 
-const CURRENT_PROFILE_STORAGE_KEY = "current_profile";
-
-// Helper function for API calls with timeout and error handling
-async function apiCall<T>(
-  endpoint: string, 
-  options: RequestInit = {},
-  timeoutMs: number = API_TIMEOUT_MS
-): Promise<T> {
+async function apiCall<T>(endpoint: string, options: RequestInit = {}, timeoutMs: number = API_TIMEOUT_MS): Promise<T> {
   const token = localStorage.getItem("auth_token");
-  
   const headers: HeadersInit = {
     "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -41,117 +29,89 @@ async function apiCall<T>(
       signal: controller.signal,
     });
 
-    clearTimeout(timeoutId);
+    window.clearTimeout(timeoutId);
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: "שגיאת שרת" }));
-      throw new Error(error.message || `שגיאה ${response.status}`);
+      const error = await response.json().catch(() => ({ error: "Server error" }));
+      throw new Error(error.error || error.message || `Request failed (${response.status})`);
     }
 
-    return response.json();
+    return response.json() as Promise<T>;
   } catch (error) {
-    clearTimeout(timeoutId);
-    
-    if (error instanceof Error) {
-      if (error.name === "AbortError") {
-        throw new Error("הבקשה נכשלה - השרת לא מגיב. נסה שוב.");
-      }
-      throw error;
+    window.clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("����� ����� - ���� �� ����. ��� ���.");
     }
-    throw new Error("שגיאה בתקשורת עם השרת");
+    throw error;
   }
 }
 
 function normalizeUserRole(role: string | null | undefined): UserRole {
-  const r = role?.toLowerCase();
-  if (r === "clinic") return "clinic";
-  if (r === "worker" || r === "staff") return "worker";
-  return "worker";
+  const value = role?.toLowerCase();
+  return value === "clinic" ? "clinic" : "worker";
 }
 
-// Backend feed profile structure
 interface BackendFeedProfile {
   id: string;
   name: string;
   position?: string | null;
   location?: string | null;
-  salary_info?: { min?: number; max?: number } | null;
-  availability?: { days?: string[]; hours?: string; start_date?: string } | null;
+  salary_info?: { min?: number | null; max?: number | null } | number | null;
+  availability?: { days?: string[] | null; hours?: string | null; start_date?: string | null } | null;
   image_url?: string | null;
   role?: string;
   industry?: string | null;
   created_at?: string | null;
+  is_urgent?: boolean | null;
+  experience_years?: number | null;
+  description?: string | null;
+  job_type?: string | null;
+  radius_km?: number | null;
 }
 
-// Transform backend feed profile to MatchCardData
-function transformToMatchCardData(profile: BackendFeedProfile): MatchCardData {
-  // salary_info is stored as a numeric average in the backend (e.g. 7500),
-  // but may also arrive as { min, max } if the backend changes.
-  const salaryRaw = profile.salary_info as unknown;
-  let salaryMin: number | null = null;
-  let salaryMax: number | null = null;
-  if (typeof salaryRaw === 'number') {
-    salaryMin = salaryRaw; // use the stored average as the displayed value
-  } else if (salaryRaw && typeof salaryRaw === 'object') {
-    const s = salaryRaw as { min?: number; max?: number };
-    salaryMin = s.min || null;
-    salaryMax = s.max || null;
+function normalizeSalaryRange(value: BackendFeedProfile["salary_info"]) {
+  if (typeof value === "number") {
+    return { min: value, max: value };
   }
+  return {
+    min: value?.min ?? null,
+    max: value?.max ?? null,
+  };
+}
 
-  // position may not be in the feed response; fall back to first item of positions array
-  const positionsArr = (profile as any).positions as string[] | undefined;
-  const position = profile.position || (positionsArr && positionsArr.length > 0 ? positionsArr[0] : null) || null;
+function transformToMatchCardData(profile: BackendFeedProfile): MatchCardData {
+  const salaryRange = normalizeSalaryRange(profile.salary_info);
 
   return {
     id: profile.id,
     name: profile.name,
-    position,
+    position: profile.position || null,
     location: profile.location || null,
     availability: {
       days: profile.availability?.days || [],
       hours: profile.availability?.hours || null,
       startDate: profile.availability?.start_date || null,
     },
-    salaryRange: {
-      min: salaryMin,
-      max: salaryMax,
-    },
+    salaryRange,
     imageUrl: profile.image_url || null,
     role: normalizeUserRole(profile.role),
-    // These fields may not come from backend, set defaults
-    experienceYears: null,
-    description: null,
-    jobType: null,
-    radiusKm: null,
+    experienceYears: profile.experience_years ?? null,
+    description: profile.description || null,
+    jobType: (profile.job_type as MatchCardData["jobType"]) || null,
+    radiusKm: profile.radius_km ?? null,
     createdAt: profile.created_at || null,
-    isUrgent: (profile as any).is_urgent || null,
-    industry: profile.industry || null,
+    isUrgent: profile.is_urgent ?? null,
+    industry: (profile.industry as MatchCardData["industry"]) || null,
   };
 }
 
-// GET /api/feed/{userId} - Get profiles for discovery feed
 export async function getFeed(currentUser: CurrentUser): Promise<MatchCardData[]> {
-  if (!currentUser.profileId || !currentUser.role) {
-    return [];
-  }
-
-  try {
-    const response = await apiCall<{ profiles: BackendFeedProfile[] } | BackendFeedProfile[]>(
-      `/feed/${currentUser.profileId}`
-    );
-    
-    // Handle both array and object response formats
-    const profiles = Array.isArray(response) ? response : (response.profiles || []);
-    
-    // Transform each profile to frontend format
-    return profiles.map(transformToMatchCardData);
-  } catch (error) {
-    console.error("Error fetching feed:", error);
-    throw error;
-  }
+  if (!currentUser.profileId) return [];
+  const response = await apiCall<BackendFeedProfile[] | { profiles: BackendFeedProfile[] }>(`/feed/${currentUser.profileId}`);
+  const profiles = Array.isArray(response) ? response : response.profiles || [];
+  return profiles.map(transformToMatchCardData);
 }
 
-// Backend swipe response (may use snake_case)
 interface BackendSwipeResponse {
   is_match?: boolean;
   isMatch?: boolean;
@@ -159,62 +119,23 @@ interface BackendSwipeResponse {
   matchId?: string;
 }
 
-// POST /api/swipe - Record a swipe action
 export async function postSwipe(request: SwipeRequest): Promise<SwipeResponse> {
-  // Validate swiped_id before sending
-  if (!request.swipedId) {
-    console.error("[Swipe API] Invalid swiped_id:", request.swipedId);
-    throw new Error("שגיאה: מזהה משתמש לא תקין");
-  }
-
-  console.log("[Swipe API] Sending swipe request:", {
-    swiper_id: request.swiperId,
-    swiped_id: request.swipedId,
-    type: request.type,
+  const response = await apiCall<BackendSwipeResponse>("/swipe", {
+    method: "POST",
+    body: JSON.stringify({
+      swiper_id: request.swiperId,
+      swiped_id: request.swipedId,
+      type: request.type,
+    }),
   });
 
-  try {
-    const response = await apiCall<BackendSwipeResponse>("/swipe", {
-      method: "POST",
-      body: JSON.stringify({
-        swiper_id: request.swiperId,
-        swiped_id: request.swipedId,
-        type: request.type,
-      }),
-    });
-
-    // Log the raw response to debug matchId extraction
-    console.log("[Swipe API] Raw response:", JSON.stringify(response));
-
-    // Handle both snake_case and camelCase from backend
-    const isMatch = response.isMatch ?? response.is_match ?? false;
-    const matchId = response.matchId ?? response.match_id;
-
-    console.log("[Swipe API] Extracted - isMatch:", isMatch, "matchId:", matchId);
-
-    return {
-      success: true,
-      isMatch,
-      matchId,
-    };
-  } catch (error) {
-    // Enhanced error logging for debugging
-    console.error("[Swipe API] Error details:", {
-      swiperId: request.swiperId,
-      swipedId: request.swipedId,
-      type: request.type,
-      error: error instanceof Error ? error.message : error,
-    });
-    
-    // Re-throw with more context
-    if (error instanceof Error) {
-      throw new Error(`שגיאה ביצירת Match: ${error.message}`);
-    }
-    throw new Error("שגיאה ביצירת Match - נסה שוב");
-  }
+  return {
+    success: true,
+    isMatch: response.isMatch ?? response.is_match ?? false,
+    matchId: response.matchId ?? response.match_id,
+  };
 }
 
-// Backend match response structure - handles both formats
 interface BackendMatchFlat {
   match_id: string;
   profile_id: string;
@@ -243,14 +164,11 @@ interface BackendMatchNested {
 
 type BackendMatch = BackendMatchFlat | BackendMatchNested;
 
-// Check if match is flat format (from /matches/{userId} endpoint)
 function isFlatMatch(match: BackendMatch): match is BackendMatchFlat {
-  return 'match_id' in match && 'profile_id' in match;
+  return "match_id" in match;
 }
 
-// Transform backend match to frontend Match
 function transformToMatch(match: BackendMatch): Match {
-  // Handle flat format: { match_id, profile_id, name, position, location }
   if (isFlatMatch(match)) {
     return {
       id: match.match_id,
@@ -265,7 +183,7 @@ function transformToMatch(match: BackendMatch): Match {
         salaryRange: { min: null, max: null },
         experienceYears: null,
         imageUrl: match.image_url || null,
-        role: (match.role?.toLowerCase() as "clinic" | "worker") || "worker",
+        role: normalizeUserRole(match.role),
         description: null,
         jobType: null,
         radiusKm: null,
@@ -273,8 +191,7 @@ function transformToMatch(match: BackendMatch): Match {
       },
     };
   }
-  
-  // Handle nested format: { id, other_profile: {...} }
+
   return {
     id: match.id,
     createdAt: match.created_at,
@@ -288,7 +205,7 @@ function transformToMatch(match: BackendMatch): Match {
       salaryRange: { min: null, max: null },
       experienceYears: null,
       imageUrl: match.other_profile.image_url || null,
-      role: (match.other_profile.role?.toLowerCase() as "clinic" | "worker") || "worker",
+      role: normalizeUserRole(match.other_profile.role),
       description: null,
       jobType: null,
       radiusKm: null,
@@ -297,83 +214,69 @@ function transformToMatch(match: BackendMatch): Match {
   };
 }
 
-// GET /api/matches/{userId} - Get all matches for current user
 export async function getMatches(currentUser: CurrentUser): Promise<Match[]> {
-  if (!currentUser.profileId) {
-    return [];
-  }
-
-  try {
-    console.log("[getMatches] Fetching for profileId:", currentUser.profileId);
-    const response = await apiCall<{ matches: BackendMatch[] } | BackendMatch[]>(
-      `/matches/${currentUser.profileId}`
-    );
-    
-    console.log("[getMatches] Raw response:", JSON.stringify(response));
-    const matches = Array.isArray(response) ? response : (response.matches || []);
-    const transformed = matches.map(transformToMatch);
-    console.log("[getMatches] Transformed matches:", transformed.length, "items");
-    return transformed;
-  } catch (error) {
-    console.error("Error fetching matches:", error);
-    throw error;
-  }
+  if (!currentUser.profileId) return [];
+  const response = await apiCall<BackendMatch[] | { matches: BackendMatch[] }>(`/matches/${currentUser.profileId}`);
+  const matches = Array.isArray(response) ? response : response.matches || [];
+  return matches.map(transformToMatch);
 }
 
-// GET /api/matches/{userId}/{matchId} - Get single match details
 export async function getMatchDetails(userId: string, matchId: string): Promise<Match | null> {
   try {
     const response = await apiCall<BackendMatch>(`/matches/${userId}/${matchId}`);
     return transformToMatch(response);
-  } catch (error) {
-    console.error("Error fetching match details:", error);
+  } catch {
     return null;
   }
 }
 
-// POST /api/matches/{matchId}/close - Close a match
 export async function closeMatch(matchId: string, userId: string): Promise<void> {
-  try {
-    await apiCall(`/matches/${matchId}/close`, {
-      method: "POST",
-      body: JSON.stringify({ user_id: userId }),
-    });
-  } catch (error) {
-    console.error("Error closing match:", error);
-    throw error;
-  }
+  await apiCall(`/matches/${matchId}/close`, {
+    method: "POST",
+    body: JSON.stringify({ user_id: userId }),
+  });
 }
 
-// Backend profile response structure
 interface BackendProfile {
   id: string;
   email: string;
   role: string;
   name: string;
-  position?: string;
-  required_position?: string; // For clinics
-  location?: string;
-  salary_info?: { min?: number; max?: number } | null;
-  availability?: { days?: string[]; hours?: string; start_date?: string } | null;
+  position?: string | null;
+  required_position?: string | null;
+  positions?: string[] | null;
+  workplace_types?: string[] | null;
+  industry?: string | null;
+  location?: string | null;
+  description?: string | null;
+  radius_km?: number | null;
+  experience_years?: number | null;
+  availability_date?: string | null;
+  availability_days?: string[] | null;
+  availability_hours?: string | null;
+  salary_min?: number | null;
+  salary_max?: number | null;
+  salary_info?: { min?: number | null; max?: number | null } | number | null;
+  availability?: { days?: string[] | null; hours?: string | null; start_date?: string | null } | null;
+  job_type?: string | null;
+  screening_questions?: string[] | null;
+  is_auto_screener_active?: boolean | null;
+  is_urgent?: boolean | null;
+  avatar_url?: string | null;
+  logo_url?: string | null;
+  image_url?: string | null;
   created_at?: string;
+  updated_at?: string;
   is_admin?: boolean;
-  isAdmin?: boolean;
+  is_blocked?: boolean;
 }
 
-// Transform backend profile to CurrentUser
 function transformToCurrentUser(profile: BackendProfile): CurrentUser {
   const role = normalizeUserRole(profile.role);
-  const position = profile.position ?? null;
-  const requiredPosition = profile.required_position ?? null;
+  const position = role === "clinic" ? profile.required_position ?? profile.position ?? null : profile.position ?? null;
   const location = profile.location ?? null;
-  
-  // Profile is complete when:
-  // - Has name
-  // - Has position (worker) or required_position (clinic)
-  // - Has location
-  const hasPosition = role === "clinic" ? Boolean(requiredPosition) : Boolean(position);
-  const hasLocation = Boolean(location);
-  const isProfileComplete = Boolean(profile.name && hasPosition && hasLocation);
+  const isProfileComplete = Boolean(profile.name && position && location);
+  const imageUrl = profile.image_url || (role === "clinic" ? profile.logo_url : profile.avatar_url) || null;
 
   return {
     id: profile.id,
@@ -381,167 +284,131 @@ function transformToCurrentUser(profile: BackendProfile): CurrentUser {
     profileId: profile.id,
     role,
     name: profile.name,
-    imageUrl: null,
+    imageUrl,
     position,
     location,
+    industry: (profile.industry as CurrentUser["industry"]) || null,
     isProfileComplete,
-    isAdmin: profile.is_admin ?? profile.isAdmin ?? false,
+    isAdmin: profile.is_admin ?? false,
   };
 }
 
-// Backend auth response with JWT token
 interface BackendAuthResponse {
   success?: boolean;
   user: BackendProfile;
-  token: string;
+  token?: string;
 }
 
-// POST /api/auth/login - Login with email only (no password for MVP)
-export async function login(
-  email: string
-): Promise<{ user: CurrentUser | null; error: string | null; needsRegistration?: boolean }> {
+export interface ProfileCreateData {
+  email: string;
+  role: "CLINIC" | "STAFF";
+  name: string;
+  position?: string;
+  positions?: string[];
+  required_position?: string;
+  workplace_types?: string[];
+  industry?: string | null;
+  location?: string;
+  description?: string | null;
+  radius_km?: number | null;
+  experience_years?: number | null;
+  salary_info?: { min?: number; max?: number } | null;
+  availability?: {
+    days?: string[];
+    hours?: string;
+    start_date?: string;
+  };
+  job_type?: string | null;
+  screening_questions?: string[] | null;
+  is_auto_screener_active?: boolean | null;
+  is_urgent?: boolean | null;
+  avatar_url?: string | null;
+  logo_url?: string | null;
+}
+
+function buildCreatePayload(data: ProfileCreateData) {
+  return {
+    email: data.email,
+    role: data.role,
+    name: data.name,
+    position: data.position,
+    positions: data.positions,
+    required_position: data.required_position,
+    workplace_types: data.workplace_types,
+    industry: data.industry || null,
+    location: data.location,
+    description: data.description || null,
+    radius_km: data.radius_km ?? null,
+    experience_years: data.experience_years ?? null,
+    salary_min: data.salary_info?.min ?? null,
+    salary_max: data.salary_info?.max ?? null,
+    availability_days: data.availability?.days || null,
+    availability_hours: data.availability?.hours || null,
+    availability_date: data.availability?.start_date || null,
+    job_type: data.job_type || null,
+    screening_questions: data.screening_questions || null,
+    is_auto_screener_active: data.is_auto_screener_active ?? null,
+    is_urgent: data.is_urgent ?? null,
+    avatar_url: data.avatar_url || null,
+    logo_url: data.logo_url || null,
+  };
+}
+
+export async function login(email: string): Promise<{ user: CurrentUser | null; error: string | null; needsRegistration?: boolean }> {
   try {
     const response = await apiCall<BackendAuthResponse>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email }),
     });
 
-    // Save JWT token
     if (response.token) {
       localStorage.setItem("auth_token", response.token);
     }
 
-    // Transform user profile
     const user = transformToCurrentUser(response.user);
     localStorage.setItem("current_user", JSON.stringify(user));
-
-    // Cache full profile locally (backend has no GET /profiles/:id)
-    try {
-      const profile = transformToProfile(response.user as unknown as FullBackendProfile);
-      localStorage.setItem(CURRENT_PROFILE_STORAGE_KEY, JSON.stringify(profile));
-    } catch {
-      // ignore cache errors
-    }
-    
     return { user, error: null };
   } catch (error) {
     if (error instanceof Error) {
-      // Check if user not found - needs registration
-      if (error.message.includes("404") || error.message.includes("not found") || error.message.includes("לא נמצא")) {
-        return { user: null, error: "האימייל לא נמצא, אנא הירשם", needsRegistration: true };
+      const message = error.message.toLowerCase();
+      if (message.includes("not found")) {
+        return { user: null, error: "������� �� ����, ���� ������", needsRegistration: true };
       }
       return { user: null, error: error.message };
     }
-    return { user: null, error: "התחברות נכשלה" };
+    return { user: null, error: "�������� �����" };
   }
 }
 
-// Profile creation data
-export interface ProfileCreateData {
-  email: string;
-  role: "CLINIC" | "STAFF";
-  name: string;
-  position?: string;
-  positions?: string[]; // Array of positions (new multi-select)
-  required_position?: string; // Required for clinics
-  workplace_types?: string[]; // Array of domains (e.g., "dental", "optics")
-  industry?: string | null;
-  location?: string;
-  salary_info?: {
-    min?: number;
-    max?: number;
-  };
-  availability?: {
-    days?: string[];
-    hours?: string;
-    start_date?: string;
-  };
-}
-
-// POST /api/profiles - Create a new profile (signup)
-export async function createProfile(
-  data: ProfileCreateData
-): Promise<{ user: CurrentUser | null; error: string | null }> {
+export async function createProfile(data: ProfileCreateData): Promise<{ user: CurrentUser | null; error: string | null }> {
   try {
-    // Build payload with positions array support
-    const payload: Record<string, unknown> = {
-      email: data.email,
-      role: data.role,
-      name: data.name,
-      location: data.location,
-    };
-
-    // Handle positions - send as array if provided, or single position
-    if (data.positions && data.positions.length > 0) {
-      payload.positions = data.positions;
-      // Also set single position for backward compatibility
-      payload.position = data.positions[0];
-    } else if (data.position) {
-      payload.position = data.position;
-    }
-
-    // Handle workplace_types array
-    if (data.workplace_types && data.workplace_types.length > 0) {
-      payload.workplace_types = data.workplace_types;
-    }
-
-    // Pass industry
-    payload.industry = data.industry || null;
-
-    if (data.required_position) {
-      payload.required_position = data.required_position;
-    }
-
-    if (data.salary_info) {
-      payload.salary_info = data.salary_info;
-    }
-
-    if (data.availability) {
-      payload.availability = data.availability;
-    }
-
     const response = await apiCall<BackendAuthResponse>("/profiles", {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify(buildCreatePayload(data)),
     });
 
-    // Save JWT token from registration response
     if (response.token) {
       localStorage.setItem("auth_token", response.token);
     }
 
     const user = transformToCurrentUser(response.user);
     localStorage.setItem("current_user", JSON.stringify(user));
-
-    // Cache full profile locally (backend has no GET /profiles/:id)
-    try {
-      const profile = transformToProfile(response.user as unknown as FullBackendProfile);
-      localStorage.setItem(CURRENT_PROFILE_STORAGE_KEY, JSON.stringify(profile));
-    } catch {
-      // ignore cache errors
-    }
-    
     return { user, error: null };
   } catch (error) {
     if (error instanceof Error) {
-      // Handle duplicate email error
-      if (error.message.includes("duplicate") || error.message.includes("unique constraint")) {
-        return { user: null, error: "האימייל כבר רשום במערכת. נסה להתחבר במקום להירשם." };
-      }
       return { user: null, error: error.message };
     }
-    return { user: null, error: "יצירת הפרופיל נכשלה" };
+    return { user: null, error: "����� ������� �����" };
   }
 }
 
-// Profile update data for PUT /api/profiles/:id
 export interface ProfileUpdateData {
   name?: string;
   role?: "CLINIC" | "STAFF" | "clinic" | "worker";
   position?: string | null;
-  positions?: string[] | null; // Array of positions (new multi-select)
+  positions?: string[] | null;
+  workplace_types?: string[] | null;
   required_position?: string | null;
-  workplace_types?: string[] | null; // Array of domains
   description?: string | null;
   city?: string | null;
   preferred_area?: string | null;
@@ -553,264 +420,130 @@ export interface ProfileUpdateData {
   salary_min?: number | null;
   salary_max?: number | null;
   job_type?: string | null;
-  // Recruitment settings (clinic only)
   screening_questions?: string[] | null;
   is_auto_screener_active?: boolean | null;
-  // Boost profile (clinic only)
   is_urgent?: boolean | null;
-}
-
-// Full profile response from backend
-export interface FullBackendProfile {
-  id: string;
-  email: string;
-  role: string;
-  name: string;
-  position?: string | null;
-  positions?: string[] | null; // Array of positions (new multi-select)
-  required_position?: string | null;
-  workplace_types?: string[] | null; // Array of domains
-  description?: string | null;
-  city?: string | null;
-  location?: string | null;
-  preferred_area?: string | null;
-  radius_km?: number | null;
-  experience_years?: number | null;
-  availability_date?: string | null;
-  availability_days?: string[] | null;
-  availability_hours?: string | null;
-  salary_min?: number | null;
-  salary_max?: number | null;
-  salary_info?: { min?: number; max?: number } | null;
-  job_type?: string | null;
   avatar_url?: string | null;
-  image_url?: string | null;
-  created_at?: string;
-  updated_at?: string;
-  is_admin?: boolean;
+  logo_url?: string | null;
 }
 
-// Transform backend profile to frontend Profile type
+export interface FullBackendProfile extends BackendProfile {}
+
 export function transformToProfile(profile: FullBackendProfile) {
   const role = normalizeUserRole(profile.role);
-  const location = profile.city || profile.location || null;
+  const salaryRange = normalizeSalaryRange(profile.salary_info);
+  const avatarUrl = profile.avatar_url || (role === "clinic" ? profile.logo_url : profile.image_url) || null;
+  const logoUrl = profile.logo_url || (role === "clinic" ? profile.image_url : null) || null;
 
   return {
     id: profile.id,
-    user_id: profile.id, // Backend uses id as user_id
+    user_id: profile.id,
     name: profile.name,
     role,
-    position: profile.position || null,
-    positions: profile.positions || null, // Array of positions
-    required_position: profile.required_position || null,
-    workplace_types: profile.workplace_types || null, // Array of domains
+    position: role === "clinic" ? profile.position || profile.required_position || null : profile.position || null,
+    positions: profile.positions || (profile.position ? [profile.position] : []),
+    required_position: profile.required_position || profile.position || null,
+    workplace_types: profile.workplace_types || [],
     description: profile.description || null,
-    // Backend stores a single `location` string; in the UI:
-    // - clinic uses `city`
-    // - worker uses `preferred_area`
-    city: role === "clinic" ? location : (profile.city || null),
-    preferred_area: role === "worker" ? (profile.preferred_area || profile.location || null) : (profile.preferred_area || null),
-    radius_km: profile.radius_km || null,
-    experience_years: profile.experience_years || null,
-    availability_date: profile.availability_date || null,
-    availability_days: profile.availability_days || null,
-    availability_hours: profile.availability_hours || null,
-    salary_min: profile.salary_min ?? profile.salary_info?.min ?? null,
-    salary_max: profile.salary_max ?? profile.salary_info?.max ?? null,
-    job_type: profile.job_type as "daily" | "temporary" | "permanent" | null,
-    avatar_url: profile.avatar_url || profile.image_url || null,
+    city: role === "clinic" ? profile.location || null : null,
+    preferred_area: role === "worker" ? profile.location || null : null,
+    radius_km: profile.radius_km ?? null,
+    experience_years: profile.experience_years ?? null,
+    availability_date: profile.availability_date || profile.availability?.start_date || null,
+    availability_days: profile.availability_days || profile.availability?.days || [],
+    availability_hours: profile.availability_hours || profile.availability?.hours || null,
+    salary_min: profile.salary_min ?? salaryRange.min,
+    salary_max: profile.salary_max ?? salaryRange.max,
+    job_type: (profile.job_type as "daily" | "temporary" | "permanent" | null) || null,
+    avatar_url: avatarUrl,
+    logo_url: logoUrl,
+    screening_questions: profile.screening_questions || [],
+    is_auto_screener_active: profile.is_auto_screener_active ?? false,
+    is_urgent: profile.is_urgent ?? false,
     created_at: profile.created_at || new Date().toISOString(),
     updated_at: profile.updated_at || new Date().toISOString(),
   };
 }
 
-// GET /api/profiles/:id - Get profile by ID
-export async function getProfile(profileId: string): Promise<ReturnType<typeof transformToProfile> | null> {
-  // Backend does not support GET /api/profiles/:id (returns 404), so we rely on local cache.
-  try {
-    const cached = localStorage.getItem(CURRENT_PROFILE_STORAGE_KEY);
-    if (cached) {
-      const parsed = JSON.parse(cached) as ReturnType<typeof transformToProfile>;
-      if (parsed?.id === profileId) return parsed;
-    }
-
-    // Fallback: derive minimal profile from current_user (if it has cached fields)
-    const storedUser = localStorage.getItem("current_user");
-    if (storedUser) {
-      const u = JSON.parse(storedUser) as Partial<CurrentUser> & { location?: string | null; position?: string | null };
-      if (u.profileId === profileId) {
-        const derived: FullBackendProfile = {
-          id: profileId,
-          email: String(u.email || ""),
-          role: String(u.role || "worker"),
-          name: String(u.name || ""),
-          position: u.position ?? null,
-          location: u.location ?? null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        return transformToProfile(derived);
-      }
-    }
-
-    return null;
-  } catch (error) {
-    console.error("Error reading cached profile:", error);
-    return null;
-  }
+export async function getProfile(profileId: string) {
+  const response = await apiCall<FullBackendProfile>(`/profiles/${profileId}`);
+  return transformToProfile(response);
 }
 
-// POST /api/profiles - Update profile (backend uses POST as upsert)
-export async function updateProfileApi(
-  profileId: string,
-  data: ProfileUpdateData
-): Promise<{ profile: ReturnType<typeof transformToProfile> | null; error: string | null }> {
+export async function updateProfileApi(profileId: string, data: ProfileUpdateData): Promise<{ profile: ReturnType<typeof transformToProfile> | null; error: string | null }> {
   try {
-    // Get email from current user (required by backend for upsert identification)
-    const currentUserData = localStorage.getItem("current_user");
-    let email: string | undefined;
-    if (currentUserData) {
-      try {
-        const parsedUser = JSON.parse(currentUserData);
-        email = parsedUser.email;
-      } catch {
-        // Ignore parse errors
-      }
-    }
-    
-    if (!email) {
-      return { profile: null, error: "Email is required - please login again" };
-    }
-    
-    // Map frontend role format to backend format
-    let backendRole: string | undefined;
-    if (data.role) {
-      backendRole = data.role === "clinic" || data.role === "CLINIC" ? "CLINIC" : "STAFF";
-    }
-    
-    // Transform frontend fields to backend format - include email
-    const backendData: Record<string, unknown> = { 
-      email, // Always include email for backend identification (upsert key)
-      name: data.name,
+    const backendRole = data.role ? (data.role === "clinic" || data.role === "CLINIC" ? "CLINIC" : "STAFF") : undefined;
+    const payload = {
       role: backendRole,
+      name: data.name,
       position: data.position,
-      required_position: data.required_position, // Required for clinics
+      positions: data.positions,
+      required_position: data.required_position,
+      workplace_types: data.workplace_types,
+      location: data.city || data.preferred_area || null,
+      description: data.description || null,
+      radius_km: data.radius_km ?? null,
+      experience_years: data.experience_years ?? null,
+      availability_date: data.availability_date || null,
+      availability_days: data.availability_days || null,
+      availability_hours: data.availability_hours || null,
+      salary_min: data.salary_min ?? null,
+      salary_max: data.salary_max ?? null,
+      job_type: data.job_type || null,
+      screening_questions: data.screening_questions ?? null,
+      is_auto_screener_active: data.is_auto_screener_active ?? null,
+      is_urgent: data.is_urgent ?? null,
+      avatar_url: data.avatar_url ?? null,
+      logo_url: data.logo_url ?? null,
     };
 
-    // Handle positions array - CRITICAL for matching logic
-    if (data.positions && data.positions.length > 0) {
-      backendData.positions = data.positions;
-      // Also set single position for backward compatibility
-      if (!data.position) {
-        backendData.position = data.positions[0];
-      }
-    }
-
-    // Handle workplace_types array - CRITICAL for matching logic
-    if (data.workplace_types && data.workplace_types.length > 0) {
-      backendData.workplace_types = data.workplace_types;
-    }
-
-    console.log("[updateProfileApi] Sending payload:", JSON.stringify(backendData, null, 2));
-    
-    // Convert salary fields to salary_info
-    if (data.salary_min !== undefined || data.salary_max !== undefined) {
-      backendData.salary_info = {
-        min: data.salary_min,
-        max: data.salary_max,
-      };
-    }
-    
-    // Convert availability fields
-    if (data.availability_days || data.availability_hours || data.availability_date) {
-      backendData.availability = {
-        days: data.availability_days,
-        hours: data.availability_hours,
-        start_date: data.availability_date,
-      };
-    }
-    
-    // Map city/preferred_area to location
-    if (data.city) {
-      backendData.location = data.city;
-    } else if (data.preferred_area) {
-      backendData.location = data.preferred_area;
-    }
-    
-    // Include recruitment settings (clinic only)
-    if (data.screening_questions !== undefined) {
-      backendData.screening_questions = data.screening_questions;
-    }
-    if (data.is_auto_screener_active !== undefined) {
-      backendData.is_auto_screener_active = data.is_auto_screener_active;
-    }
-    
-    // Include boost profile settings (clinic only)
-    if (data.is_urgent !== undefined) {
-      backendData.is_urgent = data.is_urgent;
-    }
-    
-    // Use POST /api/profiles (upsert endpoint) instead of PUT
-    const response = await apiCall<BackendAuthResponse>("/profiles", {
-      method: "POST",
-      body: JSON.stringify(backendData),
+    const response = await apiCall<{ user: FullBackendProfile }>(`/profiles/${profileId}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
     });
-    
-    // Save updated token if returned
-    if (response.token) {
-      localStorage.setItem("auth_token", response.token);
-    }
-    
-    const profile = transformToProfile(response.user as unknown as FullBackendProfile);
 
-    // Cache latest profile locally for ProfileGuard/useProfile
-    localStorage.setItem(CURRENT_PROFILE_STORAGE_KEY, JSON.stringify(profile));
-    
-    // Update current_user in localStorage with new data
-    const storedUser = localStorage.getItem("current_user");
-    if (storedUser) {
-      const currentUser = JSON.parse(storedUser);
-      currentUser.name = profile.name;
-      currentUser.role = profile.role;
-      currentUser.position = profile.position;
-      currentUser.location = profile.city || profile.preferred_area;
-      const hasPosition = Boolean(profile.position || profile.required_position);
-      const hasLocation = Boolean(profile.city || profile.preferred_area);
-      currentUser.isProfileComplete = Boolean(profile.name && hasPosition && hasLocation);
-      localStorage.setItem("current_user", JSON.stringify(currentUser));
+    const profile = transformToProfile(response.user);
+    const currentUserRaw = localStorage.getItem("current_user");
+    if (currentUserRaw) {
+      const currentUser = JSON.parse(currentUserRaw) as CurrentUser;
+      const nextUser: CurrentUser = {
+        ...currentUser,
+        name: profile.name,
+        role: profile.role,
+        position: profile.role === "clinic" ? profile.required_position : profile.position,
+        location: profile.city || profile.preferred_area,
+        imageUrl: profile.role === "clinic" ? profile.logo_url || profile.avatar_url : profile.avatar_url || profile.logo_url,
+        isProfileComplete: Boolean(profile.name && (profile.required_position || profile.position) && (profile.city || profile.preferred_area)),
+      };
+      localStorage.setItem("current_user", JSON.stringify(nextUser));
     }
-    
+
     return { profile, error: null };
   } catch (error) {
     if (error instanceof Error) {
       return { profile: null, error: error.message };
     }
-    return { profile: null, error: "עדכון הפרופיל נכשל" };
+    return { profile: null, error: "����� ������� ����" };
   }
 }
 
-// Get current user from localStorage
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   const stored = localStorage.getItem("current_user");
   if (!stored) return null;
 
   try {
     return JSON.parse(stored) as CurrentUser;
-  } catch (error) {
-    console.error("Error parsing current user:", error);
+  } catch {
     localStorage.removeItem("current_user");
     return null;
   }
 }
 
-// Logout - clear all auth-related local storage
 export async function logout(): Promise<void> {
   localStorage.removeItem("current_user");
   localStorage.removeItem("auth_token");
-  localStorage.removeItem(CURRENT_PROFILE_STORAGE_KEY);
 }
 
-// Backend message structure
 interface BackendMessage {
   id: string;
   match_id: string;
@@ -819,77 +552,44 @@ interface BackendMessage {
   created_at: string;
 }
 
-// Transform to frontend Message
-function transformToMessage(msg: BackendMessage): Message {
+function transformToMessage(message: BackendMessage): Message {
   return {
-    id: msg.id,
-    matchId: msg.match_id,
-    senderId: msg.sender_id,
-    content: msg.content,
-    createdAt: msg.created_at,
+    id: message.id,
+    matchId: message.match_id,
+    senderId: message.sender_id,
+    content: message.content,
+    createdAt: message.created_at,
   };
 }
 
-// GET /api/messages/{matchId} - Get messages for a match
 export async function getMessages(matchId: string): Promise<Message[]> {
-  try {
-    const response = await apiCall<{ messages: BackendMessage[] } | BackendMessage[]>(
-      `/messages/${matchId}`
-    );
-    
-    const messages = Array.isArray(response) ? response : (response.messages || []);
-    return messages.map(transformToMessage);
-  } catch (error) {
-    console.error("Error fetching messages:", error);
-    return [];
-  }
+  const response = await apiCall<BackendMessage[] | { messages: BackendMessage[] }>(`/messages/${matchId}`);
+  const messages = Array.isArray(response) ? response : response.messages || [];
+  return messages.map(transformToMessage);
 }
 
-// POST /api/messages - Send a message
-export async function sendMessage(
-  matchId: string, 
-  senderId: string, 
-  content: string
-): Promise<Message> {
-  try {
-    const response = await apiCall<BackendMessage>("/messages", {
-      method: "POST",
-      body: JSON.stringify({ match_id: matchId, sender_id: senderId, content }),
-    });
-    return transformToMessage(response);
-  } catch (error) {
-    console.error("Error sending message:", error);
-    throw error;
-  }
+export async function sendMessage(matchId: string, senderId: string, content: string): Promise<Message> {
+  const response = await apiCall<BackendMessage>("/messages", {
+    method: "POST",
+    body: JSON.stringify({ match_id: matchId, sender_id: senderId, content }),
+  });
+  return transformToMessage(response);
 }
 
-// POST /api/ai/generate-bio - Generate bio using AI
 export async function generateBio(keywords: string, role: string): Promise<string> {
-  try {
-    const response = await apiCall<{ bio: string }>("/ai/generate-bio", {
-      method: "POST",
-      body: JSON.stringify({ keywords, role }),
-    });
-    return response.bio;
-  } catch (error) {
-    console.error("Error generating bio:", error);
-    throw error;
-  }
+  const response = await apiCall<{ bio: string }>("/ai/generate-bio", {
+    method: "POST",
+    body: JSON.stringify({ keywords, role }),
+  });
+  return response.bio;
 }
 
-// POST /api/ai/generate-questions - Generate screening questions using AI
-export async function generateScreeningQuestions(
-  position?: string, 
-  workplaceType?: string
-): Promise<string[]> {
-  try {
-    const response = await apiCall<{ questions: string[] }>("/ai/generate-questions", {
-      method: "POST",
-      body: JSON.stringify({ position, workplace_type: workplaceType }),
-    });
-    return response.questions || [];
-  } catch (error) {
-    console.error("Error generating questions:", error);
-    throw error;
-  }
+export async function generateScreeningQuestions(position?: string, workplaceType?: string): Promise<string[]> {
+  const response = await apiCall<{ questions: string[] }>("/ai/generate-questions", {
+    method: "POST",
+    body: JSON.stringify({ position, workplace_type: workplaceType }),
+  });
+  return response.questions || [];
 }
+
+

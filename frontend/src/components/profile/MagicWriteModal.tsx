@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Sparkles } from "lucide-react";
-import { toast } from "sonner";
 import { generateBio } from "@/lib/api";
+import { toast } from "sonner";
 
 interface MagicWriteModalProps {
   open: boolean;
@@ -20,7 +20,7 @@ export function MagicWriteModal({ open, onOpenChange, role, onGenerated }: Magic
 
   const handleGenerate = async () => {
     if (!keywords.trim()) {
-      toast.error("Χ Χ ΧΧ”Χ–Χ™Χ ΧΧ™ΧΧ•Χª ΧΧ¤ΧªΧ—");
+      toast.error("πΰ μδζιο ξιμεϊ ξτϊη");
       return;
     }
 
@@ -30,10 +30,10 @@ export function MagicWriteModal({ open, onOpenChange, role, onGenerated }: Magic
       onGenerated(bio);
       onOpenChange(false);
       setKeywords("");
-      toast.success("Χ”Χ‘Χ™Χ•Χ’Χ¨Χ¤Χ™Χ” Χ Χ•Χ¦Χ¨Χ” Χ‘Χ”Χ¦ΧΧ—Χ”! β¨");
-    } catch (error: any) {
-      toast.error("Χ©Χ’Χ™ΧΧ” Χ‘Χ™Χ¦Χ™Χ¨Χª Χ”ΧΧ§Χ΅Χ", { 
-        description: error.message || "Χ Χ΅Χ” Χ©Χ•Χ‘ ΧΧΧ•Χ—Χ¨ Χ™Χ•ΧªΧ¨" 
+      toast.success("δθχρθ πεφψ αδφμηδ");
+    } catch (error) {
+      toast.error("ωβιΰδ αιφιψϊ δθχρθ", {
+        description: error instanceof Error ? error.message : "πρε ωεα ξΰεηψ ιεϊψ",
       });
     } finally {
       setIsGenerating(false);
@@ -44,58 +44,23 @@ export function MagicWriteModal({ open, onOpenChange, role, onGenerated }: Magic
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" />
-            Χ›ΧªΧ™Χ‘Χ” Χ§Χ΅Χ•ΧΧ”
-          </DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />λϊιαδ ηλξδ</DialogTitle>
           <DialogDescription>
-            {role === "clinic" 
-              ? "ΧªΧΧ¨ ΧΧª Χ”ΧΧ¨Χ¤ΧΧ” Χ‘-3 ΧΧ™ΧΧ™Χ Χ•Χ”Χ‘Χ™Χ Χ” Χ”ΧΧΧΧ›Χ•ΧªΧ™Χª ΧªΧ›ΧªΧ•Χ‘ ΧΆΧ‘Χ•Χ¨Χ"
-              : "ΧªΧΧ¨ ΧΧª ΧΆΧ¦ΧΧ Χ‘-3 ΧΧ™ΧΧ™Χ Χ•Χ”Χ‘Χ™Χ Χ” Χ”ΧΧΧΧ›Χ•ΧªΧ™Χª ΧªΧ›ΧªΧ•Χ‘ ΧΆΧ‘Χ•Χ¨Χ"}
+            {role === "clinic" ? "ϊΰψε ΰϊ αιϊ δςρχ αλξδ ξιμιν εδξςψλϊ ϊλϊεα θχρθ χφψ αωαιμλν." : "ϊΰψε ΰϊ ςφξλν αλξδ ξιμιν εδξςψλϊ ϊλϊεα θχρθ χφψ αωαιμλν."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="keywords">ΧΧ™ΧΧ•Χª ΧΧ¤ΧªΧ—</Label>
-            <Input
-              id="keywords"
-              value={keywords}
-              onChange={(e) => setKeywords(e.target.value)}
-              placeholder={role === "clinic" 
-                ? "ΧΧΧ©Χ: ΧΧ§Χ¦Χ•ΧΆΧ™Χª, Χ—Χ“Χ©Χ Χ™Χª, ΧΧ©Χ¤Χ—ΧªΧ™Χª"
-                : "ΧΧΧ©Χ: Χ—Χ¨Χ•Χ¥, ΧΧ Χ•Χ΅Χ”, ΧΧ•ΧΧ“ ΧΧ”Χ¨"}
-              disabled={isGenerating}
-            />
-            <p className="text-xs text-muted-foreground">
-              Χ”Χ¤Χ¨Χ“ Χ‘Χ™Χ Χ”ΧΧ™ΧΧ™Χ Χ‘Χ¤Χ΅Χ™Χ§Χ™Χ
-            </p>
+            <Label htmlFor="keywords">ξιμεϊ ξτϊη</Label>
+            <Input id="keywords" value={keywords} onChange={(event) => setKeywords(event.target.value)} disabled={isGenerating} placeholder={role === "clinic" ? "ξχφεςι, ωιψεϊι, ξδιψ" : "ΰηψΰι, ιρεγι, ξπερδ"} />
           </div>
 
-          <div className="flex gap-2 justify-end">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isGenerating}
-            >
-              Χ‘Χ™ΧΧ•Χ
-            </Button>
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating || !keywords.trim()}
-              className="gap-2"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Χ™Χ•Χ¦Χ¨...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  Χ¦Χ•Χ¨ ΧΧ§Χ΅Χ
-                </>
-              )}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isGenerating}>αιθεμ</Button>
+            <Button onClick={handleGenerate} disabled={isGenerating || !keywords.trim()} className="gap-2">
+              {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              φεψ θχρθ
             </Button>
           </div>
         </div>

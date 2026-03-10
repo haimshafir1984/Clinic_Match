@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { getMatches, closeMatch as apiCloseMatch } from "@/lib/api";
+import { closeMatch as apiCloseMatch, getMatchDetails } from "@/lib/api";
 import { Match } from "@/types";
 
 export function useMatchDetails(matchId: string) {
@@ -8,14 +8,10 @@ export function useMatchDetails(matchId: string) {
   const { currentUser } = useAuth();
 
   const query = useQuery({
-    queryKey: ["match", matchId],
+    queryKey: ["match", currentUser?.profileId, matchId],
     queryFn: async (): Promise<Match | null> => {
       if (!currentUser?.profileId) return null;
-
-      // Get all matches and find the specific one
-      const matches = await getMatches(currentUser);
-      const match = matches.find((m) => m.id === matchId);
-      return match || null;
+      return getMatchDetails(currentUser.profileId, matchId);
     },
     enabled: !!matchId && !!currentUser?.profileId,
   });
@@ -26,7 +22,7 @@ export function useMatchDetails(matchId: string) {
       await apiCloseMatch(matchId, currentUser.profileId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["match", matchId] });
+      queryClient.invalidateQueries({ queryKey: ["match", currentUser?.profileId, matchId] });
       queryClient.invalidateQueries({ queryKey: ["matches"] });
     },
   });

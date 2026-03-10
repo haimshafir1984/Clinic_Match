@@ -1,139 +1,58 @@
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { AlertCircle, ArrowLeft, CheckCircle2, Eye, Heart, Lightbulb, Loader2, MessageSquare, Sparkles, TrendingUp, Zap } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useAuth } from "@/contexts/AuthContext";
-import { useProfile } from "@/hooks/useProfile";
-import { useMatches } from "@/hooks/useMatches";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  Sparkles, 
-  TrendingUp, 
-  Eye, 
-  Heart, 
-  MessageSquare, 
-  Lightbulb,
-  Target,
-  ArrowLeft,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-  Zap
-} from "lucide-react";
-import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/contexts/AuthContext";
+import { useMatches } from "@/hooks/useMatches";
+import { useProfile, Profile } from "@/hooks/useProfile";
 import { calculateProfileCompletion } from "@/lib/profileCompletion";
 
-// AI-generated insights based on profile data
-function generateInsights(profile: any, matchesCount: number, role: string) {
-  const insights: { type: 'success' | 'warning' | 'tip'; icon: typeof CheckCircle2; text: string }[] = [];
-  
-  // Profile completeness
+type InsightTone = "success" | "warning" | "tip";
+
+interface InsightItem {
+  tone: InsightTone;
+  icon: typeof CheckCircle2;
+  text: string;
+}
+
+function generateInsights(profile: Profile | null, matchesCount: number, role: "clinic" | "worker"): InsightItem[] {
+  const insights: InsightItem[] = [];
   const completion = calculateProfileCompletion(profile);
+
   if (completion.percentage === 100) {
-    insights.push({
-      type: 'success',
-      icon: CheckCircle2,
-      text: 'Χ”Χ¤Χ¨Χ•Χ¤Χ™Χ Χ©ΧΧ ΧΧ•Χ©ΧΧ! Χ–Χ” ΧΧ’Χ“Χ™Χ ΧΧª Χ”Χ΅Χ™Χ›Χ•Χ™ ΧΧ”ΧªΧΧΧ•Χª Χ‘-40%'
-    });
+    insights.push({ tone: "success", icon: CheckCircle2, text: "δτψετιμ ωμκ ξμΰ, εζδ ξωτψ ξωξςεϊιϊ ΰϊ ριλειι δδϊΰξδ." });
   } else if (completion.percentage < 70) {
-    insights.push({
-      type: 'warning',
-      icon: AlertCircle,
-      text: `Χ”Χ©ΧΧΧª Χ”Χ¤Χ¨Χ•Χ¤Χ™Χ (${completion.percentage}%) ΧªΧ’Χ“Χ™Χ ΧΧ©ΧΧΆΧ•ΧªΧ™Χª ΧΧª Χ”Χ—Χ©Χ™Χ¤Χ” Χ©ΧΧ`
-    });
+    insights.push({ tone: "warning", icon: AlertCircle, text: `δωμξϊ δτψετιμ (${completion.percentage}%) ϊβγιμ ΰϊ δηωιτδ ωμκ.` });
   }
-  
-  // Description insight
+
   if (!profile?.description || profile.description.length < 50) {
-    insights.push({
-      type: 'tip',
-      icon: Lightbulb,
-      text: 'Χ”Χ•Χ΅Χ¤Χª ΧªΧ™ΧΧ•Χ¨ ΧΧ¤Χ•Χ¨Χ Χ™Χ•ΧªΧ¨ ΧΧ•Χ©Χ›Χª Χ™Χ•ΧªΧ¨ ΧªΧ©Χ•ΧΧª ΧΧ‘'
-    });
+    insights.push({ tone: "tip", icon: Lightbulb, text: "λγΰι μδερισ ϊιΰεψ ξτεψθ ιεϊψ λγι μδαμιθ ΰϊ δτψετιμ." });
   }
-  
-  // Match insights
+
   if (matchesCount === 0) {
-    insights.push({
-      type: 'tip',
-      icon: Lightbulb,
-      text: role === 'clinic' 
-        ? 'Χ Χ΅Χ• ΧΧ”Χ¨Χ—Χ™Χ‘ ΧΧª ΧΧ•Χ•Χ— Χ”Χ—Χ™Χ¤Χ•Χ© ΧΧ• Χ”Χ•Χ΅Χ™Χ¤Χ• ΧªΧ—Χ•ΧΧ™ ΧΆΧ™Χ΅Χ•Χ§ Χ Χ•Χ΅Χ¤Χ™Χ'
-        : 'ΧΆΧ“Χ›Χ Χ• ΧΧª Χ”Χ–ΧΧ™Χ Χ•Χª Χ©ΧΧ›Χ Χ›Χ“Χ™ ΧΧ”Χ’Χ“Χ™Χ Χ΅Χ™Χ›Χ•Χ™Χ™ Χ”ΧªΧΧΧ”'
-    });
+    insights.push({ tone: "tip", icon: Lightbulb, text: role === "clinic" ? "δψηαϊ ϊηεν δηιτεω ιλεμδ μδαιΰ ςεγ ξεςξγιν." : "ςγλεο ζξιπεϊ εωλψ ιλεμ μδαιΰ ιεϊψ δϊΰξεϊ." });
   } else if (matchesCount >= 5) {
-    insights.push({
-      type: 'success',
-      icon: TrendingUp,
-      text: `Χ™Χ© ΧΧ ${matchesCount} Χ”ΧªΧΧΧ•Χª! Χ©ΧΧ•Χ¨ ΧΆΧ Χ§Χ©Χ¨ Χ¤ΧΆΧ™Χ ΧΧ™ΧªΧ`
-    });
+    insights.push({ tone: "success", icon: TrendingUp, text: `ιω λαψ ${matchesCount} δϊΰξεϊ τςιμεϊ. λγΰι μδξωικ ΰϊ δωιηεϊ.` });
   }
-  
-  // Role-specific tips
-  if (role === 'clinic') {
-    if (!profile?.required_position) {
-      insights.push({
-        type: 'warning',
-        icon: AlertCircle,
-        text: 'Χ”Χ’Χ“Χ¨Χª ΧªΧ¤Χ§Χ™Χ“ ΧΧ‘Χ•Χ§Χ© ΧªΧ©Χ¤Χ¨ ΧΧª ΧΧ™Χ›Χ•Χª Χ”Χ”ΧªΧΧΧ•Χª'
-      });
-    }
-  } else {
-    if (!profile?.availability_days || profile.availability_days.length === 0) {
-      insights.push({
-        type: 'tip',
-        icon: Lightbulb,
-        text: 'ΧΆΧ“Χ›Χ•Χ Χ™ΧΧ™ Χ–ΧΧ™Χ Χ•Χª Χ™ΧΆΧ–Χ•Χ¨ ΧΧΧ¦Χ•Χ Χ”ΧªΧΧΧ•Χª ΧΧ“Χ•Χ™Χ§Χ•Χª Χ™Χ•ΧªΧ¨'
-      });
-    }
-  }
-  
+
   return insights;
 }
 
-// Calculate stats from real data only
-function calculateStats(profile: any, matchesCount: number) {
-  const completion = calculateProfileCompletion(profile);
-
-  return {
-    views: 0,        // placeholder until real analytics API exists
-    likes: 0,        // placeholder
-    matches: matchesCount,
-    responseRate: 0, // placeholder
-    profileScore: completion.percentage,
-  };
-}
-
-// Optimization suggestions
-function getOptimizationSuggestions(profile: any, role: string): string[] {
+function getSuggestions(profile: Profile | null, role: "clinic" | "worker"): string[] {
   const suggestions: string[] = [];
-  
-  if (!profile?.avatar_url) {
-    suggestions.push("Χ”Χ•Χ΅Χ™Χ¤Χ• ΧªΧΧ•Χ Χª Χ¤Χ¨Χ•Χ¤Χ™Χ - Χ¤Χ¨Χ•Χ¤Χ™ΧΧ™Χ ΧΆΧ ΧªΧΧ•Χ Χ” ΧΧ§Χ‘ΧΧ™Χ Χ¤Χ™ 3 Χ™Χ•ΧªΧ¨ Χ¦Χ¤Χ™Χ•Χª");
-  }
-  
-  if (!profile?.description || profile.description.length < 100) {
-    suggestions.push("Χ›ΧªΧ‘Χ• ΧªΧ™ΧΧ•Χ¨ ΧΧ¤Χ•Χ¨Χ Χ™Χ•ΧªΧ¨ (ΧΧ¤Χ—Χ•Χª 100 ΧªΧ•Χ•Χ™Χ)");
-  }
-  
-  if (role === 'worker') {
-    if (!profile?.experience_years) {
-      suggestions.push("Χ¦Χ™Χ™Χ Χ• ΧΧª Χ©Χ Χ•Χª Χ”Χ Χ™Χ΅Χ™Χ•Χ Χ©ΧΧ›Χ");
-    }
-    if (!profile?.salary_min || !profile?.salary_max) {
-      suggestions.push("Χ”Χ’Χ“Χ™Χ¨Χ• ΧΧ•Χ•Χ— Χ©Χ›Χ¨ ΧΧ¦Χ•Χ¤Χ”");
-    }
-  }
-  
-  if (role === 'clinic') {
-    if (!profile?.city) {
-      suggestions.push("Χ”Χ•Χ΅Χ™Χ¤Χ• ΧΧª ΧΧ™Χ§Χ•Χ Χ”ΧΧ¨Χ¤ΧΧ”");
-    }
-  }
-  
-  return suggestions.slice(0, 3); // Max 3 suggestions
+  const image = role === "clinic" ? profile?.logo_url || profile?.avatar_url : profile?.avatar_url || profile?.logo_url;
+
+  if (!image) suggestions.push(role === "clinic" ? "δεριτε μεβε μαιϊ δςρχ." : "δςμε ϊξεπϊ τψετιμ." );
+  if (!profile?.description || profile.description.length < 100) suggestions.push("λγΰι μδψηια ΰϊ δϊιΰεψ μ-100 ϊεειν μτηεϊ.");
+  if (role === "worker" && !profile?.experience_years) suggestions.push("φιιπε ωπεϊ πιριεο λγι μωτψ δϊΰξδ.");
+  if (role === "clinic" && !profile?.city) suggestions.push("δωμιξε ςιψ λγι μξχγ ΰϊ δδϊΰξεϊ.");
+
+  return suggestions.slice(0, 3);
 }
 
 export default function Insights() {
@@ -141,187 +60,90 @@ export default function Insights() {
   const { currentUser } = useAuth();
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { matches, isLoading: matchesLoading } = useMatches();
-  
+
+  const role = currentUser?.role || "worker";
   const isLoading = profileLoading || matchesLoading;
-  const role = currentUser?.role || 'worker';
-  
+
+  const completion = useMemo(() => calculateProfileCompletion(profile), [profile]);
+  const stats = useMemo(() => ({ views: 0, likes: 0, matches: matches.length, responseRate: 0, profileScore: completion.percentage }), [completion.percentage, matches.length]);
+  const insights = useMemo(() => generateInsights(profile, matches.length, role), [profile, matches.length, role]);
+  const suggestions = useMemo(() => getSuggestions(profile, role), [profile, role]);
+
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-[80vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="flex h-[80vh] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </AppLayout>
     );
   }
-  
-  const stats = useMemo(() => calculateStats(profile, matches.length), [profile, matches.length]);
-  const insights = useMemo(() => generateInsights(profile, matches.length, role), [profile, matches.length, role]);
-  const suggestions = useMemo(() => getOptimizationSuggestions(profile, role), [profile, role]);
-  
+
   return (
     <AppLayout>
-      <div className="p-4 max-w-md mx-auto pb-24 space-y-4">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-6"
-        >
-          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 mx-auto mb-3 flex items-center justify-center">
-            <Sparkles className="w-7 h-7 text-primary" />
+      <div className="mx-auto max-w-md space-y-4 p-4 pb-24">
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 text-center">
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20">
+            <Sparkles className="h-7 w-7 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">ΧªΧ•Χ‘Χ Χ•Χª AI</h1>
-          <p className="text-sm text-muted-foreground">
-            Χ Χ™ΧªΧ•Χ— Χ—Χ›Χ Χ©Χ Χ”Χ¤Χ¨Χ•Χ¤Χ™Χ Χ•Χ”Χ”ΧªΧΧΧ•Χª Χ©ΧΧ
-          </p>
+          <h1 className="text-2xl font-bold">ϊεαπεϊ</h1>
+          <p className="text-sm text-muted-foreground">ριλεν ξδιψ ωμ δτψετιμ εδδϊΰξεϊ ωμκ</p>
         </motion.div>
 
-        {/* Analytics placeholder banner */}
-        <div className="rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground text-center">
-          Χ ΧªΧ•Χ Χ™ Χ¦Χ¤Χ™Χ•Χª Χ•ΧΧ™Χ™Χ§Χ™Χ Χ™ΧªΧ•Χ•Χ΅Χ¤Χ• Χ‘Χ§Χ¨Χ•Χ‘
+        <Card className="overflow-hidden">
+          <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-sm font-medium">φιεο τψετιμ</span>
+              <Badge variant="secondary" className="bg-primary/10 text-primary"><Zap className="ml-1 h-3 w-3" />AI Score</Badge>
+            </div>
+            <div className="flex items-end gap-3">
+              <span className="text-4xl font-bold text-primary">{stats.profileScore}</span>
+              <span className="mb-1 text-lg text-muted-foreground">/100</span>
+            </div>
+            <Progress value={stats.profileScore} className="mt-3 h-2" />
+          </div>
+        </Card>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Card className="p-4"><div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"><Eye className="h-4 w-4" />φτιεϊ</div><p className="text-2xl font-bold">{stats.views}</p></Card>
+          <Card className="p-4"><div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"><Heart className="h-4 w-4" />μιιχιν</div><p className="text-2xl font-bold">{stats.likes}</p></Card>
+          <Card className="p-4"><div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"><Sparkles className="h-4 w-4" />δϊΰξεϊ</div><p className="text-2xl font-bold">{stats.matches}</p></Card>
+          <Card className="p-4"><div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground"><MessageSquare className="h-4 w-4" />ϊβεαδ</div><p className="text-2xl font-bold">{stats.responseRate}%</p></Card>
         </div>
 
-        {/* Profile Score */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Card className="overflow-hidden">
-            <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-foreground">Χ¦Χ™Χ•Χ Χ”Χ¤Χ¨Χ•Χ¤Χ™Χ</span>
-                <Badge variant="secondary" className="bg-primary/10 text-primary">
-                  <Zap className="w-3 h-3 ml-1" />
-                  AI Score
-                </Badge>
+        <Card>
+          <CardHeader>
+            <CardTitle>ξδ δξςψλϊ ψεΰδ</CardTitle>
+            <CardDescription>ξαερρ ςμ δτψετιμ ωμκ λψβς</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {insights.map((insight, index) => (
+              <div key={`${insight.text}-${index}`} className={`flex items-start gap-3 rounded-lg border p-3 ${insight.tone === "success" ? "border-success/20 bg-success/10" : insight.tone === "warning" ? "border-warning/20 bg-warning/10" : "border-border bg-accent/30"}`}>
+                <insight.icon className={`mt-0.5 h-5 w-5 ${insight.tone === "success" ? "text-success" : insight.tone === "warning" ? "text-warning" : "text-primary"}`} />
+                <p className="text-sm">{insight.text}</p>
               </div>
-              <div className="flex items-end gap-3">
-                <span className="text-4xl font-bold text-primary">{stats.profileScore}</span>
-                <span className="text-lg text-muted-foreground mb-1">/100</span>
-              </div>
-              <Progress value={stats.profileScore} className="h-2 mt-3" />
-            </div>
-          </Card>
-        </motion.div>
+            ))}
+          </CardContent>
+        </Card>
 
-        {/* Stats Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="grid grid-cols-2 gap-3"
-        >
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Eye className="w-4 h-4 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">Χ¦Χ¤Χ™Χ•Χª</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{stats.views}</p>
-          </Card>
-          
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Heart className="w-4 h-4 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">ΧΧ™Χ™Χ§Χ™Χ</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{stats.likes}</p>
-          </Card>
-          
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Target className="w-4 h-4 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">Χ”ΧªΧΧΧ•Χª</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{stats.matches}</p>
-          </Card>
-          
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <MessageSquare className="w-4 h-4 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">ΧΧ—Χ•Χ– ΧªΧ’Χ•Χ‘Χ”</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{stats.responseRate}%</p>
-          </Card>
-        </motion.div>
-
-        {/* AI Insights */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
+        {suggestions.length > 0 && (
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary" />
-                ΧªΧ•Χ‘Χ Χ•Χª AI
-              </CardTitle>
-              <CardDescription>Χ Χ™ΧªΧ•Χ— ΧΧ•ΧΧ•ΧΧΧ™ Χ©Χ Χ”Χ¤Χ¨Χ•Χ¤Χ™Χ Χ©ΧΧ</CardDescription>
+            <CardHeader>
+              <CardTitle>δξμφεϊ μωιτεψ</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {insights.map((insight, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 + index * 0.1 }}
-                  className={`flex items-start gap-3 p-3 rounded-lg ${
-                    insight.type === 'success' 
-                      ? 'bg-success/10 border border-success/20' 
-                      : insight.type === 'warning'
-                      ? 'bg-warning/10 border border-warning/20'
-                      : 'bg-accent/50 border border-border'
-                  }`}
-                >
-                  <insight.icon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${
-                    insight.type === 'success' ? 'text-success' 
-                    : insight.type === 'warning' ? 'text-warning'
-                    : 'text-primary'
-                  }`} />
-                  <p className="text-sm text-foreground">{insight.text}</p>
-                </motion.div>
+            <CardContent className="space-y-2">
+              {suggestions.map((suggestion, index) => (
+                <div key={suggestion} className="flex gap-2 text-sm text-muted-foreground">
+                  <span className="font-bold text-primary">{index + 1}.</span>
+                  <span>{suggestion}</span>
+                </div>
               ))}
+              <Button onClick={() => navigate("/profile")} className="mt-4 w-full gap-2">
+                ςγλεο τψετιμ
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
             </CardContent>
           </Card>
-        </motion.div>
-
-        {/* Optimization Suggestions */}
-        {suggestions.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-primary" />
-                  Χ”ΧΧΧ¦Χ•Χª ΧΧ©Χ™Χ¤Χ•Χ¨
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {suggestions.map((suggestion, index) => (
-                  <div 
-                    key={index}
-                    className="flex items-start gap-2 text-sm text-muted-foreground"
-                  >
-                    <span className="text-primary font-bold">{index + 1}.</span>
-                    <span>{suggestion}</span>
-                  </div>
-                ))}
-                
-                <Button 
-                  onClick={() => navigate('/profile')}
-                  className="w-full mt-4 gap-2"
-                >
-                  ΧΆΧ“Χ›Χ Χ¤Χ¨Χ•Χ¤Χ™Χ
-                  <ArrowLeft className="w-4 h-4" />
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
         )}
       </div>
     </AppLayout>

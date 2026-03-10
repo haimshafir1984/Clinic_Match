@@ -1,4 +1,4 @@
-ן»¿import { useState } from "react";
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ChatMessages } from "@/components/chat/ChatMessages";
@@ -42,9 +42,9 @@ export default function Chat() {
     return (
       <AppLayout showNav={false}>
         <div className="flex flex-col items-center justify-center h-screen p-4">
-          <p className="text-muted-foreground">׳”׳”׳×׳׳׳” ׳׳ ׳ ׳׳¦׳׳”</p>
+          <p className="text-muted-foreground">ההתאמה לא נמצאה</p>
           <Link to="/matches" className="text-primary mt-2">
-            ׳—׳–׳¨׳” ׳׳”׳×׳׳׳•׳×
+            חזרה להתאמות
           </Link>
         </div>
       </AppLayout>
@@ -58,9 +58,9 @@ export default function Chat() {
   const handleCloseMatch = async () => {
     try {
       await closeMatch();
-      toast.success("׳”׳”׳×׳׳׳” ׳ ׳¡׳’׳¨׳”");
+      toast.success("ההתאמה נסגרה");
     } catch {
-      toast.error("׳©׳’׳™׳׳” ׳‘׳¡׳’׳™׳¨׳× ׳”׳”׳×׳׳׳”");
+      toast.error("שגיאה בסגירת ההתאמה");
     }
   };
 
@@ -85,7 +85,7 @@ export default function Chat() {
           <div className="flex-1">
             <h2 className="font-semibold">{otherProfile.name}</h2>
             <p className="text-xs text-muted-foreground">
-              {isClinic ? "׳׳¨׳₪׳׳”" : "׳¢׳•׳‘׳“/׳×"}
+              {isClinic ? "בית עסק" : "עובד/ת"}
             </p>
           </div>
 
@@ -102,19 +102,19 @@ export default function Chat() {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>׳¡׳’׳™׳¨׳× ׳”׳”׳×׳׳׳”</AlertDialogTitle>
+                  <AlertDialogTitle>סגירת ההתאמה</AlertDialogTitle>
                   <AlertDialogDescription>
-                    ׳”׳׳ ׳׳×׳” ׳‘׳˜׳•׳— ׳©׳‘׳¨׳¦׳•׳ ׳ ׳׳¡׳’׳•׳¨ ׳׳× ׳”׳”׳×׳׳׳” ׳¢׳ {otherProfile.name}?
-                    ׳₪׳¢׳•׳׳” ׳–׳• ׳׳™׳ ׳” ׳ ׳™׳×׳ ׳× ׳׳‘׳™׳˜׳•׳.
+                    האם אתה בטוח שברצונך לסגור את ההתאמה עם {otherProfile.name}?
+                    פעולה זו אינה ניתנת לביטול.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>׳‘׳™׳˜׳•׳</AlertDialogCancel>
+                  <AlertDialogCancel>ביטול</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleCloseMatch}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
-                    ׳¡׳’׳•׳¨ ׳”׳×׳׳׳”
+                    סגור התאמה
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -145,7 +145,7 @@ export default function Chat() {
 
         {match.isClosed && (
           <div className="p-4 bg-muted text-center text-sm text-muted-foreground">
-            ׳”׳”׳×׳׳׳” ׳”׳–׳• ׳ ׳¡׳’׳¨׳”
+            ההתאמה הזו נסגרה
           </div>
         )}
       </div>

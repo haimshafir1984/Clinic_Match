@@ -1,14 +1,15 @@
-import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useState, type FormEvent } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { BrandMark } from "@/components/branding/BrandMark";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2, Heart, Briefcase, AlertCircle } from "lucide-react";
-import { motion } from "framer-motion";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -20,134 +21,84 @@ export default function Login() {
 
   const from = location.state?.from?.pathname || "/swipe";
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
     setNetworkError(null);
-    
-    if (!email) {
-      toast.error("Χ Χ ΧΧ”Χ–Χ™Χ ΧΧ™ΧΧ™Χ™Χ");
+    if (!email.trim()) {
+      toast.error("πΰ μδζιο ΰιξιιμ");
       return;
     }
 
     setLoading(true);
-    
     try {
-      const { error, needsRegistration } = await signIn(email);
-
+      const { error, needsRegistration } = await signIn(email.trim());
       if (error) {
         if (needsRegistration) {
-          toast.info("Χ”ΧΧ™ΧΧ™Χ™Χ ΧΧ Χ ΧΧ¦Χ, ΧΧΆΧ‘Χ™Χ¨ ΧΧ”Χ¨Χ©ΧΧ”");
-          navigate("/register", { state: { email } });
+          toast.info("μΰ ξφΰπε ξωϊξω ςν δξιιμ δζδ, πςαιψ μδψωξδ");
+          navigate("/register", { state: { email: email.trim() } });
           return;
         }
-        
-        if (error.message.includes("ΧΧ ΧΧ’Χ™Χ‘") || error.message.includes("ΧªΧ§Χ©Χ•Χ¨Χª")) {
+
+        if (error.message.includes("μΰ ξβια") || error.message.includes("Request failed")) {
           setNetworkError(error.message);
         } else {
-          toast.error("Χ©Χ’Χ™ΧΧ” Χ‘Χ”ΧªΧ—Χ‘Χ¨Χ•Χª", {
-            description: error.message,
-          });
+          toast.error("ωβιΰδ αδϊηαψεϊ", { description: error.message });
         }
-      } else {
-        toast.success("Χ”ΧªΧ—Χ‘Χ¨Χª Χ‘Χ”Χ¦ΧΧ—Χ”!");
-        // Always redirect to profile first to review details
-        navigate(from, { replace: true });
+        return;
       }
-    } catch (error) {
-      setNetworkError("Χ©Χ’Χ™ΧΧ” Χ‘ΧªΧ§Χ©Χ•Χ¨Χª ΧΆΧ Χ”Χ©Χ¨Χª. Χ Χ΅Χ” Χ©Χ•Χ‘.");
+
+      toast.success("δϊηαψϊ αδφμηδ");
+      navigate(from, { replace: true });
+    } catch {
+      setNetworkError("ωβιΰδ αϊχωεψϊ ςν δωψϊ. πρδ ωεα.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-br from-primary/5 via-accent/30 to-background">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        {/* Logo & Value Proposition */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="relative">
-            <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center mb-4 shadow-lg shadow-primary/30">
-              <Briefcase className="w-10 h-10 text-primary-foreground" />
-            </div>
-            <Heart className="absolute -bottom-1 -left-1 w-6 h-6 text-destructive fill-destructive" />
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/30 to-background px-4 py-8">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md items-center">
+        <div className="w-full">
+          <div className="mb-8 flex flex-col items-center text-center">
+            <BrandMark size={72} className="mb-4 h-20 w-20 rounded-2xl shadow-lg" />
+            <h1 className="text-3xl font-bold text-foreground">ShiftMatch</h1>
+            <p className="mt-2 text-sm text-muted-foreground">τμθτεψξϊ δϊΰξδ αιο ςεαγιν εαϊι ςρχ αξβεεο ϊηεξιν</p>
           </div>
-          <h1 className="text-3xl font-bold text-foreground">ShiftMatch</h1>
-          <p className="text-muted-foreground mt-1 text-center">
-            Χ”ΧªΧΧΧ•Χª ΧΆΧ‘Χ•Χ“Χ” Χ‘Χ›Χ ΧªΧ—Χ•Χ
-          </p>
-          <p className="text-sm text-primary/80 mt-2 text-center font-medium">
-            ΧΧΆΧ΅Χ™Χ§Χ™Χ β†” ΧΧ Χ©Χ™ ΧΧ§Χ¦Χ•ΧΆ
-          </p>
-        </div>
 
-        <Card className="border-0 shadow-xl">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Χ‘Χ¨Χ•Χ›Χ™Χ Χ”Χ‘ΧΧ™Χ</CardTitle>
-            <CardDescription>
-              Χ”Χ–Χ™Χ Χ• ΧΧª Χ”ΧΧ™ΧΧ™Χ™Χ Χ©ΧΧ›Χ Χ›Χ“Χ™ ΧΧ”ΧªΧ—Χ‘Χ¨ Χ•ΧΧ”ΧªΧ—Χ™Χ ΧΧ§Χ‘Χ Χ”ΧªΧΧΧ•Χª
-            </CardDescription>
-          </CardHeader>
-          
-          {networkError && (
-            <div className="px-6">
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{networkError}</AlertDescription>
-              </Alert>
-            </div>
-          )}
-          
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Χ›ΧªΧ•Χ‘Χª ΧΧ™ΧΧ™Χ™Χ</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="text-right"
-                  dir="ltr"
-                  autoComplete="email"
-                />
+          <Card className="border-0 shadow-xl">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">λπιρδ μξςψλϊ</CardTitle>
+              <CardDescription>δζιπε ΰϊ λϊεαϊ δΰιξιιμ λγι μδϊηαψ</CardDescription>
+            </CardHeader>
+
+            {networkError && (
+              <div className="px-6">
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{networkError}</AlertDescription>
+                </Alert>
               </div>
-            </CardContent>
-            <CardFooter className="flex flex-col gap-4">
-              <Button 
-                type="submit" 
-                className="w-full" 
-                size="lg"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin ml-2" />
-                    ΧΧªΧ—Χ‘Χ¨...
-                  </>
-                ) : (
-                  "Χ›Χ Χ™Χ΅Χ” ΧΧΧΆΧ¨Χ›Χª"
-                )}
-              </Button>
-              <p className="text-sm text-muted-foreground text-center">
-                ΧΆΧ“Χ™Χ™Χ ΧΧ™Χ ΧΧ Χ—Χ©Χ‘Χ•Χ?{" "}
-                <Link to="/register" className="text-primary hover:underline font-medium">
-                  Χ”Χ¦ΧΧ¨Χ£ ΧΆΧ›Χ©Χ™Χ•
-                </Link>
-              </p>
-            </CardFooter>
-          </form>
-        </Card>
+            )}
 
-        {/* Trust indicator */}
-        <p className="text-xs text-muted-foreground text-center mt-6">
-          π”’ Χ”ΧΧ™Χ“ΧΆ Χ©ΧΧ ΧΧΧ•Χ‘ΧΧ— Χ•ΧΧ Χ™Χ©Χ•ΧªΧ£ ΧΆΧ Χ¦Χ“ Χ©ΧΧ™Χ©Χ™
-        </p>
+            <form onSubmit={handleSubmit}>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">ΰιξιιμ</Label>
+                  <Input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} dir="ltr" autoComplete="email" placeholder="name@example.com" />
+                </div>
+              </CardContent>
+              <CardFooter className="flex flex-col gap-4">
+                <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "λπιρδ"}
+                </Button>
+                <p className="text-center text-sm text-muted-foreground">
+                  ςγιιο ΰιο ηωαεο? <Link to="/register" className="font-medium text-primary hover:underline">μδψωξδ</Link>
+                </p>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
       </motion.div>
     </div>
   );

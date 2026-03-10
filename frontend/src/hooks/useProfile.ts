@@ -1,23 +1,21 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
-import { 
-  getProfile, 
-  updateProfileApi, 
+import {
   createProfile as createProfileApi,
+  getProfile,
   ProfileUpdateData,
-  transformToProfile
+  transformToProfile,
+  updateProfileApi,
 } from "@/lib/api";
 
-// Profile type inferred from the transform function
-type Profile = ReturnType<typeof transformToProfile>;
+export type Profile = ReturnType<typeof transformToProfile>;
 
-// Extended type for ProfileForm data that matches what ProfileForm sends
 export interface ProfileFormInput {
   name: string;
   role: "clinic" | "worker";
   position?: string | null;
-  positions?: string[] | null; // Array of positions (new multi-select)
-  workplace_types?: string[] | null; // Array of domains
+  positions?: string[] | null;
+  workplace_types?: string[] | null;
   required_position?: string | null;
   description?: string | null;
   city?: string | null;
@@ -30,11 +28,11 @@ export interface ProfileFormInput {
   salary_min?: number | null;
   salary_max?: number | null;
   job_type?: "daily" | "temporary" | "permanent" | null;
-  // Recruitment settings (clinic only)
   screening_questions?: string[] | null;
   is_auto_screener_active?: boolean | null;
-  // Boost profile (clinic only)
   is_urgent?: boolean | null;
+  avatar_url?: string | null;
+  logo_url?: string | null;
 }
 
 export function useProfile() {
@@ -55,41 +53,30 @@ export function useCreateProfile() {
 
   return useMutation({
     mutationFn: async (profile: ProfileFormInput) => {
-      // The backend identifies profile by email (upsert). Email may come from:
-      // 1) current_user (logged in)
-      // 2) pendingEmail (signup flow)
       let email: string | null = null;
-
       const currentUserRaw = localStorage.getItem("current_user");
       if (currentUserRaw) {
-        try {
-          const parsed = JSON.parse(currentUserRaw);
-          email = typeof parsed?.email === "string" ? parsed.email : null;
-        } catch {
-          // ignore parse errors
-        }
-      }
-
-      if (!email) {
-        email = localStorage.getItem("pendingEmail");
+        const parsed = JSON.parse(currentUserRaw) as { email?: string };
+        email = parsed.email || null;
       }
 
       if (!email) {
         throw new Error("Email is required");
       }
 
-      // Map frontend role to backend role
       const role = profile.role === "clinic" ? "CLINIC" : "STAFF";
-      
       const result = await createProfileApi({
         email,
         name: profile.name,
         role,
         position: profile.position || undefined,
-        positions: profile.positions || undefined, // Array of positions
-        workplace_types: profile.workplace_types || undefined, // Array of domains
-        required_position: profile.required_position || undefined, // Required for clinics
+        positions: profile.positions || undefined,
+        required_position: profile.required_position || undefined,
+        workplace_types: profile.workplace_types || undefined,
         location: profile.city || profile.preferred_area || undefined,
+        description: profile.description || undefined,
+        radius_km: profile.radius_km ?? undefined,
+        experience_years: profile.experience_years ?? undefined,
         salary_info: profile.salary_min || profile.salary_max ? {
           min: profile.salary_min || undefined,
           max: profile.salary_max || undefined,
@@ -99,6 +86,12 @@ export function useCreateProfile() {
           hours: profile.availability_hours || undefined,
           start_date: profile.availability_date || undefined,
         } : undefined,
+        job_type: profile.job_type || undefined,
+        screening_questions: profile.screening_questions || undefined,
+        is_auto_screener_active: profile.is_auto_screener_active ?? undefined,
+        is_urgent: profile.is_urgent ?? undefined,
+        avatar_url: profile.avatar_url || undefined,
+        logo_url: profile.logo_url || undefined,
       });
 
       if (result.error) {
@@ -109,8 +102,6 @@ export function useCreateProfile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
-      localStorage.removeItem("pendingEmail");
-      localStorage.removeItem("pendingRole");
     },
   });
 }
@@ -126,11 +117,9 @@ export function useUpdateProfile() {
       }
 
       const result = await updateProfileApi(currentUser.profileId, profile as ProfileUpdateData);
-
       if (result.error) {
         throw new Error(result.error);
       }
-
       return result.profile;
     },
     onSuccess: async () => {
