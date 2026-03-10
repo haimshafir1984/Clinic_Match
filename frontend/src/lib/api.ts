@@ -41,7 +41,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}, timeoutMs
   } catch (error) {
     window.clearTimeout(timeoutId);
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("����� ����� - ���� �� ����. ��� ���.");
+      throw new Error("הבקשה נכשלה - השרת לא מגיב. נסה שוב.");
     }
     throw error;
   }
@@ -373,11 +373,11 @@ export async function login(email: string): Promise<{ user: CurrentUser | null; 
     if (error instanceof Error) {
       const message = error.message.toLowerCase();
       if (message.includes("not found")) {
-        return { user: null, error: "������� �� ����, ���� ������", needsRegistration: true };
+        return { user: null, error: "האימייל לא נמצא, אפשר להירשם", needsRegistration: true };
       }
       return { user: null, error: error.message };
     }
-    return { user: null, error: "�������� �����" };
+    return { user: null, error: "ההתחברות נכשלה" };
   }
 }
 
@@ -399,7 +399,7 @@ export async function createProfile(data: ProfileCreateData): Promise<{ user: Cu
     if (error instanceof Error) {
       return { user: null, error: error.message };
     }
-    return { user: null, error: "����� ������� �����" };
+    return { user: null, error: "יצירת הפרופיל נכשלה" };
   }
 }
 
@@ -524,7 +524,7 @@ export async function updateProfileApi(profileId: string, data: ProfileUpdateDat
     if (error instanceof Error) {
       return { profile: null, error: error.message };
     }
-    return { profile: null, error: "����� ������� ����" };
+    return { profile: null, error: "עדכון הפרופיל נכשל" };
   }
 }
 

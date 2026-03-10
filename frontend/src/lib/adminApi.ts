@@ -37,7 +37,7 @@ async function adminApiCall<T>(endpoint: string, options: RequestInit = {}, time
   } catch (error) {
     window.clearTimeout(timeoutId);
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("����� ����� - ���� �� ����. ��� ���.");
+      throw new Error("הבקשה נכשלה - השרת לא מגיב. נסה שוב.");
     }
     throw error;
   }
