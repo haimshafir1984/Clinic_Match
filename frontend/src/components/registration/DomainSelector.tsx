@@ -1,9 +1,9 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { INDUSTRIES, DOMAINS, Industry, WorkplaceDomain, getDomainsByIndustry } from "@/constants/domains";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { INDUSTRIES, Industry, WorkplaceDomain, getDomainsByIndustry } from "@/constants/domains";
+import { cn } from "@/lib/utils";
 
 interface DomainSelectorProps {
   value: WorkplaceDomain | null;
@@ -24,9 +24,9 @@ export function DomainSelector({ value, onChange }: DomainSelectorProps) {
               type="button"
               whileTap={{ scale: 0.98 }}
               onClick={() => setSelectedIndustry(industry.id)}
-              className="flex items-center gap-4 p-4 rounded-xl border-2 border-border hover:border-primary/50 transition-all text-right"
+              className="flex items-center gap-4 rounded-xl border-2 border-border p-4 text-right transition-all hover:border-primary/50"
             >
-              <span className="text-3xl">{industry.icon}</span>
+              <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">{industry.icon}</span>
               <span className="font-medium">{industry.label}</span>
             </motion.button>
           ))}
@@ -35,19 +35,19 @@ export function DomainSelector({ value, onChange }: DomainSelectorProps) {
     );
   }
 
-  const industryConfig = INDUSTRIES.find((i) => i.id === selectedIndustry)!;
+  const industryConfig = INDUSTRIES.find((item) => item.id === selectedIndustry)!;
   const subDomains = getDomainsByIndustry(selectedIndustry);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" type="button" onClick={() => setSelectedIndustry(null)}>
-          <ArrowRight className="w-4 h-4 ml-1" />
+          <ArrowRight className="ml-1 h-4 w-4" />
           חזרה
         </Button>
-        <span className="text-sm text-muted-foreground">{industryConfig.icon} {industryConfig.label}</span>
+        <span className="text-sm text-muted-foreground">{industryConfig.label}</span>
       </div>
-      <p className="text-center text-muted-foreground text-sm">בחרו תחום ספציפי</p>
+      <p className="text-center text-sm text-muted-foreground">בחר/י תחום ספציפי</p>
       <div className="grid grid-cols-2 gap-3">
         {subDomains.map((domain) => (
           <motion.button
@@ -56,14 +56,12 @@ export function DomainSelector({ value, onChange }: DomainSelectorProps) {
             whileTap={{ scale: 0.98 }}
             onClick={() => onChange(domain.id, selectedIndustry)}
             className={cn(
-              "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
-              value === domain.id
-                ? "border-primary bg-primary/5 text-primary"
-                : "border-border hover:border-primary/50"
+              "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all",
+              value === domain.id ? "border-primary bg-primary/5 text-primary" : "border-border hover:border-primary/50"
             )}
           >
-            <span className="text-3xl">{domain.icon}</span>
-            <span className="font-medium text-sm text-center">{domain.label}</span>
+            <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">{domain.icon}</span>
+            <span className="text-center text-sm font-medium">{domain.label}</span>
           </motion.button>
         ))}
       </div>
