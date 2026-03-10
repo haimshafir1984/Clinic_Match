@@ -34,11 +34,11 @@ export function useSwipe() {
   const swipeMutation = useMutation({
     mutationFn: async ({ targetId, type }: { targetId: string; type: SwipeType }) => {
       if (!currentUser?.profileId) {
-        throw new Error("׳׳ ׳׳—׳•׳‘׳¨ - ׳ ׳ ׳׳”׳×׳—׳‘׳¨ ׳׳—׳“׳©");
+        throw new Error("לא מחובר - נא להתחבר מחדש");
       }
 
       if (!targetId) {
-        throw new Error("׳׳–׳”׳” ׳׳©׳×׳׳© ׳׳ ׳×׳§׳™׳");
+        throw new Error("מזהה משתמש לא תקין");
       }
 
       return postSwipe({
@@ -53,8 +53,8 @@ export function useSwipe() {
     },
     onError: (error: Error) => {
       console.error("[useSwipe] Mutation error:", error);
-      toast.error("Match ׳ ׳›׳©׳", {
-        description: error.message || "׳׳™׳¨׳¢׳” ׳©׳’׳™׳׳” - ׳ ׳¡׳” ׳©׳•׳‘",
+      toast.error("Match נכשל", {
+        description: error.message || "אירעה שגיאה - נסה שוב",
       });
     },
   });
@@ -86,4 +86,3 @@ export function useSwipe() {
     isLoading: swipeMutation.isPending,
   };
 }
-

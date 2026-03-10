@@ -34,31 +34,30 @@ export function EmptyState({ onRefresh }: EmptyStateProps) {
       </motion.div>
       
       <h3 className="text-xl font-semibold text-foreground mb-2">
-        ׳¢׳‘׳¨׳×׳ ׳¢׳ ׳›׳ ׳”׳”׳×׳׳׳•׳×! נ‰
+        עברתם על כל ההתאמות! 🎉
       </h3>
       <p className="text-muted-foreground mb-6 max-w-xs leading-relaxed">
-        ׳›׳ ׳”׳›׳‘׳•׳“! ׳¡׳™׳™׳׳×׳ ׳׳¢׳‘׳•׳¨ ׳¢׳ ׳›׳ ׳”׳₪׳¨׳•׳₪׳™׳׳™׳ ׳”׳–׳׳™׳ ׳™׳ ׳›׳¨׳’׳¢. 
-        ׳—׳–׳¨׳• ׳׳׳•׳—׳¨ ׳™׳•׳×׳¨ ׳׳’׳׳•׳× ׳₪׳¨׳•׳₪׳™׳׳™׳ ׳—׳“׳©׳™׳.
+        כל הכבוד! סיימתם לעבור על כל הפרופילים הזמינים כרגע. 
+        חזרו מאוחר יותר לגלות פרופילים חדשים.
       </p>
       
       <div className="space-y-3">
         <Button onClick={onRefresh} className="gap-2 w-full">
           <RefreshCw className="w-4 h-4" />
-          ׳‘׳“׳§׳• ׳©׳•׳‘
+          בדקו שוב
         </Button>
         
         <Link to="/profile" className="block">
           <Button variant="outline" className="gap-2 w-full">
             <Sparkles className="w-4 h-4" />
-            ׳©׳₪׳¨׳• ׳׳× ׳”׳₪׳¨׳•׳₪׳™׳
+            שפרו את הפרופיל
           </Button>
         </Link>
         
         <p className="text-xs text-muted-foreground">
-          נ’¡ ׳˜׳™׳₪: ׳¢׳“׳›׳•׳ ׳”׳₪׳¨׳•׳₪׳™׳ ׳™׳›׳•׳ ׳׳©׳₪׳¨ ׳׳× ׳׳™׳›׳•׳× ׳”׳”׳×׳׳׳•׳×
+          💡 טיפ: עדכון הפרופיל יכול לשפר את איכות ההתאמות
         </p>
       </div>
     </motion.div>
   );
 }
-

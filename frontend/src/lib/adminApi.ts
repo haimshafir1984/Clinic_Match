@@ -5,7 +5,8 @@ import {
   ToggleBlockResponse,
 } from "@/types/admin";
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") || "http://localhost:10000/api";
+const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "");
+const API_BASE_URL = configuredApiBaseUrl || (import.meta.env.DEV ? "http://localhost:10000/api" : "/api");
 
 async function adminApiCall<T>(endpoint: string, options: RequestInit = {}, timeoutMs: number = 15_000): Promise<T> {
   const token = localStorage.getItem("auth_token");
@@ -36,7 +37,7 @@ async function adminApiCall<T>(endpoint: string, options: RequestInit = {}, time
   } catch (error) {
     window.clearTimeout(timeoutId);
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("הבקשה נכשלה - השרת לא מגיב. נסה שוב.");
+      throw new Error("����� ����� - ���� �� ����. ��� ���.");
     }
     throw error;
   }
@@ -118,4 +119,3 @@ export async function toggleUserBlock(request: ToggleBlockRequest): Promise<Togg
     message: response.message,
   };
 }
-

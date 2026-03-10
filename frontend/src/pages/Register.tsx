@@ -57,7 +57,7 @@ export default function Register() {
     setNetworkError(null);
 
     if (!email.trim() || !name.trim() || !city.trim() || !role || !workplaceDomain || positions.length === 0) {
-      toast.error("Χ Χ ΧΧ”Χ©ΧΧ™Χ ΧΧª Χ›Χ Χ”Χ©Χ“Χ•Χª Χ”Χ Χ“Χ¨Χ©Χ™Χ");
+      toast.error("πΰ μδωμιν ΰϊ λμ δωγεϊ δπγψωιν");
       return;
     }
 
@@ -75,18 +75,18 @@ export default function Register() {
       });
 
       if (error) {
-        if (error.message.includes("Request failed") || error.message.includes("ΧΧ ΧΧ’Χ™Χ‘")) {
+        if (error.message.includes("Request failed") || error.message.includes("μΰ ξβια")) {
           setNetworkError(error.message);
         } else {
-          toast.error("Χ©Χ’Χ™ΧΧ” Χ‘Χ”Χ¨Χ©ΧΧ”", { description: error.message });
+          toast.error("ωβιΰδ αδψωξδ", { description: error.message });
         }
         return;
       }
 
-      toast.success("Χ Χ¨Χ©ΧΧª Χ‘Χ”Χ¦ΧΧ—Χ”");
+      toast.success("πψωξϊ αδφμηδ");
       navigate("/profile", { state: { isNew: true } });
     } catch {
-      setNetworkError("Χ©Χ’Χ™ΧΧ” Χ‘ΧªΧ§Χ©Χ•Χ¨Χª ΧΆΧ Χ”Χ©Χ¨Χª. Χ Χ΅Χ” Χ©Χ•Χ‘.");
+      setNetworkError("ωβιΰδ αϊχωεψϊ ςν δωψϊ. πρδ ωεα.");
     } finally {
       setLoading(false);
     }
@@ -98,13 +98,13 @@ export default function Register() {
         <div className="mb-6 flex flex-col items-center text-center">
           <BrandMark size={64} className="mb-3 h-16 w-16 rounded-2xl shadow-lg" />
           <h1 className="text-2xl font-bold">ShiftMatch</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Χ”Χ¨Χ©ΧΧ” Χ§Χ¦Χ¨Χ” Χ•Χ™Χ•Χ¦ΧΧ™Χ ΧΧ”ΧªΧ—Χ™Χ Χ”ΧªΧΧΧ•Χª</p>
+          <p className="mt-2 text-sm text-muted-foreground">δψωξδ χφψδ ειεφΰιν μδϊηιμ δϊΰξεϊ</p>
         </div>
 
         <Card className="border-0 shadow-xl">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl">Χ”Χ¨Χ©ΧΧ”</CardTitle>
-            <CardDescription>4 Χ©ΧΧ‘Χ™Χ Χ§Χ¦Χ¨Χ™Χ ΧΧ¤ΧªΧ™Χ—Χª Χ¤Χ¨Χ•Χ¤Χ™Χ</CardDescription>
+            <CardTitle className="text-2xl">δψωξδ</CardTitle>
+            <CardDescription>4 ωμαιν χφψιν μτϊιηϊ τψετιμ</CardDescription>
           </CardHeader>
 
           {networkError && (
@@ -129,11 +129,11 @@ export default function Register() {
                   <motion.div key="role" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="grid grid-cols-2 gap-3">
                     <Button type="button" variant={role === "CLINIC" ? "default" : "outline"} className="h-auto flex-col gap-2 py-6" onClick={() => { setRole("CLINIC"); goToNextStep(); }}>
                       <Building2 className="h-8 w-8" />
-                      Χ‘Χ™Χª ΧΆΧ΅Χ§
+                      αιϊ ςρχ
                     </Button>
                     <Button type="button" variant={role === "STAFF" ? "default" : "outline"} className="h-auto flex-col gap-2 py-6" onClick={() => { setRole("STAFF"); goToNextStep(); }}>
                       <UserRound className="h-8 w-8" />
-                      ΧΆΧ•Χ‘Χ“/Χª
+                      ςεαγ/ϊ
                     </Button>
                   </motion.div>
                 )}
@@ -148,7 +148,7 @@ export default function Register() {
                   <motion.div key="positions" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
                     <RoleMultiSelector domain={workplaceDomain} selectedRoles={positions} onChange={setPositions} />
                     <Button type="button" className="w-full" disabled={positions.length === 0} onClick={goToNextStep}>
-                      Χ”ΧΧ©Χ
+                      δξωκ
                       <ArrowLeft className="mr-2 h-4 w-4" />
                     </Button>
                   </motion.div>
@@ -160,16 +160,16 @@ export default function Register() {
                       {positions.map((position) => <span key={position} className="rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">{position}</span>)}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="name">Χ©Χ ΧΧΧ / Χ©Χ Χ‘Χ™Χª Χ”ΧΆΧ΅Χ§</Label>
+                      <Label htmlFor="name">ων ξμΰ / ων αιϊ δςρχ</Label>
                       <Input id="name" value={name} onChange={(event) => setName(event.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="email">ΧΧ™ΧΧ™Χ™Χ</Label>
+                      <Label htmlFor="email">ΰιξιιμ</Label>
                       <Input id="email" type="email" value={email} dir="ltr" onChange={(event) => setEmail(event.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label>ΧΆΧ™Χ¨ / ΧΧ–Χ•Χ¨</Label>
-                      <CityCombobox value={city} onChange={setCity} placeholder="Χ‘Χ—Χ¨ ΧΆΧ™Χ¨" />
+                      <Label>ςιψ / ΰζεψ</Label>
+                      <CityCombobox value={city} onChange={setCity} placeholder="αηψ ςιψ" />
                     </div>
                   </motion.div>
                 )}
@@ -181,17 +181,17 @@ export default function Register() {
                 {canGoBack && (
                   <Button type="button" variant="outline" onClick={goToPreviousStep} className="flex-1">
                     <ArrowRight className="ml-2 h-4 w-4" />
-                    Χ—Χ–Χ¨Χ”
+                    ηζψδ
                   </Button>
                 )}
                 {isLastStep && (
                   <Button type="submit" className={cn("flex-1", !canGoBack && "w-full")} disabled={loading}>
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Χ΅Χ™Χ•Χ"}
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "ριεν"}
                   </Button>
                 )}
               </div>
               <p className="text-center text-sm text-muted-foreground">
-                Χ›Χ‘Χ¨ Χ™Χ© Χ—Χ©Χ‘Χ•Χ? <Link to="/login" className="font-medium text-primary hover:underline">ΧΧ”ΧªΧ—Χ‘Χ¨Χ•Χª</Link>
+                λαψ ιω ηωαεο? <Link to="/login" className="font-medium text-primary hover:underline">μδϊηαψεϊ</Link>
               </p>
             </CardFooter>
           </form>
@@ -200,4 +200,3 @@ export default function Register() {
     </div>
   );
 }
-

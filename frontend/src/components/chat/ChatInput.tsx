@@ -42,7 +42,7 @@ export function ChatInput({ onSend, value, onChange }: ChatInputProps) {
         <Input
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="׳”׳§׳׳“ ׳”׳•׳“׳¢׳”..."
+          placeholder="הקלד הודעה..."
           className="flex-1"
           disabled={sending}
         />
@@ -53,4 +53,3 @@ export function ChatInput({ onSend, value, onChange }: ChatInputProps) {
     </form>
   );
 }
-

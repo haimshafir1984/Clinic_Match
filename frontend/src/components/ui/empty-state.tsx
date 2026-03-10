@@ -80,14 +80,13 @@ export function NetworkError({ onRetry, message }: NetworkErrorProps) {
   return (
     <EmptyStateGeneric
       icon={AlertCircle}
-      title="׳‘׳¢׳™׳™׳× ׳×׳§׳©׳•׳¨׳×"
-      description={message || "׳׳ ׳”׳¦׳׳—׳ ׳• ׳׳”׳×׳—׳‘׳¨ ׳׳©׳¨׳×. ׳‘׳“׳•׳§ ׳׳× ׳”׳—׳™׳‘׳•׳¨ ׳׳׳™׳ ׳˜׳¨׳ ׳˜ ׳•׳ ׳¡׳” ׳©׳•׳‘."}
+      title="בעיית תקשורת"
+      description={message || "לא הצלחנו להתחבר לשרת. בדוק את החיבור לאינטרנט ונסה שוב."}
       action={{
-        label: "׳ ׳¡׳” ׳©׳•׳‘",
+        label: "נסה שוב",
         onClick: onRetry,
         variant: "outline",
       }}
     />
   );
 }
-

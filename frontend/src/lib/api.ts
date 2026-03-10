@@ -8,7 +8,8 @@ import {
   UserRole,
 } from "@/types";
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") || "http://localhost:10000/api";
+const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "");
+const API_BASE_URL = configuredApiBaseUrl || (import.meta.env.DEV ? "http://localhost:10000/api" : "/api");
 const API_TIMEOUT_MS = 15_000;
 
 async function apiCall<T>(endpoint: string, options: RequestInit = {}, timeoutMs: number = API_TIMEOUT_MS): Promise<T> {
@@ -40,7 +41,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}, timeoutMs
   } catch (error) {
     window.clearTimeout(timeoutId);
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("הבקשה נכשלה - השרת לא מגיב. נסה שוב.");
+      throw new Error("����� ����� - ���� �� ����. ��� ���.");
     }
     throw error;
   }
@@ -372,11 +373,11 @@ export async function login(email: string): Promise<{ user: CurrentUser | null; 
     if (error instanceof Error) {
       const message = error.message.toLowerCase();
       if (message.includes("not found")) {
-        return { user: null, error: "האימייל לא נמצא, אפשר להירשם", needsRegistration: true };
+        return { user: null, error: "������� �� ����, ���� ������", needsRegistration: true };
       }
       return { user: null, error: error.message };
     }
-    return { user: null, error: "ההתחברות נכשלה" };
+    return { user: null, error: "�������� �����" };
   }
 }
 
@@ -398,7 +399,7 @@ export async function createProfile(data: ProfileCreateData): Promise<{ user: Cu
     if (error instanceof Error) {
       return { user: null, error: error.message };
     }
-    return { user: null, error: "יצירת הפרופיל נכשלה" };
+    return { user: null, error: "����� ������� �����" };
   }
 }
 
@@ -523,7 +524,7 @@ export async function updateProfileApi(profileId: string, data: ProfileUpdateDat
     if (error instanceof Error) {
       return { profile: null, error: error.message };
     }
-    return { profile: null, error: "עדכון הפרופיל נכשל" };
+    return { profile: null, error: "����� ������� ����" };
   }
 }
 
@@ -591,6 +592,5 @@ export async function generateScreeningQuestions(position?: string, workplaceTyp
   });
   return response.questions || [];
 }
-
 
 
