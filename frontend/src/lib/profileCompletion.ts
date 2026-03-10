@@ -46,19 +46,19 @@ export interface ProfileCompletionResult {
 }
 
 const FIELD_LABELS: Record<string, string> = {
-  name: "שם",
-  position: "מקצוע",
-  required_position: "תפקיד מבוקש",
-  description: "תיאור",
-  city: "עיר",
-  preferred_area: "עיר מועדפת",
-  availability_days: "ימי זמינות",
-  availability_hours: "שעות זמינות",
-  availability_date: "תאריך התחלה",
-  salary_min: "שכר מינימום",
-  salary_max: "שכר מקסימום",
-  job_type: "סוג משרה",
-  experience_years: "שנות ניסיון",
+  name: "׳©׳",
+  position: "׳׳§׳¦׳•׳¢",
+  required_position: "׳×׳₪׳§׳™׳“ ׳׳‘׳•׳§׳©",
+  description: "׳×׳™׳׳•׳¨",
+  city: "׳¢׳™׳¨",
+  preferred_area: "׳¢׳™׳¨ ׳׳•׳¢׳“׳₪׳×",
+  availability_days: "׳™׳׳™ ׳–׳׳™׳ ׳•׳×",
+  availability_hours: "׳©׳¢׳•׳× ׳–׳׳™׳ ׳•׳×",
+  availability_date: "׳×׳׳¨׳™׳ ׳”׳×׳—׳׳”",
+  salary_min: "׳©׳›׳¨ ׳׳™׳ ׳™׳׳•׳",
+  salary_max: "׳©׳›׳¨ ׳׳§׳¡׳™׳׳•׳",
+  job_type: "׳¡׳•׳’ ׳׳©׳¨׳”",
+  experience_years: "׳©׳ ׳•׳× ׳ ׳™׳¡׳™׳•׳",
 };
 
 export function getFieldLabel(field: string): string {
@@ -130,3 +130,4 @@ export function calculateProfileCompletion(
     totalFields: relevantFields.length,
   };
 }
+

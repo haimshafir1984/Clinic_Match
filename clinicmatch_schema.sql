@@ -145,3 +145,4 @@ DROP TRIGGER IF EXISTS trg_matches_updated_at ON matches;
 CREATE TRIGGER trg_matches_updated_at
   BEFORE UPDATE ON matches
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+

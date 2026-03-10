@@ -18,7 +18,7 @@ export function BoostProfileSection({
       <CardHeader className="pb-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10">
         <CardTitle className="text-base font-medium flex items-center gap-2">
           <Flame className="w-4 h-4 text-amber-500" />
-          קידום פרופיל
+          ׳§׳™׳“׳•׳ ׳₪׳¨׳•׳₪׳™׳
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-4 space-y-4">
@@ -27,10 +27,10 @@ export function BoostProfileSection({
           <div className="space-y-0.5 flex-1">
             <Label htmlFor="urgent-hiring" className="text-sm font-medium flex items-center gap-2">
               <Flame className="w-4 h-4 text-orange-500" />
-              גיוס דחוף
+              ׳’׳™׳•׳¡ ׳“׳—׳•׳£
             </Label>
             <p className="text-xs text-muted-foreground">
-              הפרופיל שלך יופיע בולט יותר בפיד
+              ׳”׳₪׳¨׳•׳₪׳™׳ ׳©׳׳ ׳™׳•׳₪׳™׳¢ ׳‘׳•׳׳˜ ׳™׳•׳×׳¨ ׳‘׳₪׳™׳“
             </p>
           </div>
           <Switch
@@ -56,3 +56,4 @@ export function BoostProfileSection({
     </Card>
   );
 }
+

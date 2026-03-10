@@ -36,7 +36,7 @@ async function adminApiCall<T>(endpoint: string, options: RequestInit = {}, time
   } catch (error) {
     window.clearTimeout(timeoutId);
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("δαχωδ πλωμδ - δωψϊ μΰ ξβια. πρδ ωεα.");
+      throw new Error("Χ”Χ‘Χ§Χ©Χ” Χ Χ›Χ©ΧΧ” - Χ”Χ©Χ¨Χª ΧΧ ΧΧ’Χ™Χ‘. Χ Χ΅Χ” Χ©Χ•Χ‘.");
     }
     throw error;
   }
@@ -118,3 +118,4 @@ export async function toggleUserBlock(request: ToggleBlockRequest): Promise<Togg
     message: response.message,
   };
 }
+

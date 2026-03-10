@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -79,3 +79,4 @@ export function ChatMessages({ messages, isClosed }: ChatMessagesProps) {
     </div>
   );
 }
+

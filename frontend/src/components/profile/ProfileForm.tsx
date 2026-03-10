@@ -26,19 +26,19 @@ type UserRole = "clinic" | "worker";
 type JobType = "daily" | "temporary" | "permanent";
 
 const days = [
-  { value: "sunday", label: "ψΰωεο" },
-  { value: "monday", label: "ωπι" },
-  { value: "tuesday", label: "ωμιωι" },
-  { value: "wednesday", label: "ψαιςι" },
-  { value: "thursday", label: "ηξιωι" },
-  { value: "friday", label: "ωιωι" },
-  { value: "saturday", label: "ωαϊ" },
+  { value: "sunday", label: "Χ¨ΧΧ©Χ•Χ" },
+  { value: "monday", label: "Χ©Χ Χ™" },
+  { value: "tuesday", label: "Χ©ΧΧ™Χ©Χ™" },
+  { value: "wednesday", label: "Χ¨Χ‘Χ™ΧΆΧ™" },
+  { value: "thursday", label: "Χ—ΧΧ™Χ©Χ™" },
+  { value: "friday", label: "Χ©Χ™Χ©Χ™" },
+  { value: "saturday", label: "Χ©Χ‘Χª" },
 ];
 
 const profileSchema = z.object({
-  name: z.string().min(2, "ων ηιια μδλιμ μτηεϊ 2 ϊεειν").max(50, "ων ΰψεκ ξγι"),
+  name: z.string().min(2, "Χ©Χ Χ—Χ™Χ™Χ‘ ΧΧ”Χ›Χ™Χ ΧΧ¤Χ—Χ•Χª 2 ΧªΧ•Χ•Χ™Χ").max(50, "Χ©Χ ΧΧ¨Χ•Χ ΧΧ“Χ™"),
   role: z.enum(["clinic", "worker"]),
-  description: z.string().max(500, "ϊιΰεψ ΰψεκ ξγι").optional().or(z.literal("")),
+  description: z.string().max(500, "ΧªΧ™ΧΧ•Χ¨ ΧΧ¨Χ•Χ ΧΧ“Χ™").optional().or(z.literal("")),
   city: z.string().optional(),
   preferred_area: z.string().optional(),
   radius_km: z.number().min(1).max(100).nullable().optional(),
@@ -55,7 +55,7 @@ const profileSchema = z.object({
   }
   return true;
 }, {
-  message: "ωλψ ξιπιξεν ηιια μδιεϊ χθο ΰε ωεεδ μωλψ ξχριξεν",
+  message: "Χ©Χ›Χ¨ ΧΧ™Χ Χ™ΧΧ•Χ Χ—Χ™Χ™Χ‘ ΧΧ”Χ™Χ•Χª Χ§ΧΧ ΧΧ• Χ©Χ•Χ•Χ” ΧΧ©Χ›Χ¨ ΧΧ§Χ΅Χ™ΧΧ•Χ",
   path: ["salary_min"],
 });
 
@@ -97,7 +97,7 @@ async function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("χψιΰϊ δχεαυ πλωμδ"));
+    reader.onerror = () => reject(new Error("Χ§Χ¨Χ™ΧΧª Χ”Χ§Χ•Χ‘Χ¥ Χ Χ›Χ©ΧΧ”"));
     reader.readAsDataURL(file);
   });
 }
@@ -119,11 +119,11 @@ function MediaPicker({
     const file = event.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      toast.error("ΰτωψ μδςμεϊ ψχ χεαυ ϊξεπδ");
+      toast.error("ΧΧ¤Χ©Χ¨ ΧΧ”ΧΆΧΧ•Χª Χ¨Χ§ Χ§Χ•Χ‘Χ¥ ΧªΧΧ•Χ Χ”");
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("βεγμ δϊξεπδ δξχριξμι δεΰ 2MB");
+      toast.error("Χ’Χ•Χ“Χ Χ”ΧªΧΧ•Χ Χ” Χ”ΧΧ§Χ΅Χ™ΧΧΧ™ Χ”Χ•Χ 2MB");
       return;
     }
 
@@ -132,7 +132,7 @@ function MediaPicker({
       const dataUrl = await fileToDataUrl(file);
       onChange(dataUrl);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "δςμΰϊ δϊξεπδ πλωμδ");
+      toast.error(error instanceof Error ? error.message : "Χ”ΧΆΧΧΧª Χ”ΧªΧΧ•Χ Χ” Χ Χ›Χ©ΧΧ”");
     } finally {
       setLoading(false);
       event.target.value = "";
@@ -152,13 +152,13 @@ function MediaPicker({
             <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
             <span className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-              δςμΰϊ χεαυ
+              Χ”ΧΆΧΧΧª Χ§Χ•Χ‘Χ¥
             </span>
           </Label>
           {value && (
             <Button type="button" variant="ghost" size="sm" onClick={() => onChange(null)} className="justify-start px-0 text-destructive">
               <X className="mr-1 h-4 w-4" />
-              δρψ ϊξεπδ
+              Χ”Χ΅Χ¨ ΧªΧΧ•Χ Χ”
             </Button>
           )}
         </div>
@@ -214,22 +214,22 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
 
   const previewName = watch("name") || "";
   const primaryImage = isClinic ? logoUrl : avatarUrl;
-  const primaryLabel = isClinic ? "μεβε αιϊ δςρχ" : "ϊξεπϊ δςεαγ/ϊ";
+  const primaryLabel = isClinic ? "ΧΧ•Χ’Χ• Χ‘Χ™Χª Χ”ΧΆΧ΅Χ§" : "ΧªΧΧ•Χ Χª Χ”ΧΆΧ•Χ‘Χ“/Χª";
   const previewIcon = isClinic ? <Building2 className="h-8 w-8 text-primary" /> : <UserRound className="h-8 w-8 text-primary" />;
 
   const domainLabel = useMemo(() => (selectedDomain ? getDomainConfig(selectedDomain)?.label : null), [selectedDomain]);
 
   const submit = async (data: FormData) => {
     if (!currentRole) {
-      toast.error("αηψ ρεβ ξωϊξω");
+      toast.error("Χ‘Χ—Χ¨ Χ΅Χ•Χ’ ΧΧ©ΧªΧΧ©");
       return;
     }
     if (!selectedDomain) {
-      toast.error("αηψ ϊηεν");
+      toast.error("Χ‘Χ—Χ¨ ΧªΧ—Χ•Χ");
       return;
     }
     if (selectedPositions.length === 0) {
-      toast.error("αηψ μτηεϊ ϊτχιγ ΰηγ");
+      toast.error("Χ‘Χ—Χ¨ ΧΧ¤Χ—Χ•Χª ΧªΧ¤Χ§Χ™Χ“ ΧΧ—Χ“");
       return;
     }
 
@@ -266,22 +266,22 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
       }
       onSuccess();
     } catch (error) {
-      toast.error("ωβιΰδ αωξιψδ", { description: error instanceof Error ? error.message : "μΰ πιϊο μωξεψ λψβς" });
+      toast.error("Χ©Χ’Χ™ΧΧ” Χ‘Χ©ΧΧ™Χ¨Χ”", { description: error instanceof Error ? error.message : "ΧΧ Χ Χ™ΧªΧ ΧΧ©ΧΧ•Χ¨ Χ›Χ¨Χ’ΧΆ" });
     }
   };
 
   if (!role && !initialData) {
     return (
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-        <p className="text-center text-muted-foreground">ΰικ πψφδ μςαεγ ςν ShiftMatch?</p>
+        <p className="text-center text-muted-foreground">ΧΧ™Χ Χ Χ¨Χ¦Χ” ΧΧΆΧ‘Χ•Χ“ ΧΆΧ ShiftMatch?</p>
         <div className="grid grid-cols-2 gap-4">
           <Button type="button" variant="outline" className="h-auto flex-col gap-3 py-6" onClick={() => { setRole("clinic"); setValue("role", "clinic"); }}>
             <Building2 className="h-8 w-8 text-primary" />
-            <span>αιϊ ςρχ</span>
+            <span>Χ‘Χ™Χª ΧΆΧ΅Χ§</span>
           </Button>
           <Button type="button" variant="outline" className="h-auto flex-col gap-3 py-6" onClick={() => { setRole("worker"); setValue("role", "worker"); }}>
             <UserRound className="h-8 w-8 text-primary" />
-            <span>ςεαγ/ϊ</span>
+            <span>ΧΆΧ•Χ‘Χ“/Χª</span>
           </Button>
         </div>
       </motion.div>
@@ -296,7 +296,7 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5 text-primary" />
-            τψετιμ
+            Χ¤Χ¨Χ•Χ¤Χ™Χ
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -320,8 +320,8 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
                 <AvatarFallback>{previewIcon}</AvatarFallback>
               </Avatar>
               <div>
-                <div className="font-semibold">{previewName || (isClinic ? "αιϊ δςρχ ωμκ" : "δτψετιμ ωμκ")}</div>
-                <div className="text-sm text-muted-foreground">{domainLabel || "αηψ ϊηεν εϊτχιγιν"}</div>
+                <div className="font-semibold">{previewName || (isClinic ? "Χ‘Χ™Χª Χ”ΧΆΧ΅Χ§ Χ©ΧΧ" : "Χ”Χ¤Χ¨Χ•Χ¤Χ™Χ Χ©ΧΧ")}</div>
+                <div className="text-sm text-muted-foreground">{domainLabel || "Χ‘Χ—Χ¨ ΧªΧ—Χ•Χ Χ•ΧªΧ¤Χ§Χ™Χ“Χ™Χ"}</div>
                 {selectedPositions.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {selectedPositions.map((position) => (
@@ -334,13 +334,13 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name">{isClinic ? "ων αιϊ δςρχ" : "ων ξμΰ"}</Label>
+            <Label htmlFor="name">{isClinic ? "Χ©Χ Χ‘Χ™Χª Χ”ΧΆΧ΅Χ§" : "Χ©Χ ΧΧΧ"}</Label>
             <Input id="name" {...register("name")} />
             {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label>ϊηεν</Label>
+            <Label>ΧªΧ—Χ•Χ</Label>
             <DomainSelector
               value={selectedDomain}
               onChange={(domain, _industry) => {
@@ -352,17 +352,17 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
 
           {selectedDomain && (
             <div className="space-y-2">
-              <Label>ϊτχιγιν</Label>
+              <Label>ΧªΧ¤Χ§Χ™Χ“Χ™Χ</Label>
               <RoleMultiSelector domain={selectedDomain} selectedRoles={selectedPositions} onChange={setSelectedPositions} />
             </div>
           )}
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="description">ϊιΰεψ</Label>
+              <Label htmlFor="description">ΧªΧ™ΧΧ•Χ¨</Label>
               <Button type="button" variant="ghost" size="sm" onClick={() => setShowMagicWrite(true)} className="gap-2">
                 <Sparkles className="h-4 w-4" />
-                λϊιαδ ηλξδ
+                Χ›ΧªΧ™Χ‘Χ” Χ—Χ›ΧΧ”
               </Button>
             </div>
             <Textarea id="description" rows={4} {...register("description")} />
@@ -375,27 +375,27 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-primary" />
-            ξιχεν εδςγτεϊ
+            ΧΧ™Χ§Χ•Χ Χ•Χ”ΧΆΧ“Χ¤Χ•Χª
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>{isClinic ? "ςιψ" : "ΰζεψ ξεςγσ"}</Label>
+            <Label>{isClinic ? "ΧΆΧ™Χ¨" : "ΧΧ–Χ•Χ¨ ΧΧ•ΧΆΧ“Χ£"}</Label>
             <CityCombobox
               value={(isClinic ? watch("city") : watch("preferred_area")) || ""}
               onChange={(value) => setValue(isClinic ? "city" : "preferred_area", value, { shouldValidate: true })}
-              placeholder={isClinic ? "αηψ ςιψ" : "αηψ ΰζεψ"}
+              placeholder={isClinic ? "Χ‘Χ—Χ¨ ΧΆΧ™Χ¨" : "Χ‘Χ—Χ¨ ΧΧ–Χ•Χ¨"}
             />
           </div>
 
           {isClinic ? (
             <div className="space-y-2">
-              <Label htmlFor="radius_km">ψγιερ ηιτεω</Label>
+              <Label htmlFor="radius_km">Χ¨Χ“Χ™Χ•Χ΅ Χ—Χ™Χ¤Χ•Χ©</Label>
               <Input id="radius_km" type="number" min={1} max={100} {...register("radius_km", { valueAsNumber: true })} />
             </div>
           ) : (
             <div className="space-y-2">
-              <Label htmlFor="experience_years">ωπεϊ πιριεο</Label>
+              <Label htmlFor="experience_years">Χ©Χ Χ•Χª Χ Χ™Χ΅Χ™Χ•Χ</Label>
               <Input id="experience_years" type="number" min={0} max={50} {...register("experience_years", { valueAsNumber: true })} />
             </div>
           )}
@@ -406,12 +406,12 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
-            ζξιπεϊ εϊπΰιν
+            Χ–ΧΧ™Χ Χ•Χª Χ•ΧªΧ ΧΧ™Χ
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>ιξι ζξιπεϊ</Label>
+            <Label>Χ™ΧΧ™ Χ–ΧΧ™Χ Χ•Χª</Label>
             <div className="flex flex-wrap gap-2">
               {days.map((day) => {
                 const checked = selectedDays.includes(day.value);
@@ -436,37 +436,37 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="availability_hours">ωςεϊ</Label>
+              <Label htmlFor="availability_hours">Χ©ΧΆΧ•Χª</Label>
               <Input id="availability_hours" {...register("availability_hours")} placeholder="08:00 - 16:00" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="availability_date">ϊΰψικ δϊημδ</Label>
+              <Label htmlFor="availability_date">ΧªΧΧ¨Χ™Χ Χ”ΧªΧ—ΧΧ”</Label>
               <Input id="availability_date" type="date" {...register("availability_date")} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="salary_min">ωλψ ξιπιξεν</Label>
+              <Label htmlFor="salary_min">Χ©Χ›Χ¨ ΧΧ™Χ Χ™ΧΧ•Χ</Label>
               <Input id="salary_min" type="number" min={0} {...register("salary_min", { valueAsNumber: true })} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="salary_max">ωλψ ξχριξεν</Label>
+              <Label htmlFor="salary_max">Χ©Χ›Χ¨ ΧΧ§Χ΅Χ™ΧΧ•Χ</Label>
               <Input id="salary_max" type="number" min={0} {...register("salary_max", { valueAsNumber: true })} />
             </div>
           </div>
           {errors.salary_min && <p className="text-sm text-destructive">{errors.salary_min.message}</p>}
 
           <div className="space-y-2">
-            <Label>ρεβ ξωψδ</Label>
+            <Label>Χ΅Χ•Χ’ ΧΧ©Χ¨Χ”</Label>
             <Select value={watch("job_type") || undefined} onValueChange={(value) => setValue("job_type", value as JobType)}>
               <SelectTrigger>
-                <SelectValue placeholder="αηψ ρεβ ξωψδ" />
+                <SelectValue placeholder="Χ‘Χ—Χ¨ Χ΅Χ•Χ’ ΧΧ©Χ¨Χ”" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="daily">ιεξι</SelectItem>
-                <SelectItem value="temporary">ζξπι</SelectItem>
-                <SelectItem value="permanent">χαες</SelectItem>
+                <SelectItem value="daily">Χ™Χ•ΧΧ™</SelectItem>
+                <SelectItem value="temporary">Χ–ΧΧ Χ™</SelectItem>
+                <SelectItem value="permanent">Χ§Χ‘Χ•ΧΆ</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -488,11 +488,12 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
 
       <Button type="submit" className="w-full gap-2" size="lg" disabled={isLoading}>
         {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-        {isEditing ? "ςγλεο τψετιμ" : "ωξιψδ εδϊημδ"}
+        {isEditing ? "ΧΆΧ“Χ›Χ•Χ Χ¤Χ¨Χ•Χ¤Χ™Χ" : "Χ©ΧΧ™Χ¨Χ” Χ•Χ”ΧªΧ—ΧΧ”"}
       </Button>
 
       <MagicWriteModal open={showMagicWrite} onOpenChange={setShowMagicWrite} role={currentRole as UserRole} onGenerated={(bio) => setValue("description", bio)} />
     </form>
   );
 }
+
 

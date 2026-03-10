@@ -1,4 +1,4 @@
-﻿import { AppLayout } from "@/components/layout/AppLayout";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { useMatches } from "@/hooks/useMatches";
 import { MatchCard } from "@/components/matches/MatchCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -117,3 +117,4 @@ export default function Matches() {
     </AppLayout>
   );
 }
+

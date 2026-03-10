@@ -20,7 +20,7 @@ export function MagicWriteModal({ open, onOpenChange, role, onGenerated }: Magic
 
   const handleGenerate = async () => {
     if (!keywords.trim()) {
-      toast.error("πΰ μδζιο ξιμεϊ ξτϊη");
+      toast.error("Χ Χ ΧΧ”Χ–Χ™Χ ΧΧ™ΧΧ•Χª ΧΧ¤ΧªΧ—");
       return;
     }
 
@@ -30,10 +30,10 @@ export function MagicWriteModal({ open, onOpenChange, role, onGenerated }: Magic
       onGenerated(bio);
       onOpenChange(false);
       setKeywords("");
-      toast.success("δθχρθ πεφψ αδφμηδ");
+      toast.success("Χ”ΧΧ§Χ΅Χ Χ Χ•Χ¦Χ¨ Χ‘Χ”Χ¦ΧΧ—Χ”");
     } catch (error) {
-      toast.error("ωβιΰδ αιφιψϊ δθχρθ", {
-        description: error instanceof Error ? error.message : "πρε ωεα ξΰεηψ ιεϊψ",
+      toast.error("Χ©Χ’Χ™ΧΧ” Χ‘Χ™Χ¦Χ™Χ¨Χª Χ”ΧΧ§Χ΅Χ", {
+        description: error instanceof Error ? error.message : "Χ Χ΅Χ• Χ©Χ•Χ‘ ΧΧΧ•Χ—Χ¨ Χ™Χ•ΧªΧ¨",
       });
     } finally {
       setIsGenerating(false);
@@ -44,23 +44,23 @@ export function MagicWriteModal({ open, onOpenChange, role, onGenerated }: Magic
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />λϊιαδ ηλξδ</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />Χ›ΧªΧ™Χ‘Χ” Χ—Χ›ΧΧ”</DialogTitle>
           <DialogDescription>
-            {role === "clinic" ? "ϊΰψε ΰϊ αιϊ δςρχ αλξδ ξιμιν εδξςψλϊ ϊλϊεα θχρθ χφψ αωαιμλν." : "ϊΰψε ΰϊ ςφξλν αλξδ ξιμιν εδξςψλϊ ϊλϊεα θχρθ χφψ αωαιμλν."}
+            {role === "clinic" ? "ΧªΧΧ¨Χ• ΧΧª Χ‘Χ™Χª Χ”ΧΆΧ΅Χ§ Χ‘Χ›ΧΧ” ΧΧ™ΧΧ™Χ Χ•Χ”ΧΧΆΧ¨Χ›Χª ΧªΧ›ΧªΧ•Χ‘ ΧΧ§Χ΅Χ Χ§Χ¦Χ¨ Χ‘Χ©Χ‘Χ™ΧΧ›Χ." : "ΧªΧΧ¨Χ• ΧΧª ΧΆΧ¦ΧΧ›Χ Χ‘Χ›ΧΧ” ΧΧ™ΧΧ™Χ Χ•Χ”ΧΧΆΧ¨Χ›Χª ΧªΧ›ΧªΧ•Χ‘ ΧΧ§Χ΅Χ Χ§Χ¦Χ¨ Χ‘Χ©Χ‘Χ™ΧΧ›Χ."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="keywords">ξιμεϊ ξτϊη</Label>
-            <Input id="keywords" value={keywords} onChange={(event) => setKeywords(event.target.value)} disabled={isGenerating} placeholder={role === "clinic" ? "ξχφεςι, ωιψεϊι, ξδιψ" : "ΰηψΰι, ιρεγι, ξπερδ"} />
+            <Label htmlFor="keywords">ΧΧ™ΧΧ•Χª ΧΧ¤ΧªΧ—</Label>
+            <Input id="keywords" value={keywords} onChange={(event) => setKeywords(event.target.value)} disabled={isGenerating} placeholder={role === "clinic" ? "ΧΧ§Χ¦Χ•ΧΆΧ™, Χ©Χ™Χ¨Χ•ΧªΧ™, ΧΧ”Χ™Χ¨" : "ΧΧ—Χ¨ΧΧ™, Χ™Χ΅Χ•Χ“Χ™, ΧΧ Χ•Χ΅Χ”"} />
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isGenerating}>αιθεμ</Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isGenerating}>Χ‘Χ™ΧΧ•Χ</Button>
             <Button onClick={handleGenerate} disabled={isGenerating || !keywords.trim()} className="gap-2">
               {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              φεψ θχρθ
+              Χ¦Χ•Χ¨ ΧΧ§Χ΅Χ
             </Button>
           </div>
         </div>
@@ -68,3 +68,4 @@ export function MagicWriteModal({ open, onOpenChange, role, onGenerated }: Magic
     </Dialog>
   );
 }
+

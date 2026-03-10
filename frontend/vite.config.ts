@@ -1,11 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 
-// https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig({
   server: {
     host: "::",
     port: 8080,
@@ -15,14 +13,13 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg", "favicon.ico", "apple-touch-icon.png", "robots.txt"],
+      includeAssets: ["favicon-new.svg", "favicon.ico", "apple-touch-icon.png", "robots.txt"],
       manifest: {
-        name: "ClinicMatch - השמת עובדי רפואה",
-        short_name: "ClinicMatch",
-        description: "פלטפורמת השמה לעובדי רפואה. מצא את ההתאמה המושלמת בין מרפאות לעובדים.",
+        name: "ShiftMatch",
+        short_name: "ShiftMatch",
+        description: "Platform for matching workers and businesses across multiple industries.",
         start_url: "/",
         display: "standalone",
         background_color: "#f8f9fa",
@@ -32,7 +29,7 @@ export default defineConfig(({ mode }) => ({
         lang: "he",
         icons: [
           {
-            src: "/favicon.svg",
+            src: "/favicon-new.svg",
             sizes: "any",
             type: "image/svg+xml",
             purpose: "any maskable",
@@ -48,48 +45,17 @@ export default defineConfig(({ mode }) => ({
             type: "image/png",
           },
         ],
-        categories: ["medical", "business", "productivity"],
+        categories: ["business", "productivity", "jobs"],
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "google-fonts-cache",
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "gstatic-fonts-cache",
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
-        ],
       },
     }),
-  ].filter(Boolean),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-    // Prevent duplicate React instances that break Radix UI context
     dedupe: ["react", "react-dom", "react/jsx-runtime"],
   },
-}));
+});

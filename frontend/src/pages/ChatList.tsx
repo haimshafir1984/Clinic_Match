@@ -32,7 +32,7 @@ export default function ChatList() {
   return (
     <AppLayout>
       <div className="p-4 max-w-md mx-auto">
-        <h1 className="text-2xl font-bold text-foreground mb-6">ωιηεϊ</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-6">Χ©Χ™Χ—Χ•Χª</h1>
 
         {isLoading ? (
           <ChatListSkeleton />
@@ -45,9 +45,9 @@ export default function ChatList() {
             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
               <MessageCircle className="w-10 h-10 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">ΰιο ωιηεϊ τςιμεϊ</h3>
+            <h3 className="text-lg font-semibold mb-2">ΧΧ™Χ Χ©Χ™Χ—Χ•Χª Χ¤ΧΆΧ™ΧΧ•Χª</h3>
             <p className="text-muted-foreground">
-              λωϊδιδ δϊΰξδ, ϊελμ μδϊηιμ μγαψ ΰιϊδ λΰο
+              Χ›Χ©ΧªΧ”Χ™Χ” Χ”ΧªΧΧΧ”, ΧªΧ•Χ›Χ ΧΧ”ΧªΧ—Χ™Χ ΧΧ“Χ‘Χ¨ ΧΧ™ΧªΧ” Χ›ΧΧ
             </p>
           </motion.div>
         ) : (
@@ -92,3 +92,4 @@ export default function ChatList() {
     </AppLayout>
   );
 }
+

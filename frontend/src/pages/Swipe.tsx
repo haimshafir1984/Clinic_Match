@@ -91,7 +91,7 @@ export default function Swipe() {
         }
       }, 300);
     } catch (error) {
-      toast.error("שגיאה בשליחת הלייק");
+      toast.error("׳©׳’׳™׳׳” ׳‘׳©׳׳™׳—׳× ׳”׳׳™׳™׳§");
       setDirection(null);
     }
   };
@@ -109,7 +109,7 @@ export default function Swipe() {
         setCurrentIndex((prev) => prev + 1);
       }, 300);
     } catch (error) {
-      toast.error("שגיאה");
+      toast.error("׳©׳’׳™׳׳”");
       setDirection(null);
     }
   };
@@ -138,7 +138,7 @@ export default function Swipe() {
         <div className="flex items-center justify-center h-[80vh]">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">מחפש פרופילים...</p>
+            <p className="text-muted-foreground">׳׳—׳₪׳© ׳₪׳¨׳•׳₪׳™׳׳™׳...</p>
           </div>
         </div>
       </AppLayout>
@@ -153,15 +153,15 @@ export default function Swipe() {
             <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
               <AlertTriangle className="w-8 h-8 text-destructive" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground">שגיאה בטעינת הפרופילים</h2>
+            <h2 className="text-xl font-semibold text-foreground">׳©׳’׳™׳׳” ׳‘׳˜׳¢׳™׳ ׳× ׳”׳₪׳¨׳•׳₪׳™׳׳™׳</h2>
             <p className="text-muted-foreground max-w-sm">
-              {error instanceof Error ? error.message : "לא הצלחנו לטעון את הפרופילים. נסה שוב."}
+              {error instanceof Error ? error.message : "׳׳ ׳”׳¦׳׳—׳ ׳• ׳׳˜׳¢׳•׳ ׳׳× ׳”׳₪׳¨׳•׳₪׳™׳׳™׳. ׳ ׳¡׳” ׳©׳•׳‘."}
             </p>
             <button
               onClick={() => refetch()}
               className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
-              נסה שוב
+              ׳ ׳¡׳” ׳©׳•׳‘
             </button>
           </div>
         </div>
@@ -174,9 +174,9 @@ export default function Swipe() {
       <div className="flex flex-col h-[calc(100dvh-9rem)] max-w-md mx-auto p-4">
         {/* Header */}
         <div className="text-center mb-2">
-          <h1 className="text-2xl font-bold text-foreground">גלו התאמות</h1>
+          <h1 className="text-2xl font-bold text-foreground">׳’׳׳• ׳”׳×׳׳׳•׳×</h1>
           <p className="text-sm text-muted-foreground">
-            החליקו ימינה לסימון עניין, שמאלה לדילוג
+            ׳”׳—׳׳™׳§׳• ׳™׳׳™׳ ׳” ׳׳¡׳™׳׳•׳ ׳¢׳ ׳™׳™׳, ׳©׳׳׳׳” ׳׳“׳™׳׳•׳’
           </p>
         </div>
 
@@ -226,3 +226,4 @@ export default function Swipe() {
     </AppLayout>
   );
 }
+

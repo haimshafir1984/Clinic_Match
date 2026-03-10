@@ -1,4 +1,4 @@
-﻿export type Industry = "medical" | "tech" | "education" | "construction" | "daily" | "communication" | "insurance";
+export type Industry = "medical" | "tech" | "education" | "construction" | "daily" | "communication" | "insurance";
 
 export type WorkplaceDomain =
   | "dental" | "optics" | "aesthetics" | "physio"
@@ -90,3 +90,4 @@ export function getIndustryConfig(industry: Industry): IndustryConfig | undefine
 export function getAllRoles(): string[] {
   return Array.from(new Set(DOMAINS.flatMap((item) => item.roles)));
 }
+

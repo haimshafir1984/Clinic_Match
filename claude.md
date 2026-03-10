@@ -1,70 +1,70 @@
-# CLAUDE.md — מיפוי פרויקט ClinicMatch
-**עודכן:** 2026-03-02 | **סטטוס:** 🔴 NOT PRODUCTION-READY – יש לטפל בבעיות קריטיות לפני השקה
+# CLAUDE.md ג€” ׳׳™׳₪׳•׳™ ׳₪׳¨׳•׳™׳§׳˜ ClinicMatch
+**׳¢׳•׳“׳›׳:** 2026-03-02 | **׳¡׳˜׳˜׳•׳¡:** נ”´ NOT PRODUCTION-READY ג€“ ׳™׳© ׳׳˜׳₪׳ ׳‘׳‘׳¢׳™׳•׳× ׳§׳¨׳™׳˜׳™׳•׳× ׳׳₪׳ ׳™ ׳”׳©׳§׳”
 
 ---
 
-## TL;DR למפתח חדש
-**מה זה:** פלטפורמת Tinder לתחום הרפואה — מרפאות ועובדים מחליקים כרטיסים, match = צ'אט.
-**Stack:** React+TS (Vite) בפרונטאנד, Express+PostgreSQL בבאקנד, JWT auth (ללא סיסמה!), AI עם GPT-4o-mini.
-**איפה לשנות תחומים/תפקידים:** `frontend/src/constants/domains.ts`
-**API Base URL:** `https://clinic-match.onrender.com/api` (hardcoded ב-`frontend/src/lib/api.ts`)
+## TL;DR ׳׳׳₪׳×׳— ׳—׳“׳©
+**׳׳” ׳–׳”:** ׳₪׳׳˜׳₪׳•׳¨׳׳× Tinder ׳׳×׳—׳•׳ ׳”׳¨׳₪׳•׳׳” ג€” ׳׳¨׳₪׳׳•׳× ׳•׳¢׳•׳‘׳“׳™׳ ׳׳—׳׳™׳§׳™׳ ׳›׳¨׳˜׳™׳¡׳™׳, match = ׳¦'׳׳˜.
+**Stack:** React+TS (Vite) ׳‘׳₪׳¨׳•׳ ׳˜׳׳ ׳“, Express+PostgreSQL ׳‘׳‘׳׳§׳ ׳“, JWT auth (׳׳׳ ׳¡׳™׳¡׳׳”!), AI ׳¢׳ GPT-4o-mini.
+**׳׳™׳₪׳” ׳׳©׳ ׳•׳× ׳×׳—׳•׳׳™׳/׳×׳₪׳§׳™׳“׳™׳:** `frontend/src/constants/domains.ts`
+**API Base URL:** `https://clinic-match.onrender.com/api` (hardcoded ׳‘-`frontend/src/lib/api.ts`)
 
 ---
 
-# ClinicMatch – Architecture Review & Production Readiness Audit
+# ClinicMatch ג€“ Architecture Review & Production Readiness Audit
 **Reviewed:** 2026-03-02 | **Reviewer:** Senior Product Architect + Mobile UX Expert + Fullstack Reviewer
-**Status:** 🔴 NOT PRODUCTION-READY – Critical issues must be resolved first
+**Status:** נ”´ NOT PRODUCTION-READY ג€“ Critical issues must be resolved first
 
 ---
 
-## חלק 1 – סקירה טכנית מלאה
+## ׳—׳׳§ 1 ג€“ ׳¡׳§׳™׳¨׳” ׳˜׳›׳ ׳™׳× ׳׳׳׳”
 
 ---
 
-### 1. מבנה תיקיות
+### 1. ׳׳‘׳ ׳” ׳×׳™׳§׳™׳•׳×
 
 ```
 clinic_match/
-├── backend/
-│   ├── server.js          # שרת Express בודד (monolith)
-│   └── package.json       # express, pg, cors, jsonwebtoken, openai, dotenv
-│
-└── frontend/
-    ├── src/
-    │   ├── App.tsx                    # Router + Guards + Providers
-    │   ├── pages/                     # דפי אפליקציה (Login, Register, Swipe, Matches, Chat, ChatList, Profile, Insights, Admin)
-    │   ├── components/
-    │   │   ├── auth/                  # AuthGuard, ProfileGuard
-    │   │   ├── chat/                  # ChatInput, ChatMessages, AIChatAssistant
-    │   │   ├── layout/                # AppLayout, BottomNav, TopHeader
-    │   │   ├── matches/               # MatchCard
-    │   │   ├── profile/               # ProfileForm, ProfileView, BoostProfileSection, MagicWriteModal, RecruitmentSettings
-    │   │   ├── registration/          # DomainSelector, RoleMultiSelector
-    │   │   ├── swipe/                 # SwipeCard, SwipeActions, EmptyState, MatchCelebration, NaturalLanguageSearch
-    │   │   └── ui/                    # shadcn/ui components (~40 components)
-    │   ├── contexts/
-    │   │   └── AuthContext.tsx        # Auth state management
-    │   ├── hooks/                     # useChatMessages, useMatchDetails, useMatches, useProfile, useSwipeProfiles
-    │   ├── integrations/supabase/     # ⚠️ Supabase client ו-types – לא בשימוש פעיל
-    │   ├── lib/
-    │   │   ├── api.ts                 # כל ה-API calls לבאקנד
-    │   │   ├── adminApi.ts            # Admin API calls
-    │   │   └── profileCompletion.ts   # חישוב השלמת פרופיל
-    │   ├── types/
-    │   │   ├── index.ts               # Types ראשיים
-    │   │   └── admin.ts               # Types לאדמין
-    │   └── constants/
-    │       └── domains.ts             # רשימת תחומי עיסוק
-    ├── supabase/
-    │   └── migrations/                # Migration אחד בלבד (RLS policies)
-    └── package.json                   # React, Vite, TanStack Query, Framer Motion, shadcn/ui, Tailwind
+ג”ג”€ג”€ backend/
+ג”‚   ג”ג”€ג”€ server.js          # ׳©׳¨׳× Express ׳‘׳•׳“׳“ (monolith)
+ג”‚   ג””ג”€ג”€ package.json       # express, pg, cors, jsonwebtoken, openai, dotenv
+ג”‚
+ג””ג”€ג”€ frontend/
+    ג”ג”€ג”€ src/
+    ג”‚   ג”ג”€ג”€ App.tsx                    # Router + Guards + Providers
+    ג”‚   ג”ג”€ג”€ pages/                     # ׳“׳₪׳™ ׳׳₪׳׳™׳§׳¦׳™׳” (Login, Register, Swipe, Matches, Chat, ChatList, Profile, Insights, Admin)
+    ג”‚   ג”ג”€ג”€ components/
+    ג”‚   ג”‚   ג”ג”€ג”€ auth/                  # AuthGuard, ProfileGuard
+    ג”‚   ג”‚   ג”ג”€ג”€ chat/                  # ChatInput, ChatMessages, AIChatAssistant
+    ג”‚   ג”‚   ג”ג”€ג”€ layout/                # AppLayout, BottomNav, TopHeader
+    ג”‚   ג”‚   ג”ג”€ג”€ matches/               # MatchCard
+    ג”‚   ג”‚   ג”ג”€ג”€ profile/               # ProfileForm, ProfileView, BoostProfileSection, MagicWriteModal, RecruitmentSettings
+    ג”‚   ג”‚   ג”ג”€ג”€ registration/          # DomainSelector, RoleMultiSelector
+    ג”‚   ג”‚   ג”ג”€ג”€ swipe/                 # SwipeCard, SwipeActions, EmptyState, MatchCelebration, NaturalLanguageSearch
+    ג”‚   ג”‚   ג””ג”€ג”€ ui/                    # shadcn/ui components (~40 components)
+    ג”‚   ג”ג”€ג”€ contexts/
+    ג”‚   ג”‚   ג””ג”€ג”€ AuthContext.tsx        # Auth state management
+    ג”‚   ג”ג”€ג”€ hooks/                     # useChatMessages, useMatchDetails, useMatches, useProfile, useSwipeProfiles
+    ג”‚   ג”ג”€ג”€ integrations/supabase/     # ג ן¸ Supabase client ׳•-types ג€“ ׳׳ ׳‘׳©׳™׳׳•׳© ׳₪׳¢׳™׳
+    ג”‚   ג”ג”€ג”€ lib/
+    ג”‚   ג”‚   ג”ג”€ג”€ api.ts                 # ׳›׳ ׳”-API calls ׳׳‘׳׳§׳ ׳“
+    ג”‚   ג”‚   ג”ג”€ג”€ adminApi.ts            # Admin API calls
+    ג”‚   ג”‚   ג””ג”€ג”€ profileCompletion.ts   # ׳—׳™׳©׳•׳‘ ׳”׳©׳׳׳× ׳₪׳¨׳•׳₪׳™׳
+    ג”‚   ג”ג”€ג”€ types/
+    ג”‚   ג”‚   ג”ג”€ג”€ index.ts               # Types ׳¨׳׳©׳™׳™׳
+    ג”‚   ג”‚   ג””ג”€ג”€ admin.ts               # Types ׳׳׳“׳׳™׳
+    ג”‚   ג””ג”€ג”€ constants/
+    ג”‚       ג””ג”€ג”€ domains.ts             # ׳¨׳©׳™׳׳× ׳×׳—׳•׳׳™ ׳¢׳™׳¡׳•׳§
+    ג”ג”€ג”€ supabase/
+    ג”‚   ג””ג”€ג”€ migrations/                # Migration ׳׳—׳“ ׳‘׳׳‘׳“ (RLS policies)
+    ג””ג”€ג”€ package.json                   # React, Vite, TanStack Query, Framer Motion, shadcn/ui, Tailwind
 ```
 
 ---
 
-### 2. טכנולוגיות בשימוש
+### 2. ׳˜׳›׳ ׳•׳׳•׳’׳™׳•׳× ׳‘׳©׳™׳׳•׳©
 
-| שכבה | טכנולוגיה | גרסה / הערה |
+| ׳©׳›׳‘׳” | ׳˜׳›׳ ׳•׳׳•׳’׳™׳” | ׳’׳¨׳¡׳” / ׳”׳¢׳¨׳” |
 |---|---|---|
 | Frontend Framework | React + TypeScript | Vite build |
 | UI Library | shadcn/ui + Tailwind CSS | RTL support |
@@ -73,340 +73,340 @@ clinic_match/
 | Routing | React Router v6 | guards implemented |
 | Backend | Node.js + Express | single file monolith |
 | Database (Backend) | PostgreSQL | via `pg` pool |
-| Database (Supabase) | Supabase (PostgreSQL) | ⚠️ schema שונה, לא בשימוש בפועל |
+| Database (Supabase) | Supabase (PostgreSQL) | ג ן¸ schema ׳©׳•׳ ׳”, ׳׳ ׳‘׳©׳™׳׳•׳© ׳‘׳₪׳•׳¢׳ |
 | Auth | JWT (jsonwebtoken) | email-only, NO password |
 | AI | OpenAI GPT-4o-mini | bio generation + screening questions |
 | Deployment | Render.com (backend) | free tier = cold starts |
-| PWA | Vite PWA Plugin | manifest + icons קיימים |
+| PWA | Vite PWA Plugin | manifest + icons ׳§׳™׳™׳׳™׳ |
 
 ---
 
-### 3. זרימת משתמש עיקרית (User Flow)
+### 3. ׳–׳¨׳™׳׳× ׳׳©׳×׳׳© ׳¢׳™׳§׳¨׳™׳× (User Flow)
 
 ```
 [Login Page]
-  ├── משתמש קיים → POST /api/auth/login (email בלבד) → JWT → localStorage → /swipe
-  └── משתמש חדש → /register
-        ├── Step 1: Role (CLINIC / STAFF)
-        ├── Step 2: Domain (dental, optics, etc.)
-        ├── Step 3: Positions (multi-select)
-        └── Step 4: Details (name, email, city) → POST /api/profiles → JWT → /profile
+  ג”ג”€ג”€ ׳׳©׳×׳׳© ׳§׳™׳™׳ ג†’ POST /api/auth/login (email ׳‘׳׳‘׳“) ג†’ JWT ג†’ localStorage ג†’ /swipe
+  ג””ג”€ג”€ ׳׳©׳×׳׳© ׳—׳“׳© ג†’ /register
+        ג”ג”€ג”€ Step 1: Role (CLINIC / STAFF)
+        ג”ג”€ג”€ Step 2: Domain (dental, optics, etc.)
+        ג”ג”€ג”€ Step 3: Positions (multi-select)
+        ג””ג”€ג”€ Step 4: Details (name, email, city) ג†’ POST /api/profiles ג†’ JWT ג†’ /profile
 
 [/swipe]
-  └── GET /api/feed/:userId → כרטיסי פרופיל (20 ראשונים)
-        ├── Swipe Right (Like) → POST /api/swipe → type:LIKE → בדיקת match → אם match → celebration overlay
-        └── Swipe Left (Pass) → POST /api/swipe → type:PASS
+  ג””ג”€ג”€ GET /api/feed/:userId ג†’ ׳›׳¨׳˜׳™׳¡׳™ ׳₪׳¨׳•׳₪׳™׳ (20 ׳¨׳׳©׳•׳ ׳™׳)
+        ג”ג”€ג”€ Swipe Right (Like) ג†’ POST /api/swipe ג†’ type:LIKE ג†’ ׳‘׳“׳™׳§׳× match ג†’ ׳׳ match ג†’ celebration overlay
+        ג””ג”€ג”€ Swipe Left (Pass) ג†’ POST /api/swipe ג†’ type:PASS
 
 [/matches]
-  └── GET /api/matches/:userId → רשימת matches
+  ג””ג”€ג”€ GET /api/matches/:userId ג†’ ׳¨׳©׳™׳׳× matches
 
 [/chat/:matchId]
-  └── GET /api/messages/:matchId (polling 5 שניות)
-      POST /api/messages (שליחת הודעה)
+  ג””ג”€ג”€ GET /api/messages/:matchId (polling 5 ׳©׳ ׳™׳•׳×)
+      POST /api/messages (׳©׳׳™׳—׳× ׳”׳•׳“׳¢׳”)
 
 [/profile]
-  └── POST /api/profiles (upsert) + localStorage cache
+  ג””ג”€ג”€ POST /api/profiles (upsert) + localStorage cache
 
 [/insights]
-  └── נתונים סינתטיים (מחושבים לוקאלית – אין API)
+  ג””ג”€ג”€ ׳ ׳×׳•׳ ׳™׳ ׳¡׳™׳ ׳×׳˜׳™׳™׳ (׳׳—׳•׳©׳‘׳™׳ ׳׳•׳§׳׳׳™׳× ג€“ ׳׳™׳ API)
 
 [/admin]
-  └── POST /api/admin/stats + POST /api/admin/users + POST /api/admin/toggle-block
+  ג””ג”€ג”€ POST /api/admin/stats + POST /api/admin/users + POST /api/admin/toggle-block
 ```
 
 ---
 
-### 4. ניהול State
+### 4. ׳ ׳™׳”׳•׳ State
 
-| מידע | איפה נשמר | בעיה |
+| ׳׳™׳“׳¢ | ׳׳™׳₪׳” ׳ ׳©׳׳¨ | ׳‘׳¢׳™׳” |
 |---|---|---|
-| JWT Token | localStorage | ✅ תקין |
-| current_user | localStorage | ⚠️ עלול להיות stale |
-| current_profile | localStorage | 🔴 זהו ה-source of truth היחיד לפרופיל |
-| Feed profiles | React Query (in-memory) | ✅ תקין |
-| Matches | React Query (in-memory) | ✅ תקין |
-| Messages | React Query (polling 5s) | ⚠️ polling כבד |
+| JWT Token | localStorage | ג… ׳×׳§׳™׳ |
+| current_user | localStorage | ג ן¸ ׳¢׳׳•׳ ׳׳”׳™׳•׳× stale |
+| current_profile | localStorage | נ”´ ׳–׳”׳• ׳”-source of truth ׳”׳™׳—׳™׳“ ׳׳₪׳¨׳•׳₪׳™׳ |
+| Feed profiles | React Query (in-memory) | ג… ׳×׳§׳™׳ |
+| Matches | React Query (in-memory) | ג… ׳×׳§׳™׳ |
+| Messages | React Query (polling 5s) | ג ן¸ polling ׳›׳‘׳“ |
 
 ---
 
-### 5. נקודות חולשה (Weaknesses)
+### 5. ׳ ׳§׳•׳“׳•׳× ׳—׳•׳׳©׳” (Weaknesses)
 
-1. **אין GET /api/profiles/:id** – הבאקנד אינו מחזיר פרופיל לפי ID; הפרונטאנד מסתמך על localStorage cache בלבד
-2. **ללא סיסמה** – Auth מבוסס email בלבד; כל מי שיודע את האימייל יכול להתחבר
-3. **JWT default secret** – `'my_super_secret_key_12345'` בקוד אם אין `.env`
-4. **CORS פתוח לכל** – `app.use(cors())` ללא מגבלת origin
-5. **Polling חזק** – Chat מבקש כל 5 שניות; אין WebSocket
-6. **Render.com Free Tier** – cold start של 30-60 שניות אחרי חוסר פעילות
-7. **Supabase integration לא בשימוש** – קוד מיותר וסכמה מבלבלת
-8. **אין Rate Limiting** – ניתן לייצר swipes/messages ב-loop
-9. **Insights page – נתונים מזויפים** – Views ו-Likes מחושבים עם `Math.random()` – שקרי
+1. **׳׳™׳ GET /api/profiles/:id** ג€“ ׳”׳‘׳׳§׳ ׳“ ׳׳™׳ ׳• ׳׳—׳–׳™׳¨ ׳₪׳¨׳•׳₪׳™׳ ׳׳₪׳™ ID; ׳”׳₪׳¨׳•׳ ׳˜׳׳ ׳“ ׳׳¡׳×׳׳ ׳¢׳ localStorage cache ׳‘׳׳‘׳“
+2. **׳׳׳ ׳¡׳™׳¡׳׳”** ג€“ Auth ׳׳‘׳•׳¡׳¡ email ׳‘׳׳‘׳“; ׳›׳ ׳׳™ ׳©׳™׳•׳“׳¢ ׳׳× ׳”׳׳™׳׳™׳™׳ ׳™׳›׳•׳ ׳׳”׳×׳—׳‘׳¨
+3. **JWT default secret** ג€“ `'my_super_secret_key_12345'` ׳‘׳§׳•׳“ ׳׳ ׳׳™׳ `.env`
+4. **CORS ׳₪׳×׳•׳— ׳׳›׳** ג€“ `app.use(cors())` ׳׳׳ ׳׳’׳‘׳׳× origin
+5. **Polling ׳—׳–׳§** ג€“ Chat ׳׳‘׳§׳© ׳›׳ 5 ׳©׳ ׳™׳•׳×; ׳׳™׳ WebSocket
+6. **Render.com Free Tier** ג€“ cold start ׳©׳ 30-60 ׳©׳ ׳™׳•׳× ׳׳—׳¨׳™ ׳—׳•׳¡׳¨ ׳₪׳¢׳™׳׳•׳×
+7. **Supabase integration ׳׳ ׳‘׳©׳™׳׳•׳©** ג€“ ׳§׳•׳“ ׳׳™׳•׳×׳¨ ׳•׳¡׳›׳׳” ׳׳‘׳׳‘׳׳×
+8. **׳׳™׳ Rate Limiting** ג€“ ׳ ׳™׳×׳ ׳׳™׳™׳¦׳¨ swipes/messages ׳‘-loop
+9. **Insights page ג€“ ׳ ׳×׳•׳ ׳™׳ ׳׳–׳•׳™׳₪׳™׳** ג€“ Views ׳•-Likes ׳׳—׳•׳©׳‘׳™׳ ׳¢׳ `Math.random()` ג€“ ׳©׳§׳¨׳™
 
 ---
 
-### 6. נקודות סיכון לפרודקשן 🔴
+### 6. ׳ ׳§׳•׳“׳•׳× ׳¡׳™׳›׳•׳ ׳׳₪׳¨׳•׳“׳§׳©׳ נ”´
 
-| # | סיכון | חומרה | השפעה |
+| # | ׳¡׳™׳›׳•׳ | ׳—׳•׳׳¨׳” | ׳”׳©׳₪׳¢׳” |
 |---|---|---|---|
-| 1 | Email-only auth ללא סיסמה | קריטי | חשיפת כל משתמש |
-| 2 | JWT_SECRET fallback בקוד | קריטי | זיוף tokens |
-| 3 | is_blocked לא נבדק ב-login | גבוה | משתמשים חסומים יכולים להתחבר |
-| 4 | sender_id לא מאומת בשליחת הודעה (messages endpoint) | גבוה | הזרקת הודעות במקום אחר |
-| 5 | CORS open to all origins | גבוה | CSRF-like attacks |
-| 6 | אין GET /profiles/:id | בינוני | cache stale = ממשק שבור |
-| 7 | Insights מבוסס Math.random() | בינוני | חוסר אמינות, כעס משתמשים |
-| 8 | Chat polling 5s ללא cleanup | בינוני | memory leak + עומס שרת |
-| 9 | admin_stats view לא קיים | בינוני | crash של Admin page |
-| 10 | אין index ב-swipes וב-messages | בינוני | slowdown עם scale |
+| 1 | Email-only auth ׳׳׳ ׳¡׳™׳¡׳׳” | ׳§׳¨׳™׳˜׳™ | ׳—׳©׳™׳₪׳× ׳›׳ ׳׳©׳×׳׳© |
+| 2 | JWT_SECRET fallback ׳‘׳§׳•׳“ | ׳§׳¨׳™׳˜׳™ | ׳–׳™׳•׳£ tokens |
+| 3 | is_blocked ׳׳ ׳ ׳‘׳“׳§ ׳‘-login | ׳’׳‘׳•׳” | ׳׳©׳×׳׳©׳™׳ ׳—׳¡׳•׳׳™׳ ׳™׳›׳•׳׳™׳ ׳׳”׳×׳—׳‘׳¨ |
+| 4 | sender_id ׳׳ ׳׳׳•׳׳× ׳‘׳©׳׳™׳—׳× ׳”׳•׳“׳¢׳” (messages endpoint) | ׳’׳‘׳•׳” | ׳”׳–׳¨׳§׳× ׳”׳•׳“׳¢׳•׳× ׳‘׳׳§׳•׳ ׳׳—׳¨ |
+| 5 | CORS open to all origins | ׳’׳‘׳•׳” | CSRF-like attacks |
+| 6 | ׳׳™׳ GET /profiles/:id | ׳‘׳™׳ ׳•׳ ׳™ | cache stale = ׳׳׳©׳§ ׳©׳‘׳•׳¨ |
+| 7 | Insights ׳׳‘׳•׳¡׳¡ Math.random() | ׳‘׳™׳ ׳•׳ ׳™ | ׳—׳•׳¡׳¨ ׳׳׳™׳ ׳•׳×, ׳›׳¢׳¡ ׳׳©׳×׳׳©׳™׳ |
+| 8 | Chat polling 5s ׳׳׳ cleanup | ׳‘׳™׳ ׳•׳ ׳™ | memory leak + ׳¢׳•׳׳¡ ׳©׳¨׳× |
+| 9 | admin_stats view ׳׳ ׳§׳™׳™׳ | ׳‘׳™׳ ׳•׳ ׳™ | crash ׳©׳ Admin page |
+| 10 | ׳׳™׳ index ׳‘-swipes ׳•׳‘-messages | ׳‘׳™׳ ׳•׳ ׳™ | slowdown ׳¢׳ scale |
 
 ---
 
-### 7. תלויות קריטיות
+### 7. ׳×׳׳•׳™׳•׳× ׳§׳¨׳™׳˜׳™׳•׳×
 
 ```
-Backend → PostgreSQL (Render DB) → חובה שה-DATABASE_URL תהיה תקינה
-Backend → OpenAI API Key → ל-Magic Bio ול-Screening Questions
-Backend → JWT_SECRET → חייב להיות ב-.env בלבד
-Frontend → https://clinic-match.onrender.com/api → hardcoded URL
-Frontend → Render.com free tier → cold starts
+Backend ג†’ PostgreSQL (Render DB) ג†’ ׳—׳•׳‘׳” ׳©׳”-DATABASE_URL ׳×׳”׳™׳” ׳×׳§׳™׳ ׳”
+Backend ג†’ OpenAI API Key ג†’ ׳-Magic Bio ׳•׳-Screening Questions
+Backend ג†’ JWT_SECRET ג†’ ׳—׳™׳™׳‘ ׳׳”׳™׳•׳× ׳‘-.env ׳‘׳׳‘׳“
+Frontend ג†’ https://clinic-match.onrender.com/api ג†’ hardcoded URL
+Frontend ג†’ Render.com free tier ג†’ cold starts
 ```
 
 ---
 
-## חלק 2 – Mobile UX Analysis
+## ׳—׳׳§ 2 ג€“ Mobile UX Analysis
 
-### ✅ טוב
+### ג… ׳˜׳•׳‘
 
-- `h-dvh` ב-Chat page – מטפל נכון ב-dynamic viewport (keyboard)
-- `safe-bottom` class ב-BottomNav – מכסה iPhone home bar
-- `max-w-md mx-auto` – מגביל לרוחב מובייל מקסימלי
-- Framer Motion swipe gestures – gesture מדויק ותגובתי
-- BottomNav בגובה 64px (h-16) – גבול מינימלי לאזור אגודל
-- Badge indicator על "שיחות" – UX pattern טוב
-- AnimatePresence + motion transitions – onboarding חלק
+- `h-dvh` ׳‘-Chat page ג€“ ׳׳˜׳₪׳ ׳ ׳›׳•׳ ׳‘-dynamic viewport (keyboard)
+- `safe-bottom` class ׳‘-BottomNav ג€“ ׳׳›׳¡׳” iPhone home bar
+- `max-w-md mx-auto` ג€“ ׳׳’׳‘׳™׳ ׳׳¨׳•׳—׳‘ ׳׳•׳‘׳™׳™׳ ׳׳§׳¡׳™׳׳׳™
+- Framer Motion swipe gestures ג€“ gesture ׳׳“׳•׳™׳§ ׳•׳×׳’׳•׳‘׳×׳™
+- BottomNav ׳‘׳’׳•׳‘׳” 64px (h-16) ג€“ ׳’׳‘׳•׳ ׳׳™׳ ׳™׳׳׳™ ׳׳׳–׳•׳¨ ׳׳’׳•׳“׳
+- Badge indicator ׳¢׳ "׳©׳™׳—׳•׳×" ג€“ UX pattern ׳˜׳•׳‘
+- AnimatePresence + motion transitions ג€“ onboarding ׳—׳׳§
 
-### ⚠️ בעיות Mobile UX
+### ג ן¸ ׳‘׳¢׳™׳•׳× Mobile UX
 
-#### 1. SwipeCard – אזור תמונה קבוע ב-45% גובה
+#### 1. SwipeCard ג€“ ׳׳–׳•׳¨ ׳×׳׳•׳ ׳” ׳§׳‘׳•׳¢ ׳‘-45% ׳’׳•׳‘׳”
 ```
-// SwipeCard.tsx שורה 154
+// SwipeCard.tsx ׳©׳•׳¨׳” 154
 <div className="relative" style={{ height: "45%" }}>
 ```
-**בעיה:** בטלפונים קטנים (iPhone SE: 375×667px) הכרטיס מרגיש צפוף מדי. 45% = ~300px לתמונה + שאר לתוכן, אין גמישות.
-**המלצה:** `min-h-[220px] max-h-[45%]` במקום.
+**׳‘׳¢׳™׳”:** ׳‘׳˜׳׳₪׳•׳ ׳™׳ ׳§׳˜׳ ׳™׳ (iPhone SE: 375ֳ—667px) ׳”׳›׳¨׳˜׳™׳¡ ׳׳¨׳’׳™׳© ׳¦׳₪׳•׳£ ׳׳“׳™. 45% = ~300px ׳׳×׳׳•׳ ׳” + ׳©׳׳¨ ׳׳×׳•׳›׳, ׳׳™׳ ׳’׳׳™׳©׳•׳×.
+**׳”׳׳׳¦׳”:** `min-h-[220px] max-h-[45%]` ׳‘׳׳§׳•׳.
 
-#### 2. Swipe Threshold נמוך מדי (100px)
+#### 2. Swipe Threshold ׳ ׳׳•׳ ׳׳“׳™ (100px)
 ```
-// SwipeCard.tsx שורה 80-84
+// SwipeCard.tsx ׳©׳•׳¨׳” 80-84
 if (info.offset.x > 100) onSwipeRight();
 else if (info.offset.x < -100) onSwipeLeft();
 ```
-**בעיה:** על מסכים רחבים (414px+) הסף 100px הוא 24% בלבד – גורם לswiping בשוגג.
-**המלצה:** `window.innerWidth * 0.3` (30% מרוחב המסך).
+**׳‘׳¢׳™׳”:** ׳¢׳ ׳׳¡׳›׳™׳ ׳¨׳—׳‘׳™׳ (414px+) ׳”׳¡׳£ 100px ׳”׳•׳ 24% ׳‘׳׳‘׳“ ג€“ ׳’׳•׳¨׳ ׳swiping ׳‘׳©׳•׳’׳’.
+**׳”׳׳׳¦׳”:** `window.innerWidth * 0.3` (30% ׳׳¨׳•׳—׳‘ ׳”׳׳¡׳).
 
-#### 3. NaturalLanguageSearch מעמיס על מסך Swipe
-**בעיה:** שורת חיפוש + כרטיס + כפתורי פעולה בדף אחד = עומס. על iPhone SE חלק מהכרטיס נגזז.
-**המלצה:** הסתר את החיפוש ב-bottom sheet / filter icon.
+#### 3. NaturalLanguageSearch ׳׳¢׳׳™׳¡ ׳¢׳ ׳׳¡׳ Swipe
+**׳‘׳¢׳™׳”:** ׳©׳•׳¨׳× ׳—׳™׳₪׳•׳© + ׳›׳¨׳˜׳™׳¡ + ׳›׳₪׳×׳•׳¨׳™ ׳₪׳¢׳•׳׳” ׳‘׳“׳£ ׳׳—׳“ = ׳¢׳•׳׳¡. ׳¢׳ iPhone SE ׳—׳׳§ ׳׳”׳›׳¨׳˜׳™׳¡ ׳ ׳’׳–׳–.
+**׳”׳׳׳¦׳”:** ׳”׳¡׳×׳¨ ׳׳× ׳”׳—׳™׳₪׳•׳© ׳‘-bottom sheet / filter icon.
 
-#### 4. SwipeActions – כפתורי Pass/Like
-**בעיה:** לא ראיתי גודל מינימלי מוגדר. לפי Apple HIG, כפתורי touch צריכים להיות לפחות 44×44px.
-**המלצה:** `min-w-[56px] min-h-[56px]` לכפתורי הלב ו-X.
+#### 4. SwipeActions ג€“ ׳›׳₪׳×׳•׳¨׳™ Pass/Like
+**׳‘׳¢׳™׳”:** ׳׳ ׳¨׳׳™׳×׳™ ׳’׳•׳“׳ ׳׳™׳ ׳™׳׳׳™ ׳׳•׳’׳“׳¨. ׳׳₪׳™ Apple HIG, ׳›׳₪׳×׳•׳¨׳™ touch ׳¦׳¨׳™׳›׳™׳ ׳׳”׳™׳•׳× ׳׳₪׳—׳•׳× 44ֳ—44px.
+**׳”׳׳׳¦׳”:** `min-w-[56px] min-h-[56px]` ׳׳›׳₪׳×׳•׳¨׳™ ׳”׳׳‘ ׳•-X.
 
-#### 5. Chat Input – Keyboard Push-up
-**בעיה:** ChatInput ב-Chat.tsx יושב ב-`flex flex-col h-dvh` – תקין, אבל אם `AIChatAssistant` מחליף גובה, המסך עשוי להשתבש.
-**המלצה:** `overflow-hidden` על ה-container הראשי + `flex-shrink-0` על ה-input.
+#### 5. Chat Input ג€“ Keyboard Push-up
+**׳‘׳¢׳™׳”:** ChatInput ׳‘-Chat.tsx ׳™׳•׳©׳‘ ׳‘-`flex flex-col h-dvh` ג€“ ׳×׳§׳™׳, ׳׳‘׳ ׳׳ `AIChatAssistant` ׳׳—׳׳™׳£ ׳’׳•׳‘׳”, ׳”׳׳¡׳ ׳¢׳©׳•׳™ ׳׳”׳©׳×׳‘׳©.
+**׳”׳׳׳¦׳”:** `overflow-hidden` ׳¢׳ ׳”-container ׳”׳¨׳׳©׳™ + `flex-shrink-0` ׳¢׳ ׳”-input.
 
-#### 6. Register form – אין autocomplete מסודר
-**בעיה:** שדה אימייל במסך register אינו מופיע בשלב ראשון; המשתמש מגיע לשלב 4 ורק אז מזין אימייל. אם הדפדפן מציע autocomplete, הוא עשוי לבצע autofill על שדות שגויים.
-**המלצה:** הוסף `autoComplete="off"` לשדות שאינם אימייל.
+#### 6. Register form ג€“ ׳׳™׳ autocomplete ׳׳¡׳•׳“׳¨
+**׳‘׳¢׳™׳”:** ׳©׳“׳” ׳׳™׳׳™׳™׳ ׳‘׳׳¡׳ register ׳׳™׳ ׳• ׳׳•׳₪׳™׳¢ ׳‘׳©׳׳‘ ׳¨׳׳©׳•׳; ׳”׳׳©׳×׳׳© ׳׳’׳™׳¢ ׳׳©׳׳‘ 4 ׳•׳¨׳§ ׳׳– ׳׳–׳™׳ ׳׳™׳׳™׳™׳. ׳׳ ׳”׳“׳₪׳“׳₪׳ ׳׳¦׳™׳¢ autocomplete, ׳”׳•׳ ׳¢׳©׳•׳™ ׳׳‘׳¦׳¢ autofill ׳¢׳ ׳©׳“׳•׳× ׳©׳’׳•׳™׳™׳.
+**׳”׳׳׳¦׳”:** ׳”׳•׳¡׳£ `autoComplete="off"` ׳׳©׳“׳•׳× ׳©׳׳™׳ ׳ ׳׳™׳׳™׳™׳.
 
-#### 7. Admin Page – טבלת Table על מובייל
-**בעיה:** `overflow-x-auto` על ה-Table תקין, אבל scroll אופקי על מובייל הוא חוויה גרועה.
-**המלצה:** בנה Admin mobile-first עם cards במקום table.
+#### 7. Admin Page ג€“ ׳˜׳‘׳׳× Table ׳¢׳ ׳׳•׳‘׳™׳™׳
+**׳‘׳¢׳™׳”:** `overflow-x-auto` ׳¢׳ ׳”-Table ׳×׳§׳™׳, ׳׳‘׳ scroll ׳׳•׳₪׳§׳™ ׳¢׳ ׳׳•׳‘׳™׳™׳ ׳”׳•׳ ׳—׳•׳•׳™׳” ׳’׳¨׳•׳¢׳”.
+**׳”׳׳׳¦׳”:** ׳‘׳ ׳” Admin mobile-first ׳¢׳ cards ׳‘׳׳§׳•׳ table.
 
-#### 8. Text Hierarchy – Insights Page
-**בעיה:** כותרות 2xl ו-text-sm ממשיכות לסירוגין ללא היררכיה ברורה. הצמד fontsize scale ל-design tokens.
+#### 8. Text Hierarchy ג€“ Insights Page
+**׳‘׳¢׳™׳”:** ׳›׳•׳×׳¨׳•׳× 2xl ׳•-text-sm ׳׳׳©׳™׳›׳•׳× ׳׳¡׳™׳¨׳•׳’׳™׳ ׳׳׳ ׳”׳™׳¨׳¨׳›׳™׳” ׳‘׳¨׳•׳¨׳”. ׳”׳¦׳׳“ fontsize scale ׳-design tokens.
 
 #### 9. Skeleton / Loading UX
-**בעיה:** Swipe page מציג `Loader2` spinner ולא skeleton cards. Matches ו-ChatList לא ראיתי skeleton.
-**המלצה:** השתמש ב-`<Skeleton />` (קיים ב-shadcn/ui) לכל list/card.
+**׳‘׳¢׳™׳”:** Swipe page ׳׳¦׳™׳’ `Loader2` spinner ׳•׳׳ skeleton cards. Matches ׳•-ChatList ׳׳ ׳¨׳׳™׳×׳™ skeleton.
+**׳”׳׳׳¦׳”:** ׳”׳©׳×׳׳© ׳‘-`<Skeleton />` (׳§׳™׳™׳ ׳‘-shadcn/ui) ׳׳›׳ list/card.
 
 #### 10. RTL + LTR mixing
-**בעיה:** שדה אימייל עם `dir="ltr"` בתוך form עם `dir="rtl"` עלול לגרום לבעיות עם cursor position על iOS.
-**המלצה:** `inputMode="email"` + `dir="ltr"` + `className="text-left"`.
+**׳‘׳¢׳™׳”:** ׳©׳“׳” ׳׳™׳׳™׳™׳ ׳¢׳ `dir="ltr"` ׳‘׳×׳•׳ form ׳¢׳ `dir="rtl"` ׳¢׳׳•׳ ׳׳’׳¨׳•׳ ׳׳‘׳¢׳™׳•׳× ׳¢׳ cursor position ׳¢׳ iOS.
+**׳”׳׳׳¦׳”:** `inputMode="email"` + `dir="ltr"` + `className="text-left"`.
 
 ---
 
-## חלק 3 – Bug Audit
+## ׳—׳׳§ 3 ג€“ Bug Audit
 
-### 🔴 קריטי
+### נ”´ ׳§׳¨׳™׳˜׳™
 
-#### BUG-01: Insights – נתוני Views/Likes הם Math.random()
-**קובץ:** `src/pages/Insights.tsx` שורות 100-110
+#### BUG-01: Insights ג€“ ׳ ׳×׳•׳ ׳™ Views/Likes ׳”׳ Math.random()
+**׳§׳•׳‘׳¥:** `src/pages/Insights.tsx` ׳©׳•׳¨׳•׳× 100-110
 ```js
-const baseViews = Math.floor(Math.random() * 50) + 20;  // 🔴 FAKE
+const baseViews = Math.floor(Math.random() * 50) + 20;  // נ”´ FAKE
 const viewMultiplier = completion.percentage / 100;
 return {
-  views: Math.floor(baseViews * viewMultiplier),         // 🔴 FAKE
-  likes: Math.floor((baseViews * viewMultiplier) * 0.3), // 🔴 FAKE
-  responseRate: matchesCount > 0 ? Math.floor(Math.random() * 30) + 70 : 0, // 🔴 FAKE
+  views: Math.floor(baseViews * viewMultiplier),         // נ”´ FAKE
+  likes: Math.floor((baseViews * viewMultiplier) * 0.3), // נ”´ FAKE
+  responseRate: matchesCount > 0 ? Math.floor(Math.random() * 30) + 70 : 0, // נ”´ FAKE
 };
 ```
-**השפעה:** נתונים שקריים לחלוטין. משתנים בכל render. אסור לפרודקשן.
+**׳”׳©׳₪׳¢׳”:** ׳ ׳×׳•׳ ׳™׳ ׳©׳§׳¨׳™׳™׳ ׳׳—׳׳•׳˜׳™׳. ׳׳©׳×׳ ׳™׳ ׳‘׳›׳ render. ׳׳¡׳•׳¨ ׳׳₪׳¨׳•׳“׳§׳©׳.
 
-#### BUG-02: is_blocked לא נבדק ב-login
-**קובץ:** `backend/server.js` שורות 90-105
+#### BUG-02: is_blocked ׳׳ ׳ ׳‘׳“׳§ ׳‘-login
+**׳§׳•׳‘׳¥:** `backend/server.js` ׳©׳•׳¨׳•׳× 90-105
 ```js
 app.post('/api/auth/login', async (req, res) => {
   const result = await pool.query('SELECT * FROM profiles WHERE email = $1', [email]);
-  // ❌ אין בדיקה של result.rows[0].is_blocked
+  // ג ׳׳™׳ ׳‘׳“׳™׳§׳” ׳©׳ result.rows[0].is_blocked
   const token = jwt.sign(...);
   res.json({ user, token });
 });
 ```
-**השפעה:** משתמש חסום מתחבר בלי בעיה.
+**׳”׳©׳₪׳¢׳”:** ׳׳©׳×׳׳© ׳—׳¡׳•׳ ׳׳×׳—׳‘׳¨ ׳‘׳׳™ ׳‘׳¢׳™׳”.
 
-#### BUG-03: Messages endpoint – sender_id לא מאומת כחלק מה-match
-**קובץ:** `backend/server.js` שורות 303-313
+#### BUG-03: Messages endpoint ג€“ sender_id ׳׳ ׳׳׳•׳׳× ׳›׳—׳׳§ ׳׳”-match
+**׳§׳•׳‘׳¥:** `backend/server.js` ׳©׳•׳¨׳•׳× 303-313
 ```js
 app.post('/api/messages', authenticateToken, async (req, res) => {
   if (String(req.user.id) !== String(req.body.sender_id)) return 403;
-  // ❌ אין בדיקה שה-sender הוא חלק מה-match (user_one_id OR user_two_id)
+  // ג ׳׳™׳ ׳‘׳“׳™׳§׳” ׳©׳”-sender ׳”׳•׳ ׳—׳׳§ ׳׳”-match (user_one_id OR user_two_id)
   await pool.query('INSERT INTO messages (match_id, sender_id, content) VALUES ($1, $2, $3)', ...);
 });
 ```
-**השפעה:** כל משתמש מאומת יכול לשלוח הודעות לכל match שלא שלו.
+**׳”׳©׳₪׳¢׳”:** ׳›׳ ׳׳©׳×׳׳© ׳׳׳•׳׳× ׳™׳›׳•׳ ׳׳©׳׳•׳— ׳”׳•׳“׳¢׳•׳× ׳׳›׳ match ׳©׳׳ ׳©׳׳•.
 
-#### BUG-04: getMatchDetails – endpoint לא קיים בבאקנד
-**קובץ:** `src/lib/api.ts` שורה 323
+#### BUG-04: getMatchDetails ג€“ endpoint ׳׳ ׳§׳™׳™׳ ׳‘׳‘׳׳§׳ ׳“
+**׳§׳•׳‘׳¥:** `src/lib/api.ts` ׳©׳•׳¨׳” 323
 ```js
 const response = await apiCall<BackendMatch>(`/matches/${userId}/${matchId}`);
-// ❌ Backend has no GET /matches/:userId/:matchId
+// ג Backend has no GET /matches/:userId/:matchId
 ```
-**השפעה:** `useMatchDetails` תמיד מחזיר `null`. Chat page עלול לא להציג את שם הצד השני.
+**׳”׳©׳₪׳¢׳”:** `useMatchDetails` ׳×׳׳™׳“ ׳׳—׳–׳™׳¨ `null`. Chat page ׳¢׳׳•׳ ׳׳ ׳׳”׳¦׳™׳’ ׳׳× ׳©׳ ׳”׳¦׳“ ׳”׳©׳ ׳™.
 
-#### BUG-05: admin_stats view לא קיים
-**קובץ:** `backend/server.js` שורה 323
+#### BUG-05: admin_stats view ׳׳ ׳§׳™׳™׳
+**׳§׳•׳‘׳¥:** `backend/server.js` ׳©׳•׳¨׳” 323
 ```js
 const result = await pool.query('SELECT * FROM admin_stats');
-// ❌ admin_stats view/table לא קיים ב-schema
+// ג admin_stats view/table ׳׳ ׳§׳™׳™׳ ׳‘-schema
 ```
-**השפעה:** Admin page crashes ב-stats fetch.
+**׳”׳©׳₪׳¢׳”:** Admin page crashes ׳‘-stats fetch.
 
 ---
 
-### 🟠 גבוה
+### נ  ׳’׳‘׳•׳”
 
-#### BUG-06: Chat Polling – אין cleanup ב-unmount
-**קובץ:** `src/hooks/useChatMessages.ts` שורה 16
+#### BUG-06: Chat Polling ג€“ ׳׳™׳ cleanup ׳‘-unmount
+**׳§׳•׳‘׳¥:** `src/hooks/useChatMessages.ts` ׳©׳•׳¨׳” 16
 ```js
-refetchInterval: 5000, // polling תמידי
+refetchInterval: 5000, // polling ׳×׳׳™׳“׳™
 ```
-**השפעה:** TanStack Query מנהל cleanup אוטומטית כשהקומפוננטה עוזבת, אבל אם המשתמש חוזר בין matches, יתפתחו N pollers מקביל. (**הערה:** TanStack Query טיפל בחלק מזה, אך יש לוודא שכל query key ייחודי.)
-**תיקון:** ודא שה-queryKey מכיל את `matchId`.
+**׳”׳©׳₪׳¢׳”:** TanStack Query ׳׳ ׳”׳ cleanup ׳׳•׳˜׳•׳׳˜׳™׳× ׳›׳©׳”׳§׳•׳׳₪׳•׳ ׳ ׳˜׳” ׳¢׳•׳–׳‘׳×, ׳׳‘׳ ׳׳ ׳”׳׳©׳×׳׳© ׳—׳•׳–׳¨ ׳‘׳™׳ matches, ׳™׳×׳₪׳×׳—׳• N pollers ׳׳§׳‘׳™׳. (**׳”׳¢׳¨׳”:** TanStack Query ׳˜׳™׳₪׳ ׳‘׳—׳׳§ ׳׳–׳”, ׳׳ ׳™׳© ׳׳•׳•׳“׳ ׳©׳›׳ query key ׳™׳™׳—׳•׳“׳™.)
+**׳×׳™׳§׳•׳:** ׳•׳“׳ ׳©׳”-queryKey ׳׳›׳™׳ ׳׳× `matchId`.
 
-#### BUG-07: JWT_SECRET fallback ב-code
-**קובץ:** `backend/server.js` שורה 23
+#### BUG-07: JWT_SECRET fallback ׳‘-code
+**׳§׳•׳‘׳¥:** `backend/server.js` ׳©׳•׳¨׳” 23
 ```js
-const JWT_SECRET = process.env.JWT_SECRET || 'my_super_secret_key_12345'; // 🔴
+const JWT_SECRET = process.env.JWT_SECRET || 'my_super_secret_key_12345'; // נ”´
 ```
-**השפעה:** אם `.env` לא הוגדר, כל מי שיודע את ה-default יכול לזייף tokens.
+**׳”׳©׳₪׳¢׳”:** ׳׳ `.env` ׳׳ ׳”׳•׳’׳“׳¨, ׳›׳ ׳׳™ ׳©׳™׳•׳“׳¢ ׳׳× ׳”-default ׳™׳›׳•׳ ׳׳–׳™׳™׳£ tokens.
 
-#### BUG-08: updateProfileApi – email נלקח מ-localStorage
-**קובץ:** `src/lib/api.ts` שורות 664-670
+#### BUG-08: updateProfileApi ג€“ email ׳ ׳׳§׳— ׳-localStorage
+**׳§׳•׳‘׳¥:** `src/lib/api.ts` ׳©׳•׳¨׳•׳× 664-670
 ```js
 const currentUserData = localStorage.getItem("current_user");
-email = parsedUser.email; // email ממקור לא מאומת
+email = parsedUser.email; // email ׳׳׳§׳•׳¨ ׳׳ ׳׳׳•׳׳×
 ```
-**השפעה:** ניתן לשנות email ב-localStorage ולקרוא updateProfile עם email שונה.
+**׳”׳©׳₪׳¢׳”:** ׳ ׳™׳×׳ ׳׳©׳ ׳•׳× email ׳‘-localStorage ׳•׳׳§׳¨׳•׳ updateProfile ׳¢׳ email ׳©׳•׳ ׳”.
 
-#### BUG-09: CORS פתוח לכל origin
-**קובץ:** `backend/server.js` שורה 9
+#### BUG-09: CORS ׳₪׳×׳•׳— ׳׳›׳ origin
+**׳§׳•׳‘׳¥:** `backend/server.js` ׳©׳•׳¨׳” 9
 ```js
-app.use(cors()); // ❌ כל origin מורשה
+app.use(cors()); // ג ׳›׳ origin ׳׳•׳¨׳©׳”
 ```
 
-#### BUG-10: swipe ב-PASS – סיכוי ל-duplicate entry
-**קובץ:** `backend/server.js` שורה 220
+#### BUG-10: swipe ׳‘-PASS ג€“ ׳¡׳™׳›׳•׳™ ׳-duplicate entry
+**׳§׳•׳‘׳¥:** `backend/server.js` ׳©׳•׳¨׳” 220
 ```js
 await pool.query('INSERT INTO swipes (swiper_id, swiped_id, type) VALUES ($1, $2, $3)', ...);
-// ❌ אין ON CONFLICT ב-swipes – double-swipe = duplicate row
+// ג ׳׳™׳ ON CONFLICT ׳‘-swipes ג€“ double-swipe = duplicate row
 ```
 
 ---
 
-### 🟡 בינוני
+### נ¡ ׳‘׳™׳ ׳•׳ ׳™
 
-#### BUG-11: handleDragEnd – TypeScript bypass
-**קובץ:** `src/components/swipe/SwipeCard.tsx` שורה 79
+#### BUG-11: handleDragEnd ג€“ TypeScript bypass
+**׳§׳•׳‘׳¥:** `src/components/swipe/SwipeCard.tsx` ׳©׳•׳¨׳” 79
 ```js
-const handleDragEnd = (_: any, info: PanInfo) => { // ❌ _: any
+const handleDragEnd = (_: any, info: PanInfo) => { // ג _: any
 ```
 
-#### BUG-12: isProfileComplete – לוגיקה שגויה
-**קובץ:** `src/lib/api.ts` שורה 372-374
+#### BUG-12: isProfileComplete ג€“ ׳׳•׳’׳™׳§׳” ׳©׳’׳•׳™׳”
+**׳§׳•׳‘׳¥:** `src/lib/api.ts` ׳©׳•׳¨׳” 372-374
 ```js
 const hasPosition = role === "clinic" ? Boolean(requiredPosition) : Boolean(position);
-// ❌ clinic לא חייבת requiredPosition, היא יכולה לפרסם positions[]
+// ג clinic ׳׳ ׳—׳™׳™׳‘׳× requiredPosition, ׳”׳™׳ ׳™׳›׳•׳׳” ׳׳₪׳¨׳¡׳ positions[]
 ```
 
-#### BUG-13: Insights stats מחושב ב-useMemo עם Math.random()
-**קובץ:** `src/pages/Insights.tsx` שורה 162
+#### BUG-13: Insights stats ׳׳—׳•׳©׳‘ ׳‘-useMemo ׳¢׳ Math.random()
+**׳§׳•׳‘׳¥:** `src/pages/Insights.tsx` ׳©׳•׳¨׳” 162
 ```js
 const stats = useMemo(() => calculateStats(profile, matches.length), [profile, matches.length]);
-// useMemo לא מקבע Math.random() – כל פעם שה-dependency משתנה הנתונים משתנים
+// useMemo ׳׳ ׳׳§׳‘׳¢ Math.random() ג€“ ׳›׳ ׳₪׳¢׳ ׳©׳”-dependency ׳׳©׳×׳ ׳” ׳”׳ ׳×׳•׳ ׳™׳ ׳׳©׳×׳ ׳™׳
 ```
 
-#### BUG-14: Admin page – type bypass
-**קובץ:** `src/pages/Admin.tsx` שורה 51
+#### BUG-14: Admin page ג€“ type bypass
+**׳§׳•׳‘׳¥:** `src/pages/Admin.tsx` ׳©׳•׳¨׳” 51
 ```js
 const isAdmin = (currentUser as any).is_admin === true || (currentUser as any).isAdmin === true;
-// ❌ CurrentUser type לא כולל is_admin בצורה ברורה
+// ג CurrentUser type ׳׳ ׳›׳•׳׳ is_admin ׳‘׳¦׳•׳¨׳” ׳‘׳¨׳•׳¨׳”
 ```
 
-#### BUG-15: אין validation על content ב-messages
-**קובץ:** `backend/server.js` – POST /api/messages
+#### BUG-15: ׳׳™׳ validation ׳¢׳ content ׳‘-messages
+**׳§׳•׳‘׳¥:** `backend/server.js` ג€“ POST /api/messages
 ```js
-// ❌ אין בדיקת אורך content, XSS chars, null checks
+// ג ׳׳™׳ ׳‘׳“׳™׳§׳× ׳׳•׳¨׳ content, XSS chars, null checks
 ```
 
 ---
 
-## חלק 4 – DB Review
+## ׳—׳׳§ 4 ג€“ DB Review
 
-### DB הבאקנד (PostgreSQL דרך Render)
+### DB ׳”׳‘׳׳§׳ ׳“ (PostgreSQL ׳“׳¨׳ Render)
 
-#### טבלאות שחסרות / Views שחסרים
+#### ׳˜׳‘׳׳׳•׳× ׳©׳—׳¡׳¨׳•׳× / Views ׳©׳—׳¡׳¨׳™׳
 
-| חסר | למה |
+| ׳—׳¡׳¨ | ׳׳׳” |
 |---|---|
-| `admin_stats` view | backend מבצע `SELECT * FROM admin_stats` |
-| UNIQUE constraint על `swipes(swiper_id, swiped_id)` | מאפשר double-swipe |
-| Index על `swipes(swiper_id, swiped_id)` | כל feed query סורק את כל ה-swipes |
-| Index על `messages(match_id, created_at)` | כל chat load סורק את כל ה-messages |
-| Index על `profiles(email)` | login מבצע lookup לפי email |
-| Index על `profiles(role)` | feed query מסנן לפי role |
-| `is_blocked` check ב-login query | משתמשים חסומים נכנסים |
+| `admin_stats` view | backend ׳׳‘׳¦׳¢ `SELECT * FROM admin_stats` |
+| UNIQUE constraint ׳¢׳ `swipes(swiper_id, swiped_id)` | ׳׳׳₪׳©׳¨ double-swipe |
+| Index ׳¢׳ `swipes(swiper_id, swiped_id)` | ׳›׳ feed query ׳¡׳•׳¨׳§ ׳׳× ׳›׳ ׳”-swipes |
+| Index ׳¢׳ `messages(match_id, created_at)` | ׳›׳ chat load ׳¡׳•׳¨׳§ ׳׳× ׳›׳ ׳”-messages |
+| Index ׳¢׳ `profiles(email)` | login ׳׳‘׳¦׳¢ lookup ׳׳₪׳™ email |
+| Index ׳¢׳ `profiles(role)` | feed query ׳׳¡׳ ׳ ׳׳₪׳™ role |
+| `is_blocked` check ׳‘-login query | ׳׳©׳×׳׳©׳™׳ ׳—׳¡׳•׳׳™׳ ׳ ׳›׳ ׳¡׳™׳ |
 
-#### שדות בעייתיים ב-profiles (Backend)
+#### ׳©׳“׳•׳× ׳‘׳¢׳™׳™׳×׳™׳™׳ ׳‘-profiles (Backend)
 
-| שדה | בעיה | תיקון |
+| ׳©׳“׳” | ׳‘׳¢׳™׳” | ׳×׳™׳§׳•׳ |
 |---|---|---|
-| `email` | UNIQUE קיים (ON CONFLICT), אבל האם NOT NULL? | `ALTER TABLE profiles ALTER COLUMN email SET NOT NULL;` |
-| `role` | האם ENUM? אם לא, ניתן להכניס ערכים שגויים | ADD CHECK constraint |
-| `is_blocked` | אין DEFAULT FALSE מפורש | `ALTER TABLE profiles ALTER COLUMN is_blocked SET DEFAULT FALSE;` |
-| `is_admin` | אין DEFAULT FALSE מפורש | `ALTER TABLE profiles ALTER COLUMN is_admin SET DEFAULT FALSE;` |
-| `availability` | JSON ללא validation | שקול JSONB עם CHECK |
+| `email` | UNIQUE ׳§׳™׳™׳ (ON CONFLICT), ׳׳‘׳ ׳”׳׳ NOT NULL? | `ALTER TABLE profiles ALTER COLUMN email SET NOT NULL;` |
+| `role` | ׳”׳׳ ENUM? ׳׳ ׳׳, ׳ ׳™׳×׳ ׳׳”׳›׳ ׳™׳¡ ׳¢׳¨׳›׳™׳ ׳©׳’׳•׳™׳™׳ | ADD CHECK constraint |
+| `is_blocked` | ׳׳™׳ DEFAULT FALSE ׳׳₪׳•׳¨׳© | `ALTER TABLE profiles ALTER COLUMN is_blocked SET DEFAULT FALSE;` |
+| `is_admin` | ׳׳™׳ DEFAULT FALSE ׳׳₪׳•׳¨׳© | `ALTER TABLE profiles ALTER COLUMN is_admin SET DEFAULT FALSE;` |
+| `availability` | JSON ׳׳׳ validation | ׳©׳§׳•׳ JSONB ׳¢׳ CHECK |
 
-#### Schema mismatch קריטי
-**שני databases שונים בשימוש:**
-- **Backend PostgreSQL** – `profiles(id serial, email, role TEXT 'CLINIC'/'STAFF', location, availability JSONB, positions TEXT[], workplace_types TEXT[], ...)`
-- **Supabase** – `profiles(id UUID, user_id UUID, role ENUM 'clinic'/'worker', city, availability_days TEXT[], salary_min, salary_max, ...)`
+#### Schema mismatch ׳§׳¨׳™׳˜׳™
+**׳©׳ ׳™ databases ׳©׳•׳ ׳™׳ ׳‘׳©׳™׳׳•׳©:**
+- **Backend PostgreSQL** ג€“ `profiles(id serial, email, role TEXT 'CLINIC'/'STAFF', location, availability JSONB, positions TEXT[], workplace_types TEXT[], ...)`
+- **Supabase** ג€“ `profiles(id UUID, user_id UUID, role ENUM 'clinic'/'worker', city, availability_days TEXT[], salary_min, salary_max, ...)`
 
-**ה-Supabase integration לא מחובר לapp בפועל** – רק ה-types נוצרו. Backend הוא ה-source of truth.
+**׳”-Supabase integration ׳׳ ׳׳—׳•׳‘׳¨ ׳app ׳‘׳₪׳•׳¢׳** ג€“ ׳¨׳§ ׳”-types ׳ ׳•׳¦׳¨׳•. Backend ׳”׳•׳ ׳”-source of truth.
 
 ---
 
-## חלק 5 – Claude Code Prompt (חלק 2)
+## ׳—׳׳§ 5 ג€“ Claude Code Prompt (׳—׳׳§ 2)
 
 ```
 You are Claude Code operating on the ClinicMatch project.
@@ -425,25 +425,25 @@ Show only diffs. Do not rewrite entire files.
 
 ## Fixes to implement (in order):
 
-### FIX-1: backend/server.js – Block is_blocked users at login
+### FIX-1: backend/server.js ג€“ Block is_blocked users at login
 Find the POST /api/auth/login handler.
 After fetching the user from DB, add:
   if (user.is_blocked) return res.status(403).json({ error: "Account is suspended" });
 
-### FIX-2: backend/server.js – Remove JWT_SECRET fallback
+### FIX-2: backend/server.js ג€“ Remove JWT_SECRET fallback
 Change line:
   const JWT_SECRET = process.env.JWT_SECRET || 'my_super_secret_key_12345';
 To:
   const JWT_SECRET = process.env.JWT_SECRET;
   if (!JWT_SECRET) { console.error("FATAL: JWT_SECRET not set"); process.exit(1); }
 
-### FIX-3: backend/server.js – Restrict CORS to allowed origin
+### FIX-3: backend/server.js ג€“ Restrict CORS to allowed origin
 Change:
   app.use(cors());
 To:
   app.use(cors({ origin: process.env.ALLOWED_ORIGIN || 'https://your-frontend.vercel.app' }));
 
-### FIX-4: backend/server.js – Validate sender is part of match before inserting message
+### FIX-4: backend/server.js ג€“ Validate sender is part of match before inserting message
 In the POST /api/messages handler, after the identity check, add:
   const matchCheck = await pool.query(
     'SELECT id FROM matches WHERE id = $1 AND (user_one_id = $2 OR user_two_id = $2)',
@@ -451,12 +451,12 @@ In the POST /api/messages handler, after the identity check, add:
   );
   if (matchCheck.rows.length === 0) return res.status(403).json({ error: "Not part of this match" });
 
-### FIX-5: backend/server.js – Prevent duplicate swipes
+### FIX-5: backend/server.js ג€“ Prevent duplicate swipes
 Change the INSERT into swipes to:
   INSERT INTO swipes (swiper_id, swiped_id, type) VALUES ($1, $2, $3)
   ON CONFLICT (swiper_id, swiped_id) DO UPDATE SET type = EXCLUDED.type
 
-### FIX-6: frontend/src/pages/Insights.tsx – Remove Math.random() fake stats
+### FIX-6: frontend/src/pages/Insights.tsx ג€“ Remove Math.random() fake stats
 Replace the entire calculateStats function.
 Replace views, likes, responseRate with static values derived only from real data:
   views: 0, // placeholder until real analytics API exists
@@ -464,9 +464,9 @@ Replace views, likes, responseRate with static values derived only from real dat
   matches: matchesCount,
   responseRate: 0, // placeholder
   profileScore: completion.percentage,
-Add a banner in the Insights page: "נתוני צפיות ולייקים יתווספו בקרוב"
+Add a banner in the Insights page: "׳ ׳×׳•׳ ׳™ ׳¦׳₪׳™׳•׳× ׳•׳׳™׳™׳§׳™׳ ׳™׳×׳•׳•׳¡׳₪׳• ׳‘׳§׳¨׳•׳‘"
 
-### FIX-7: frontend/src/components/swipe/SwipeCard.tsx – Fix drag threshold
+### FIX-7: frontend/src/components/swipe/SwipeCard.tsx ג€“ Fix drag threshold
 Change:
   if (info.offset.x > 100) onSwipeRight();
   else if (info.offset.x < -100) onSwipeLeft();
@@ -475,10 +475,10 @@ To:
   if (info.offset.x > threshold) onSwipeRight();
   else if (info.offset.x < -threshold) onSwipeLeft();
 
-### FIX-8: frontend/src/types/index.ts – Add isAdmin to CurrentUser type
+### FIX-8: frontend/src/types/index.ts ג€“ Add isAdmin to CurrentUser type
 Add to the CurrentUser interface:
   isAdmin: boolean;
-(Remove the optional ? – it should always be present, default false)
+(Remove the optional ? ג€“ it should always be present, default false)
 
 ## Do NOT:
 - Do not change UI design, colors, or layout
@@ -490,73 +490,73 @@ Add to the CurrentUser interface:
 
 ---
 
-## חלק 6 – SQL Commands לפרודקשן (pgAdmin4 Safe)
+## ׳—׳׳§ 6 ג€“ SQL Commands ׳׳₪׳¨׳•׳“׳§׳©׳ (pgAdmin4 Safe)
 
-> כל הפקודות הן Production Safe – ללא DELETE, ללא DROP DATA.
+> ׳›׳ ׳”׳₪׳§׳•׳“׳•׳× ׳”׳ Production Safe ג€“ ׳׳׳ DELETE, ׳׳׳ DROP DATA.
 
-### 1. הוסף אינדקסים חסרים
+### 1. ׳”׳•׳¡׳£ ׳׳™׳ ׳“׳§׳¡׳™׳ ׳—׳¡׳¨׳™׳
 
 ```sql
--- Index על swipes לחיפוש מהיר ב-feed
+-- Index ׳¢׳ swipes ׳׳—׳™׳₪׳•׳© ׳׳”׳™׳¨ ׳‘-feed
 CREATE INDEX IF NOT EXISTS idx_swipes_swiper_swiped
   ON swipes (swiper_id, swiped_id);
 
--- Index על profiles לפי role (עבור feed query)
+-- Index ׳¢׳ profiles ׳׳₪׳™ role (׳¢׳‘׳•׳¨ feed query)
 CREATE INDEX IF NOT EXISTS idx_profiles_role
   ON profiles (role);
 
--- Index על profiles לפי email (עבור login query)
+-- Index ׳¢׳ profiles ׳׳₪׳™ email (׳¢׳‘׳•׳¨ login query)
 CREATE INDEX IF NOT EXISTS idx_profiles_email
   ON profiles (email);
 
--- Index על messages לפי match_id ו-created_at (עבור chat)
+-- Index ׳¢׳ messages ׳׳₪׳™ match_id ׳•-created_at (׳¢׳‘׳•׳¨ chat)
 CREATE INDEX IF NOT EXISTS idx_messages_match_created
   ON messages (match_id, created_at ASC);
 ```
 
-### 2. הוסף UNIQUE constraint על swipes
+### 2. ׳”׳•׳¡׳£ UNIQUE constraint ׳¢׳ swipes
 
 ```sql
--- מנע double-swipe (חובה לפני FIX-5 בבאקנד)
+-- ׳׳ ׳¢ double-swipe (׳—׳•׳‘׳” ׳׳₪׳ ׳™ FIX-5 ׳‘׳‘׳׳§׳ ׳“)
 ALTER TABLE swipes
   ADD CONSTRAINT unique_swipe_pair UNIQUE (swiper_id, swiped_id);
 ```
 
-### 3. הוסף NOT NULL ו-DEFAULT לשדות קריטיים
+### 3. ׳”׳•׳¡׳£ NOT NULL ׳•-DEFAULT ׳׳©׳“׳•׳× ׳§׳¨׳™׳˜׳™׳™׳
 
 ```sql
--- ודא is_blocked תמיד FALSE כברירת מחדל
+-- ׳•׳“׳ is_blocked ׳×׳׳™׳“ FALSE ׳›׳‘׳¨׳™׳¨׳× ׳׳—׳“׳
 ALTER TABLE profiles
   ALTER COLUMN is_blocked SET DEFAULT FALSE,
   ALTER COLUMN is_blocked SET NOT NULL;
 
--- ודא is_admin תמיד FALSE כברירת מחדל
+-- ׳•׳“׳ is_admin ׳×׳׳™׳“ FALSE ׳›׳‘׳¨׳™׳¨׳× ׳׳—׳“׳
 ALTER TABLE profiles
   ALTER COLUMN is_admin SET DEFAULT FALSE,
   ALTER COLUMN is_admin SET NOT NULL;
 
--- ודא email הוא NOT NULL
+-- ׳•׳“׳ email ׳”׳•׳ NOT NULL
 ALTER TABLE profiles
   ALTER COLUMN email SET NOT NULL;
 
--- ודא role הוא NOT NULL
+-- ׳•׳“׳ role ׳”׳•׳ NOT NULL
 ALTER TABLE profiles
   ALTER COLUMN role SET NOT NULL;
 ```
 
-### 4. הוסף CHECK constraint על role
+### 4. ׳”׳•׳¡׳£ CHECK constraint ׳¢׳ role
 
 ```sql
--- מנע ערכי role שגויים
+-- ׳׳ ׳¢ ׳¢׳¨׳›׳™ role ׳©׳’׳•׳™׳™׳
 ALTER TABLE profiles
   ADD CONSTRAINT check_profile_role
   CHECK (role IN ('CLINIC', 'STAFF'));
 ```
 
-### 5. הוסף UNIQUE constraint על matches
+### 5. ׳”׳•׳¡׳£ UNIQUE constraint ׳¢׳ matches
 
 ```sql
--- מנע match כפול בין אותם שני משתמשים
+-- ׳׳ ׳¢ match ׳›׳₪׳•׳ ׳‘׳™׳ ׳׳•׳×׳ ׳©׳ ׳™ ׳׳©׳×׳׳©׳™׳
 ALTER TABLE matches
   ADD CONSTRAINT unique_match_pair
   UNIQUE (
@@ -565,12 +565,12 @@ ALTER TABLE matches
   );
 ```
 
-> **הערה:** אם `user_one_id`/`user_two_id` הם INTEGER, הסר את `::text`.
+> **׳”׳¢׳¨׳”:** ׳׳ `user_one_id`/`user_two_id` ׳”׳ INTEGER, ׳”׳¡׳¨ ׳׳× `::text`.
 
-### 6. צור admin_stats view
+### 6. ׳¦׳•׳¨ admin_stats view
 
 ```sql
--- View עבור Admin panel stats
+-- View ׳¢׳‘׳•׳¨ Admin panel stats
 CREATE OR REPLACE VIEW admin_stats AS
 SELECT
   COUNT(*)                                      AS total_users,
@@ -580,20 +580,20 @@ SELECT
 FROM profiles;
 ```
 
-### 7. הוסף content validation על messages
+### 7. ׳”׳•׳¡׳£ content validation ׳¢׳ messages
 
 ```sql
--- מגבל אורך הודעה ל-2000 תווים
+-- ׳׳’׳‘׳ ׳׳•׳¨׳ ׳”׳•׳“׳¢׳” ׳-2000 ׳×׳•׳•׳™׳
 ALTER TABLE messages
   ADD CONSTRAINT check_message_length
   CHECK (char_length(content) BETWEEN 1 AND 2000);
 ```
 
-### 8. הוסף Foreign Keys חסרים (אם עדיין אין)
+### 8. ׳”׳•׳¡׳£ Foreign Keys ׳—׳¡׳¨׳™׳ (׳׳ ׳¢׳“׳™׳™׳ ׳׳™׳)
 
 ```sql
--- ודא FK ממatches ל-profiles (אם עדיין אין)
--- הפעל רק אם ה-constraint לא קיים
+-- ׳•׳“׳ FK ׳׳atches ׳-profiles (׳׳ ׳¢׳“׳™׳™׳ ׳׳™׳)
+-- ׳”׳₪׳¢׳ ׳¨׳§ ׳׳ ׳”-constraint ׳׳ ׳§׳™׳™׳
 
 DO $$
 BEGIN
@@ -628,29 +628,30 @@ END $$;
 
 ---
 
-## סיכום עדיפויות לפני פרודקשן
+## ׳¡׳™׳›׳•׳ ׳¢׳“׳™׳₪׳•׳™׳•׳× ׳׳₪׳ ׳™ ׳₪׳¨׳•׳“׳§׳©׳
 
-### 🔴 חובה (בלוקר לפרודקשן)
-1. FIX-1: חסום is_blocked ב-login
-2. FIX-2: הסר JWT_SECRET fallback
-3. FIX-4: ודא sender הוא חלק מה-match
-4. SQL #4: CHECK constraint על role
-5. הוסף GET /api/profiles/:id endpoint לבאקנד
+### נ”´ ׳—׳•׳‘׳” (׳‘׳׳•׳§׳¨ ׳׳₪׳¨׳•׳“׳§׳©׳)
+1. FIX-1: ׳—׳¡׳•׳ is_blocked ׳‘-login
+2. FIX-2: ׳”׳¡׳¨ JWT_SECRET fallback
+3. FIX-4: ׳•׳“׳ sender ׳”׳•׳ ׳—׳׳§ ׳׳”-match
+4. SQL #4: CHECK constraint ׳¢׳ role
+5. ׳”׳•׳¡׳£ GET /api/profiles/:id endpoint ׳׳‘׳׳§׳ ׳“
 
-### 🟠 גבוה (תוך שבוע)
-6. FIX-3: הגבל CORS
-7. FIX-5 + SQL #2: מנע double-swipe
-8. SQL #6: צור admin_stats view
-9. SQL #1: הוסף אינדקסים
-10. FIX-6: הסר Math.random() מ-Insights
+### נ  ׳’׳‘׳•׳” (׳×׳•׳ ׳©׳‘׳•׳¢)
+6. FIX-3: ׳”׳’׳‘׳ CORS
+7. FIX-5 + SQL #2: ׳׳ ׳¢ double-swipe
+8. SQL #6: ׳¦׳•׳¨ admin_stats view
+9. SQL #1: ׳”׳•׳¡׳£ ׳׳™׳ ׳“׳§׳¡׳™׳
+10. FIX-6: ׳”׳¡׳¨ Math.random() ׳-Insights
 
-### 🟡 בינוני (תוך חודש)
-11. FIX-7: תקן swipe threshold
-12. שדרג Chat מ-polling ל-WebSocket
-13. הוסף rate limiting (express-rate-limit)
-14. הוסף GET /api/profiles/:id endpoint
-15. Admin page – Mobile-first redesign
+### נ¡ ׳‘׳™׳ ׳•׳ ׳™ (׳×׳•׳ ׳—׳•׳“׳©)
+11. FIX-7: ׳×׳§׳ swipe threshold
+12. ׳©׳“׳¨׳’ Chat ׳-polling ׳-WebSocket
+13. ׳”׳•׳¡׳£ rate limiting (express-rate-limit)
+14. ׳”׳•׳¡׳£ GET /api/profiles/:id endpoint
+15. Admin page ג€“ Mobile-first redesign
 
 ---
 
-*מסמך זה נוצר אוטומטית על ידי ניתוח מלא של קוד הפרויקט. יש לעדכן אותו לאחר כל sprint.*
+*׳׳¡׳׳ ׳–׳” ׳ ׳•׳¦׳¨ ׳׳•׳˜׳•׳׳˜׳™׳× ׳¢׳ ׳™׳“׳™ ׳ ׳™׳×׳•׳— ׳׳׳ ׳©׳ ׳§׳•׳“ ׳”׳₪׳¨׳•׳™׳§׳˜. ׳™׳© ׳׳¢׳“׳›׳ ׳׳•׳×׳• ׳׳׳—׳¨ ׳›׳ sprint.*
+

@@ -7,7 +7,7 @@ interface LoadingStateProps {
 }
 
 export function LoadingState({ 
-  message = "טוען...", 
+  message = "׳˜׳•׳¢׳...", 
   submessage 
 }: LoadingStateProps) {
   return (
@@ -54,3 +54,4 @@ export function LoadingState({
     </motion.div>
   );
 }
+

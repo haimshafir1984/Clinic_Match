@@ -33,3 +33,4 @@ export function useMatchDetails(matchId: string) {
     closeMatch: closeMutation.mutateAsync,
   };
 }
+

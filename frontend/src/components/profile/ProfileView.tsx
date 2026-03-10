@@ -30,19 +30,19 @@ interface ProfileViewProps {
 }
 
 const jobTypeLabels: Record<string, string> = {
-  daily: "ιεξι",
-  temporary: "ζξπι",
-  permanent: "χαες",
+  daily: "Χ™Χ•ΧΧ™",
+  temporary: "Χ–ΧΧ Χ™",
+  permanent: "Χ§Χ‘Χ•ΧΆ",
 };
 
 const dayLabels: Record<string, string> = {
-  sunday: "ψΰωεο",
-  monday: "ωπι",
-  tuesday: "ωμιωι",
-  wednesday: "ψαιςι",
-  thursday: "ηξιωι",
-  friday: "ωιωι",
-  saturday: "ωαϊ",
+  sunday: "Χ¨ΧΧ©Χ•Χ",
+  monday: "Χ©Χ Χ™",
+  tuesday: "Χ©ΧΧ™Χ©Χ™",
+  wednesday: "Χ¨Χ‘Χ™ΧΆΧ™",
+  thursday: "Χ—ΧΧ™Χ©Χ™",
+  friday: "Χ©Χ™Χ©Χ™",
+  saturday: "Χ©Χ‘Χª",
 };
 
 export function ProfileView({ profile }: ProfileViewProps) {
@@ -67,7 +67,7 @@ export function ProfileView({ profile }: ProfileViewProps) {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold">{profile.name}</h2>
-                <Badge variant={isClinic ? "default" : "secondary"}>{isClinic ? "αιϊ ςρχ" : "ςεαγ/ϊ"}</Badge>
+                <Badge variant={isClinic ? "default" : "secondary"}>{isClinic ? "Χ‘Χ™Χª ΧΆΧ΅Χ§" : "ΧΆΧ•Χ‘Χ“/Χª"}</Badge>
               </div>
               {positions.length > 0 && (
                 <div className="flex flex-wrap gap-1">
@@ -79,7 +79,7 @@ export function ProfileView({ profile }: ProfileViewProps) {
                   ))}
                 </div>
               )}
-              {!isClinic && profile.experience_years ? <p className="text-sm text-muted-foreground">{profile.experience_years} ωπεϊ πιριεο</p> : null}
+              {!isClinic && profile.experience_years ? <p className="text-sm text-muted-foreground">{profile.experience_years} Χ©Χ Χ•Χª Χ Χ™Χ΅Χ™Χ•Χ</p> : null}
             </div>
           </div>
           {profile.description ? <p className="mt-4 text-sm text-muted-foreground">{profile.description}</p> : null}
@@ -89,9 +89,9 @@ export function ProfileView({ profile }: ProfileViewProps) {
       {(profile.city || profile.preferred_area) && (
         <Card>
           <CardContent className="pt-6">
-            <h3 className="mb-3 flex items-center gap-2 font-semibold"><MapPin className="h-4 w-4 text-primary" />ξιχεν</h3>
+            <h3 className="mb-3 flex items-center gap-2 font-semibold"><MapPin className="h-4 w-4 text-primary" />ΧΧ™Χ§Χ•Χ</h3>
             <p>{profile.city || profile.preferred_area}</p>
-            {profile.radius_km ? <p className="text-sm text-muted-foreground">ψγιερ ηιτεω: {profile.radius_km} χ"ξ</p> : null}
+            {profile.radius_km ? <p className="text-sm text-muted-foreground">Χ¨Χ“Χ™Χ•Χ΅ Χ—Χ™Χ¤Χ•Χ©: {profile.radius_km} Χ§"Χ</p> : null}
           </CardContent>
         </Card>
       )}
@@ -99,10 +99,10 @@ export function ProfileView({ profile }: ProfileViewProps) {
       {(profile.availability_days?.length || profile.availability_hours || profile.availability_date) ? (
         <Card>
           <CardContent className="pt-6">
-            <h3 className="mb-3 flex items-center gap-2 font-semibold"><Calendar className="h-4 w-4 text-primary" />ζξιπεϊ</h3>
+            <h3 className="mb-3 flex items-center gap-2 font-semibold"><Calendar className="h-4 w-4 text-primary" />Χ–ΧΧ™Χ Χ•Χª</h3>
             {profile.availability_days?.length ? <p>{profile.availability_days.map((day) => dayLabels[day] || day).join(", ")}</p> : null}
             {profile.availability_hours ? <p className="mt-2 flex items-center gap-1 text-sm text-muted-foreground"><Clock className="h-3 w-3" />{profile.availability_hours}</p> : null}
-            {profile.availability_date ? <p className="mt-2 text-sm text-muted-foreground">ϊΰψικ δϊημδ: {new Date(profile.availability_date).toLocaleDateString("he-IL")}</p> : null}
+            {profile.availability_date ? <p className="mt-2 text-sm text-muted-foreground">ΧªΧΧ¨Χ™Χ Χ”ΧªΧ—ΧΧ”: {new Date(profile.availability_date).toLocaleDateString("he-IL")}</p> : null}
           </CardContent>
         </Card>
       ) : null}
@@ -110,14 +110,14 @@ export function ProfileView({ profile }: ProfileViewProps) {
       {(profile.salary_min || profile.salary_max || profile.job_type) ? (
         <Card>
           <CardContent className="pt-6">
-            <h3 className="mb-3 flex items-center gap-2 font-semibold"><Banknote className="h-4 w-4 text-primary" />{isClinic ? "ϊπΰι δςρχδ" : "φιτιεϊ ωλψ"}</h3>
+            <h3 className="mb-3 flex items-center gap-2 font-semibold"><Banknote className="h-4 w-4 text-primary" />{isClinic ? "ΧªΧ ΧΧ™ Χ”ΧΆΧ΅Χ§Χ”" : "Χ¦Χ™Χ¤Χ™Χ•Χª Χ©Χ›Χ¨"}</h3>
             {(profile.salary_min || profile.salary_max) ? (
               <p>
                 {profile.salary_min && profile.salary_max
-                  ? `¤${profile.salary_min.toLocaleString()} - ¤${profile.salary_max.toLocaleString()}`
+                  ? `β‚ª${profile.salary_min.toLocaleString()} - β‚ª${profile.salary_max.toLocaleString()}`
                   : profile.salary_min
-                  ? `ξ-¤${profile.salary_min.toLocaleString()}`
-                  : `ςγ ¤${profile.salary_max?.toLocaleString()}`}
+                  ? `Χ-β‚ª${profile.salary_min.toLocaleString()}`
+                  : `ΧΆΧ“ β‚ª${profile.salary_max?.toLocaleString()}`}
               </p>
             ) : null}
             {profile.job_type ? <Badge variant="outline" className="mt-2">{jobTypeLabels[profile.job_type]}</Badge> : null}
@@ -127,3 +127,4 @@ export function ProfileView({ profile }: ProfileViewProps) {
     </div>
   );
 }
+

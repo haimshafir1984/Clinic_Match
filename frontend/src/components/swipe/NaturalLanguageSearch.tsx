@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Banknote, Briefcase, Calendar, Loader2, MapPin, Search, Sparkles, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -194,3 +194,4 @@ export function NaturalLanguageSearch({ onFiltersChange, role }: NaturalLanguage
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-﻿import { motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { getDomainConfig, getRolesByDomain, WorkplaceDomain } from "@/constants/domains";
 import { cn } from "@/lib/utils";
@@ -64,3 +64,4 @@ export function RoleMultiSelector({ domain, selectedRoles, onChange }: RoleMulti
     </div>
   );
 }
+

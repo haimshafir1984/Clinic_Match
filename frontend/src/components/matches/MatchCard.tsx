@@ -28,12 +28,12 @@ export function MatchCard({ match }: MatchCardProps) {
           <div className="min-w-0 flex-1">
             <div className="mb-1 flex items-center gap-2">
               <h3 className="truncate font-semibold text-foreground">{otherProfile.name}</h3>
-              <Badge variant={isBusiness ? "default" : "secondary"} className="text-xs">{isBusiness ? "בית עסק" : "עובד/ת"}</Badge>
+              <Badge variant={isBusiness ? "default" : "secondary"} className="text-xs">{isBusiness ? "׳‘׳™׳× ׳¢׳¡׳§" : "׳¢׳•׳‘׳“/׳×"}</Badge>
             </div>
-            <p className="truncate text-sm text-muted-foreground">{otherProfile.position}{otherProfile.location ? ` • ${otherProfile.location}` : ""}</p>
+            <p className="truncate text-sm text-muted-foreground">{otherProfile.position}{otherProfile.location ? ` ג€¢ ${otherProfile.location}` : ""}</p>
             <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
               <Calendar className="h-3 w-3" />
-              <span>התאמה {formatDistanceToNow(new Date(match.createdAt), { addSuffix: true, locale: he })}</span>
+              <span>׳”׳×׳׳׳” {formatDistanceToNow(new Date(match.createdAt), { addSuffix: true, locale: he })}</span>
             </div>
           </div>
 
@@ -43,3 +43,4 @@ export function MatchCard({ match }: MatchCardProps) {
     </Link>
   );
 }
+

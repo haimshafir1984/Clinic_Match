@@ -92,3 +92,4 @@ export interface AuthResponse {
   user: CurrentUser | null;
   token: string | null;
 }
+

@@ -12,7 +12,7 @@ export function TopHeader() {
 
   const handleSignOut = async () => {
     await signOut();
-    toast.success("μδϊψΰεϊ!");
+    toast.success("ΧΧ”ΧªΧ¨ΧΧ•Χª!");
     navigate("/login");
   };
 
@@ -33,7 +33,7 @@ export function TopHeader() {
                 </Link>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>δϊΰξεϊ</TooltipContent>
+            <TooltipContent>Χ”ΧªΧΧΧ•Χª</TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -44,7 +44,7 @@ export function TopHeader() {
                 </Link>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>τψετιμ</TooltipContent>
+            <TooltipContent>Χ¤Χ¨Χ•Χ¤Χ™Χ</TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -53,10 +53,11 @@ export function TopHeader() {
                 <LogOut className="h-5 w-5" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>δϊπϊχ</TooltipContent>
+            <TooltipContent>Χ”ΧªΧ ΧªΧ§</TooltipContent>
           </Tooltip>
         </div>
       </div>
     </header>
   );
 }
+

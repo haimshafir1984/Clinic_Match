@@ -562,8 +562,8 @@ app.post("/api/swipe", authenticateToken, async (req, res) => {
 
           const clinic = profiles.rows.find((profile) => profile.role === "CLINIC" && profile.is_auto_screener_active === true);
           if (clinic && Array.isArray(clinic.screening_questions) && clinic.screening_questions.length > 0) {
-            const questionsList = clinic.screening_questions.map((question) => `• ${question}`).join("\n");
-            const botMessage = `äéé, ùîçéí òì ääúàîä!\nëãé ìäú÷ãí, ðùîç ùúòðä/é òì îñôø ùàìåú ÷öøåú:\n\n${questionsList}`;
+            const questionsList = clinic.screening_questions.map((question) => `â€¢ ${question}`).join("\n");
+            const botMessage = `×”×™×™, ×©×ž×—×™× ×¢×œ ×”×”×ª××ž×”!\n×›×“×™ ×œ×”×ª×§×“×, × ×©×ž×— ×©×ª×¢× ×”/×™ ×¢×œ ×ž×¡×¤×¨ ×©××œ×•×ª ×§×¦×¨×•×ª:\n\n${questionsList}`;
 
             await pool.query(
               `
@@ -799,3 +799,4 @@ app.post("/api/admin/toggle-block", authenticateToken, verifyAdminRole, async (r
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`ClinicMatch Backend Running on port ${PORT}`));
+

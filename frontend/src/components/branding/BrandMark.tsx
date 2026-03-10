@@ -14,3 +14,4 @@ export function BrandMark({ size = 40, className }: BrandMarkProps) {
     />
   );
 }
+

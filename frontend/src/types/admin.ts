@@ -35,3 +35,4 @@ export interface ToggleBlockResponse {
   success: boolean;
   message?: string;
 }
+

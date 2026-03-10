@@ -18,53 +18,53 @@ import {
 
 // Major Israeli cities for autocomplete
 const israeliCities = [
-  "תל אביב",
-  "ירושלים",
-  "חיפה",
-  "ראשון לציון",
-  "פתח תקווה",
-  "אשדוד",
-  "נתניה",
-  "באר שבע",
-  "בני ברק",
-  "חולון",
-  "רמת גן",
-  "אשקלון",
-  "רחובות",
-  "בת ים",
-  "הרצליה",
-  "כפר סבא",
-  "רעננה",
-  "מודיעין",
-  "לוד",
-  "רמלה",
-  "נצרת",
-  "עכו",
-  "קריית גת",
-  "אילת",
-  "טבריה",
-  "צפת",
-  "עפולה",
-  "נהריה",
-  "קריית שמונה",
-  "דימונה",
-  "ערד",
-  "יבנה",
-  "גבעתיים",
-  "קריית אתא",
-  "קריית מוצקין",
-  "קריית ביאליק",
-  "קריית ים",
-  "נס ציונה",
-  "אור יהודה",
-  "יהוד",
-  "רמת השרון",
-  "הוד השרון",
-  "כפר יונה",
-  "זכרון יעקב",
-  "פרדס חנה",
-  "טירת כרמל",
-  "עתלית",
+  "׳×׳ ׳׳‘׳™׳‘",
+  "׳™׳¨׳•׳©׳׳™׳",
+  "׳—׳™׳₪׳”",
+  "׳¨׳׳©׳•׳ ׳׳¦׳™׳•׳",
+  "׳₪׳×׳— ׳×׳§׳•׳•׳”",
+  "׳׳©׳“׳•׳“",
+  "׳ ׳×׳ ׳™׳”",
+  "׳‘׳׳¨ ׳©׳‘׳¢",
+  "׳‘׳ ׳™ ׳‘׳¨׳§",
+  "׳—׳•׳׳•׳",
+  "׳¨׳׳× ׳’׳",
+  "׳׳©׳§׳׳•׳",
+  "׳¨׳—׳•׳‘׳•׳×",
+  "׳‘׳× ׳™׳",
+  "׳”׳¨׳¦׳׳™׳”",
+  "׳›׳₪׳¨ ׳¡׳‘׳",
+  "׳¨׳¢׳ ׳ ׳”",
+  "׳׳•׳“׳™׳¢׳™׳",
+  "׳׳•׳“",
+  "׳¨׳׳׳”",
+  "׳ ׳¦׳¨׳×",
+  "׳¢׳›׳•",
+  "׳§׳¨׳™׳™׳× ׳’׳×",
+  "׳׳™׳׳×",
+  "׳˜׳‘׳¨׳™׳”",
+  "׳¦׳₪׳×",
+  "׳¢׳₪׳•׳׳”",
+  "׳ ׳”׳¨׳™׳”",
+  "׳§׳¨׳™׳™׳× ׳©׳׳•׳ ׳”",
+  "׳“׳™׳׳•׳ ׳”",
+  "׳¢׳¨׳“",
+  "׳™׳‘׳ ׳”",
+  "׳’׳‘׳¢׳×׳™׳™׳",
+  "׳§׳¨׳™׳™׳× ׳׳×׳",
+  "׳§׳¨׳™׳™׳× ׳׳•׳¦׳§׳™׳",
+  "׳§׳¨׳™׳™׳× ׳‘׳™׳׳׳™׳§",
+  "׳§׳¨׳™׳™׳× ׳™׳",
+  "׳ ׳¡ ׳¦׳™׳•׳ ׳”",
+  "׳׳•׳¨ ׳™׳”׳•׳“׳”",
+  "׳™׳”׳•׳“",
+  "׳¨׳׳× ׳”׳©׳¨׳•׳",
+  "׳”׳•׳“ ׳”׳©׳¨׳•׳",
+  "׳›׳₪׳¨ ׳™׳•׳ ׳”",
+  "׳–׳›׳¨׳•׳ ׳™׳¢׳§׳‘",
+  "׳₪׳¨׳“׳¡ ׳—׳ ׳”",
+  "׳˜׳™׳¨׳× ׳›׳¨׳׳",
+  "׳¢׳×׳׳™׳×",
 ];
 
 interface CityComboboxProps {
@@ -73,7 +73,7 @@ interface CityComboboxProps {
   placeholder?: string;
 }
 
-export function CityCombobox({ value, onChange, placeholder = "בחר עיר" }: CityComboboxProps) {
+export function CityCombobox({ value, onChange, placeholder = "׳‘׳—׳¨ ׳¢׳™׳¨" }: CityComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
 
@@ -99,7 +99,7 @@ export function CityCombobox({ value, onChange, placeholder = "בחר עיר" }:
       <PopoverContent className="w-full p-0" align="start">
         <Command dir="rtl">
           <CommandInput
-            placeholder="חפש עיר..."
+            placeholder="׳—׳₪׳© ׳¢׳™׳¨..."
             value={searchValue}
             onValueChange={setSearchValue}
             className="text-right"
@@ -107,7 +107,7 @@ export function CityCombobox({ value, onChange, placeholder = "בחר עיר" }:
           <CommandList>
             <CommandEmpty>
               <div className="p-2 text-center">
-                <p className="text-sm text-muted-foreground mb-2">לא נמצאה עיר</p>
+                <p className="text-sm text-muted-foreground mb-2">׳׳ ׳ ׳׳¦׳׳” ׳¢׳™׳¨</p>
                 {searchValue && (
                   <Button
                     variant="outline"
@@ -118,7 +118,7 @@ export function CityCombobox({ value, onChange, placeholder = "בחר עיר" }:
                       setSearchValue("");
                     }}
                   >
-                    השתמש ב-"{searchValue}"
+                    ׳”׳©׳×׳׳© ׳‘-"{searchValue}"
                   </Button>
                 )}
               </div>

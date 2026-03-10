@@ -19,3 +19,4 @@ export function AppLayout({ children, showNav = true, showHeader = true }: AppLa
     </div>
   );
 }
+

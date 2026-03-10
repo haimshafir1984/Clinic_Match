@@ -15,19 +15,19 @@ interface SwipeCardProps {
 const NEW_PROFILE_DAYS = 3;
 
 const jobTypeLabels: Record<string, string> = {
-  daily: "ιεξι",
-  temporary: "ζξπι",
-  permanent: "χαες",
+  daily: "Χ™Χ•ΧΧ™",
+  temporary: "Χ–ΧΧ Χ™",
+  permanent: "Χ§Χ‘Χ•ΧΆ",
 };
 
 const dayLabels: Record<string, string> = {
-  sunday: "ΰΧ",
-  monday: "αΧ",
-  tuesday: "βΧ",
-  wednesday: "γΧ",
-  thursday: "δΧ",
-  friday: "εΧ",
-  saturday: "ωΧ",
+  sunday: "ΧΧ³",
+  monday: "Χ‘Χ³",
+  tuesday: "Χ’Χ³",
+  wednesday: "Χ“Χ³",
+  thursday: "Χ”Χ³",
+  friday: "Χ•Χ³",
+  saturday: "Χ©Χ³",
 };
 
 function isNewProfile(createdAt: string | null): boolean {
@@ -72,29 +72,29 @@ export function SwipeCard({ profile, direction, onSwipeLeft, onSwipeRight, curre
   const isNew = isNewProfile(profile.createdAt);
   const hasSalaryMatch = checkSalaryMatch(profile.salaryRange, currentUserSalary, profile.role);
   const salary = profile.salaryRange.min && profile.salaryRange.max
-    ? `¤${profile.salaryRange.min.toLocaleString()} - ¤${profile.salaryRange.max.toLocaleString()}`
+    ? `β‚ª${profile.salaryRange.min.toLocaleString()} - β‚ª${profile.salaryRange.max.toLocaleString()}`
     : profile.salaryRange.min
-    ? `ξ-¤${profile.salaryRange.min.toLocaleString()}`
+    ? `Χ-β‚ª${profile.salaryRange.min.toLocaleString()}`
     : profile.salaryRange.max
-    ? `ςγ ¤${profile.salaryRange.max.toLocaleString()}`
+    ? `ΧΆΧ“ β‚ª${profile.salaryRange.max.toLocaleString()}`
     : null;
 
   return (
     <motion.div className="absolute inset-0" style={{ x, rotate }} drag="x" dragConstraints={{ left: 0, right: 0 }} dragElastic={0.7} onDragEnd={handleDragEnd} variants={variants} initial="initial" animate="animate" exit="exit" transition={{ type: "spring", stiffness: 300, damping: 30 }}>
-      <motion.div className="absolute right-8 top-8 z-10 rounded-lg border-4 border-success bg-success px-6 py-2 text-xl font-bold text-success-foreground rotate-12" style={{ opacity: likeOpacity }}>μιιχ</motion.div>
-      <motion.div className="absolute left-8 top-8 z-10 -rotate-12 rounded-lg border-4 border-destructive bg-destructive px-6 py-2 text-xl font-bold text-destructive-foreground" style={{ opacity: passOpacity }}>γμβ</motion.div>
+      <motion.div className="absolute right-8 top-8 z-10 rounded-lg border-4 border-success bg-success px-6 py-2 text-xl font-bold text-success-foreground rotate-12" style={{ opacity: likeOpacity }}>ΧΧ™Χ™Χ§</motion.div>
+      <motion.div className="absolute left-8 top-8 z-10 -rotate-12 rounded-lg border-4 border-destructive bg-destructive px-6 py-2 text-xl font-bold text-destructive-foreground" style={{ opacity: passOpacity }}>Χ“ΧΧ’</motion.div>
 
       <Card className={`flex h-full flex-col overflow-hidden rounded-xl shadow-2xl ${isClinic && profile.isUrgent ? "border-2 border-orange-500" : "border-0"}`}>
         <div className="relative" style={{ height: "45%" }}>
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 via-accent to-primary/10">
             {profile.imageUrl ? <img src={profile.imageUrl} alt={profile.name} className="h-full w-full object-cover" /> : <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/20"><RoleIcon className="h-10 w-10 text-primary" /></div>}
             <div className="absolute left-3 top-3 flex flex-col gap-2">
-              {isClinic && profile.isUrgent ? <Badge className="gap-1 border-0 bg-orange-500 text-white hover:bg-orange-600"><Flame className="h-3 w-3" />βιερ γηεσ</Badge> : null}
-              {isNew ? <Badge className="gap-1 border-0 bg-cyan-500 text-white hover:bg-cyan-600"><Sparkles className="h-3 w-3" />ηγω</Badge> : null}
-              {hasSalaryMatch ? <Badge className="gap-1 border-0 bg-emerald-500 text-white hover:bg-emerald-600"><CheckCircle2 className="h-3 w-3" />δϊΰξϊ ωλψ</Badge> : null}
+              {isClinic && profile.isUrgent ? <Badge className="gap-1 border-0 bg-orange-500 text-white hover:bg-orange-600"><Flame className="h-3 w-3" />Χ’Χ™Χ•Χ΅ Χ“Χ—Χ•Χ£</Badge> : null}
+              {isNew ? <Badge className="gap-1 border-0 bg-cyan-500 text-white hover:bg-cyan-600"><Sparkles className="h-3 w-3" />Χ—Χ“Χ©</Badge> : null}
+              {hasSalaryMatch ? <Badge className="gap-1 border-0 bg-emerald-500 text-white hover:bg-emerald-600"><CheckCircle2 className="h-3 w-3" />Χ”ΧªΧΧΧª Χ©Χ›Χ¨</Badge> : null}
             </div>
-            <Badge className="absolute right-3 top-3" variant={isClinic ? "default" : "secondary"}>{isClinic ? "αιϊ ςρχ" : "ςεαγ/ϊ"}</Badge>
-            {!isClinic && profile.experienceYears ? <Badge variant="outline" className="absolute right-3 top-12 bg-background/80 backdrop-blur-sm"><Star className="ml-1 h-3 w-3" />{profile.experienceYears} ωπιν</Badge> : null}
+            <Badge className="absolute right-3 top-3" variant={isClinic ? "default" : "secondary"}>{isClinic ? "Χ‘Χ™Χª ΧΆΧ΅Χ§" : "ΧΆΧ•Χ‘Χ“/Χª"}</Badge>
+            {!isClinic && profile.experienceYears ? <Badge variant="outline" className="absolute right-3 top-12 bg-background/80 backdrop-blur-sm"><Star className="ml-1 h-3 w-3" />{profile.experienceYears} Χ©Χ Χ™Χ</Badge> : null}
           </div>
         </div>
 
@@ -102,13 +102,13 @@ export function SwipeCard({ profile, direction, onSwipeLeft, onSwipeRight, curre
           <h2 className="mb-3 text-xl font-bold">{profile.name}</h2>
 
           <div className="mb-4 space-y-2">
-            {profile.position ? <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/10 p-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20"><Briefcase className="h-5 w-5 text-primary" /></div><div><p className="text-xs text-muted-foreground">ϊτχιγ</p><p className="font-bold">{profile.position}</p></div></div> : null}
-            {(profile.availability.days.length > 0 || profile.availability.startDate) ? <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/10 p-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20"><Calendar className="h-5 w-5 text-primary" /></div><div className="flex-1"><p className="text-xs text-muted-foreground">ζξιπεϊ</p><p className="font-bold">{profile.availability.startDate ? new Date(profile.availability.startDate).toLocaleDateString("he-IL", { day: "numeric", month: "short" }) : profile.availability.days.map((day) => dayLabels[day] || day).join(" ")}</p>{profile.availability.hours ? <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground"><Clock className="h-3 w-3" />{profile.availability.hours}</p> : null}</div></div> : null}
-            {salary ? <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/10 p-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20"><Banknote className="h-5 w-5 text-primary" /></div><div><p className="text-xs text-muted-foreground">ωλψ</p><p className="font-bold">{salary}</p>{profile.jobType ? <p className="text-xs text-muted-foreground">{jobTypeLabels[profile.jobType]}</p> : null}</div></div> : null}
+            {profile.position ? <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/10 p-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20"><Briefcase className="h-5 w-5 text-primary" /></div><div><p className="text-xs text-muted-foreground">ΧªΧ¤Χ§Χ™Χ“</p><p className="font-bold">{profile.position}</p></div></div> : null}
+            {(profile.availability.days.length > 0 || profile.availability.startDate) ? <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/10 p-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20"><Calendar className="h-5 w-5 text-primary" /></div><div className="flex-1"><p className="text-xs text-muted-foreground">Χ–ΧΧ™Χ Χ•Χª</p><p className="font-bold">{profile.availability.startDate ? new Date(profile.availability.startDate).toLocaleDateString("he-IL", { day: "numeric", month: "short" }) : profile.availability.days.map((day) => dayLabels[day] || day).join(" ")}</p>{profile.availability.hours ? <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground"><Clock className="h-3 w-3" />{profile.availability.hours}</p> : null}</div></div> : null}
+            {salary ? <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/10 p-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20"><Banknote className="h-5 w-5 text-primary" /></div><div><p className="text-xs text-muted-foreground">Χ©Χ›Χ¨</p><p className="font-bold">{salary}</p>{profile.jobType ? <p className="text-xs text-muted-foreground">{jobTypeLabels[profile.jobType]}</p> : null}</div></div> : null}
           </div>
 
           <div className="mt-auto space-y-2">
-            {profile.location ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4" /><span>{profile.location}</span>{profile.radiusKm ? <span className="text-xs">({profile.radiusKm} χ"ξ)</span> : null}</div> : null}
+            {profile.location ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4" /><span>{profile.location}</span>{profile.radiusKm ? <span className="text-xs">({profile.radiusKm} Χ§"Χ)</span> : null}</div> : null}
             {profile.description ? <p className="line-clamp-2 text-sm text-muted-foreground">{profile.description}</p> : null}
           </div>
         </div>
@@ -116,3 +116,4 @@ export function SwipeCard({ profile, direction, onSwipeLeft, onSwipeRight, curre
     </motion.div>
   );
 }
+

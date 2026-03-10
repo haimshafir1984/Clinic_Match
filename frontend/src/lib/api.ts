@@ -40,7 +40,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}, timeoutMs
   } catch (error) {
     window.clearTimeout(timeoutId);
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("δαχωδ πλωμδ - δωψϊ μΰ ξβια. πρδ ωεα.");
+      throw new Error("Χ”Χ‘Χ§Χ©Χ” Χ Χ›Χ©ΧΧ” - Χ”Χ©Χ¨Χª ΧΧ ΧΧ’Χ™Χ‘. Χ Χ΅Χ” Χ©Χ•Χ‘.");
     }
     throw error;
   }
@@ -372,11 +372,11 @@ export async function login(email: string): Promise<{ user: CurrentUser | null; 
     if (error instanceof Error) {
       const message = error.message.toLowerCase();
       if (message.includes("not found")) {
-        return { user: null, error: "δΰιξιιμ μΰ πξφΰ, ΰτωψ μδιψων", needsRegistration: true };
+        return { user: null, error: "Χ”ΧΧ™ΧΧ™Χ™Χ ΧΧ Χ ΧΧ¦Χ, ΧΧ¤Χ©Χ¨ ΧΧ”Χ™Χ¨Χ©Χ", needsRegistration: true };
       }
       return { user: null, error: error.message };
     }
-    return { user: null, error: "δδϊηαψεϊ πλωμδ" };
+    return { user: null, error: "Χ”Χ”ΧªΧ—Χ‘Χ¨Χ•Χª Χ Χ›Χ©ΧΧ”" };
   }
 }
 
@@ -398,7 +398,7 @@ export async function createProfile(data: ProfileCreateData): Promise<{ user: Cu
     if (error instanceof Error) {
       return { user: null, error: error.message };
     }
-    return { user: null, error: "ιφιψϊ δτψετιμ πλωμδ" };
+    return { user: null, error: "Χ™Χ¦Χ™Χ¨Χª Χ”Χ¤Χ¨Χ•Χ¤Χ™Χ Χ Χ›Χ©ΧΧ”" };
   }
 }
 
@@ -523,7 +523,7 @@ export async function updateProfileApi(profileId: string, data: ProfileUpdateDat
     if (error instanceof Error) {
       return { profile: null, error: error.message };
     }
-    return { profile: null, error: "ςγλεο δτψετιμ πλωμ" };
+    return { profile: null, error: "ΧΆΧ“Χ›Χ•Χ Χ”Χ¤Χ¨Χ•Χ¤Χ™Χ Χ Χ›Χ©Χ" };
   }
 }
 
@@ -591,5 +591,6 @@ export async function generateScreeningQuestions(position?: string, workplaceTyp
   });
   return response.questions || [];
 }
+
 
 

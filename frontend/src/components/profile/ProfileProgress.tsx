@@ -25,8 +25,8 @@ export function ProfileProgress({ completion, className, showDetails = true }: P
           )}
           <span className="font-medium text-sm">
             {isComplete 
-              ? "הפרופיל מוכן – מתחילים לקבל התאמות! 🎉" 
-              : `השלמת ${percentage}% מהפרופיל`
+              ? "׳”׳₪׳¨׳•׳₪׳™׳ ׳׳•׳›׳ ג€“ ׳׳×׳—׳™׳׳™׳ ׳׳§׳‘׳ ׳”׳×׳׳׳•׳×! נ‰" 
+              : `׳”׳©׳׳׳× ${percentage}% ׳׳”׳₪׳¨׳•׳₪׳™׳`
             }
           </span>
         </div>
@@ -54,7 +54,7 @@ export function ProfileProgress({ completion, className, showDetails = true }: P
       {!isComplete && showDetails && (
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">כדי להתחיל לקבל התאמות</span> – השלימו את השדות הבאים:
+            <span className="font-medium text-foreground">׳›׳“׳™ ׳׳”׳×׳—׳™׳ ׳׳§׳‘׳ ׳”׳×׳׳׳•׳×</span> ג€“ ׳”׳©׳׳™׳׳• ׳׳× ׳”׳©׳“׳•׳× ׳”׳‘׳׳™׳:
           </p>
           <div className="flex flex-wrap gap-2">
             {missingRequiredFields.map((field) => (
@@ -69,9 +69,10 @@ export function ProfileProgress({ completion, className, showDetails = true }: P
       {/* Success Message */}
       {isComplete && showDetails && (
         <p className="text-sm text-green-600 dark:text-green-400 font-medium">
-          ✨ כל הפרטים הנדרשים הושלמו – הפרופיל שלכם מוכן לפעולה!
+          ג¨ ׳›׳ ׳”׳₪׳¨׳˜׳™׳ ׳”׳ ׳“׳¨׳©׳™׳ ׳”׳•׳©׳׳׳• ג€“ ׳”׳₪׳¨׳•׳₪׳™׳ ׳©׳׳›׳ ׳׳•׳›׳ ׳׳₪׳¢׳•׳׳”!
         </p>
       )}
     </div>
   );
 }
+
