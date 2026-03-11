@@ -9,7 +9,7 @@ import {
 } from "@/types";
 
 const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "");
-const API_BASE_URL = configuredApiBaseUrl || (import.meta.env.DEV ? "http://localhost:10000/api" : "/api");
+const API_BASE_URL = configuredApiBaseUrl || (import.meta.env.DEV ? "http://localhost:10000/api" : "https://clinic-match.onrender.com/api");
 const API_TIMEOUT_MS = 15_000;
 
 async function apiCall<T>(endpoint: string, options: RequestInit = {}, timeoutMs: number = API_TIMEOUT_MS): Promise<T> {
