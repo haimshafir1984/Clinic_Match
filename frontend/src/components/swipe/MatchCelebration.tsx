@@ -12,12 +12,12 @@ interface MatchCelebrationProps {
   onChat: () => void;
 }
 
-export function MatchCelebration({ 
-  isOpen, 
-  matchedProfile, 
+export function MatchCelebration({
+  isOpen,
+  matchedProfile,
   currentUser,
-  onClose, 
-  onChat 
+  onClose,
+  onChat,
 }: MatchCelebrationProps) {
   if (!isOpen || !matchedProfile) return null;
 
@@ -40,11 +40,9 @@ export function MatchCelebration({
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
           className="bg-card rounded-2xl p-8 max-w-md w-full text-center shadow-lg border"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
         >
-          {/* Profile Pictures Side by Side */}
           <div className="flex items-center justify-center gap-4 mb-6">
-            {/* Current User Avatar */}
             <div className="relative">
               <Avatar className="w-20 h-20 border-4 border-primary/20">
                 <AvatarImage src={currentUser?.imageUrl || undefined} />
@@ -54,12 +52,10 @@ export function MatchCelebration({
               </Avatar>
             </div>
 
-            {/* Connection Icon */}
             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
               <MessageCircle className="w-6 h-6 text-primary" />
             </div>
 
-            {/* Matched Profile Avatar */}
             <div className="relative">
               <Avatar className="w-20 h-20 border-4 border-primary/20">
                 <AvatarImage src={matchedProfile.imageUrl || undefined} />
@@ -70,40 +66,20 @@ export function MatchCelebration({
             </div>
           </div>
 
-          {/* Title */}
-          <h2 className="text-2xl font-bold text-foreground mb-2">
-            🎉 נמצאה התאמה!
-          </h2>
-          
-          {/* Description */}
-          <p className="text-muted-foreground mb-2">
-            גם{" "}
-            <span className="font-semibold text-foreground">
-              {matchedProfile.name}
-            </span>
-            {" "}סימנ/ה עניין בכם!
-          </p>
-          <p className="text-sm text-primary mb-8">
-            עכשיו אפשר ליצור קשר ולהתקדם 🚀
-          </p>
+          <h2 className="text-2xl font-bold text-foreground mb-2">נמצאה התאמה!</h2>
 
-          {/* Action Buttons */}
+          <p className="text-muted-foreground mb-2">
+            גם <span className="font-semibold text-foreground">{matchedProfile.name}</span> סימנו עניין בכם!
+          </p>
+          <p className="text-sm text-primary mb-8">עכשיו אפשר לפתוח שיחה ולהתקדם</p>
+
           <div className="flex flex-col gap-3">
-            <Button 
-              size="lg" 
-              className="w-full gap-2"
-              onClick={onChat}
-            >
+            <Button size="lg" className="w-full gap-2" onClick={onChat}>
               <MessageCircle className="w-5 h-5" />
-              שליחת הודעה
+              לפתוח שיחה
             </Button>
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="w-full gap-2"
-              onClick={onClose}
-            >
-              המשך לגלות התאמות
+            <Button variant="outline" size="lg" className="w-full gap-2" onClick={onClose}>
+              להמשיך לגלות התאמות
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>

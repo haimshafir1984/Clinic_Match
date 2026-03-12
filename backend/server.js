@@ -565,16 +565,20 @@ app.post("/api/swipe", authenticateToken, async (req, res) => {
             const questionsList = clinic.screening_questions.map((question) => `• ${question}`).join("\n");
             const botMessage = `היי, שמחים על ההתאמה!\nכדי להתקדם, נשמח שתענה/י על מספר שאלות קצרות:\n\n${questionsList}`;
 
-            await pool.query(
-              `
-                INSERT INTO messages (match_id, sender_id, content)
-                SELECT $1, $2, $3
-                WHERE NOT EXISTS (
-                  SELECT 1 FROM messages WHERE match_id = $1 AND sender_id = $2 AND content = $3
-                )
-              `,
-              [matchId, clinic.id, botMessage]
-            );
+            try {
+              await pool.query(
+                `
+                  INSERT INTO messages (match_id, sender_id, content)
+                  SELECT $1, $2, $3
+                  WHERE NOT EXISTS (
+                    SELECT 1 FROM messages WHERE match_id = $1 AND sender_id = $2 AND content = $3
+                  )
+                `,
+                [matchId, clinic.id, botMessage]
+              );
+            } catch (messageError) {
+              console.error("AUTO SCREENER MESSAGE ERROR:", messageError);
+            }
           }
         }
 

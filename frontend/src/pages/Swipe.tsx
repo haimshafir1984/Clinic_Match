@@ -13,38 +13,37 @@ import { Loader2, AlertTriangle } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
-// Filter profiles based on natural language search
 function filterProfiles(profiles: MatchCardData[], filters: SearchFilters | null): MatchCardData[] {
   if (!filters) return profiles;
-  
-  return profiles.filter(profile => {
+
+  return profiles.filter((profile) => {
     if (filters.position && profile.position) {
       if (!profile.position.toLowerCase().includes(filters.position.toLowerCase())) {
         return false;
       }
     }
-    
+
     if (filters.location && profile.location) {
       if (!profile.location.toLowerCase().includes(filters.location.toLowerCase())) {
         return false;
       }
     }
-    
+
     if (filters.days && filters.days.length > 0 && profile.availability?.days) {
-      const hasMatchingDay = filters.days.some(d => 
-        profile.availability.days.map(pd => pd.toLowerCase()).includes(d.toLowerCase())
+      const hasMatchingDay = filters.days.some((day) =>
+        profile.availability.days.map((profileDay) => profileDay.toLowerCase()).includes(day.toLowerCase())
       );
       if (!hasMatchingDay) return false;
     }
-    
+
     if (filters.salaryMin && profile.salaryRange?.min) {
       if (profile.salaryRange.min < filters.salaryMin) return false;
     }
-    
+
     if (filters.jobType && profile.jobType) {
       if (profile.jobType !== filters.jobType) return false;
     }
-    
+
     return true;
   });
 }
@@ -54,7 +53,7 @@ export default function Swipe() {
   const { currentUser } = useAuth();
   const { profiles, isLoading, isError, error, refetch } = useSwipeProfiles();
   const { like, pass, isLoading: isSwipeLoading } = useSwipe();
-  
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<"left" | "right" | null>(null);
   const [showMatchCelebration, setShowMatchCelebration] = useState(false);
@@ -62,35 +61,29 @@ export default function Swipe() {
   const [lastMatchId, setLastMatchId] = useState<string | null>(null);
   const [searchFilters, setSearchFilters] = useState<SearchFilters | null>(null);
 
-  // Filter profiles based on search
-  const filteredProfiles = useMemo(() => 
-    filterProfiles(profiles, searchFilters), 
-    [profiles, searchFilters]
-  );
-
+  const filteredProfiles = useMemo(() => filterProfiles(profiles, searchFilters), [profiles, searchFilters]);
   const currentProfile = filteredProfiles[currentIndex];
   const hasMoreProfiles = currentIndex < filteredProfiles.length;
 
   const handleLike = async () => {
     if (!currentProfile || isSwipeLoading) return;
-    
+
     setDirection("right");
-    
+
     try {
       const result = await like(currentProfile.id);
-      
+
       setTimeout(() => {
         setDirection(null);
         setCurrentIndex((prev) => prev + 1);
-        
+
         if (result.isMatch) {
-          // Show Match Celebration overlay
           setMatchedProfile(currentProfile);
           setLastMatchId(result.matchId || null);
           setShowMatchCelebration(true);
         }
       }, 300);
-    } catch (error) {
+    } catch {
       toast.error("שגיאה בשליחת הלייק");
       setDirection(null);
     }
@@ -98,17 +91,17 @@ export default function Swipe() {
 
   const handlePass = async () => {
     if (!currentProfile || isSwipeLoading) return;
-    
+
     setDirection("left");
-    
+
     try {
       await pass(currentProfile.id);
-      
+
       setTimeout(() => {
         setDirection(null);
         setCurrentIndex((prev) => prev + 1);
       }, 300);
-    } catch (error) {
+    } catch {
       toast.error("שגיאה");
       setDirection(null);
     }
@@ -122,14 +115,18 @@ export default function Swipe() {
 
   const handleFiltersChange = (filters: SearchFilters | null) => {
     setSearchFilters(filters);
-    setCurrentIndex(0); // Reset to first card when filters change
+    setCurrentIndex(0);
   };
 
   const handleChatWithMatch = () => {
     setShowMatchCelebration(false);
     if (lastMatchId) {
       navigate(`/chat/${lastMatchId}`);
+      return;
     }
+
+    toast.error("הצ'אט עדיין לא זמין. נסה/י לפתוח מתוך מסך ההתאמות.");
+    navigate("/matches");
   };
 
   if (isLoading) {
@@ -155,13 +152,13 @@ export default function Swipe() {
             </div>
             <h2 className="text-xl font-semibold text-foreground">שגיאה בטעינת הפרופילים</h2>
             <p className="text-muted-foreground max-w-sm">
-              {error instanceof Error ? error.message : "לא הצלחנו לטעון את הפרופילים. נסה שוב."}
+              {error instanceof Error ? error.message : "לא הצלחנו לטעון את הפרופילים. נסה/י שוב."}
             </p>
             <button
               onClick={() => refetch()}
               className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
-              נסה שוב
+              נסה/י שוב
             </button>
           </div>
         </div>
@@ -172,23 +169,15 @@ export default function Swipe() {
   return (
     <AppLayout>
       <div className="flex flex-col h-[calc(100dvh-9rem)] max-w-md mx-auto p-4">
-        {/* Header */}
         <div className="text-center mb-2">
           <h1 className="text-2xl font-bold text-foreground">גלו התאמות</h1>
-          <p className="text-sm text-muted-foreground">
-            החליקו ימינה לסימון עניין, שמאלה לדילוג
-          </p>
+          <p className="text-sm text-muted-foreground">החליקו ימינה לסימון עניין, שמאלה לדילוג</p>
         </div>
 
-        {/* Natural Language Search */}
         <div className="mb-3">
-          <NaturalLanguageSearch 
-            onFiltersChange={handleFiltersChange}
-            role={currentUser?.role || 'worker'}
-          />
+          <NaturalLanguageSearch onFiltersChange={handleFiltersChange} role={currentUser?.role || "worker"} />
         </div>
 
-        {/* Card Stack */}
         <div className="flex-1 relative">
           <AnimatePresence mode="popLayout">
             {hasMoreProfiles && currentProfile ? (
@@ -205,17 +194,9 @@ export default function Swipe() {
           </AnimatePresence>
         </div>
 
-        {/* Action Buttons */}
-        {hasMoreProfiles && (
-          <SwipeActions
-            onPass={handlePass}
-            onLike={handleLike}
-            disabled={isSwipeLoading}
-          />
-        )}
+        {hasMoreProfiles && <SwipeActions onPass={handlePass} onLike={handleLike} disabled={isSwipeLoading} />}
       </div>
 
-      {/* Match Celebration Overlay */}
       <MatchCelebration
         isOpen={showMatchCelebration}
         matchedProfile={matchedProfile}

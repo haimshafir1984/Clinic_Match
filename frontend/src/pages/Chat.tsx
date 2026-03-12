@@ -42,7 +42,7 @@ export default function Chat() {
     return (
       <AppLayout showNav={false}>
         <div className="flex flex-col items-center justify-center h-screen p-4">
-          <p className="text-muted-foreground">ההתאמה לא נמצאה</p>
+          <p className="text-muted-foreground">ההתאמה לא נמצאה או שאי אפשר לפתוח את הצ'אט כרגע.</p>
           <Link to="/matches" className="text-primary mt-2">
             חזרה להתאמות
           </Link>
@@ -67,7 +67,6 @@ export default function Chat() {
   return (
     <AppLayout showNav={false}>
       <div className="flex flex-col h-dvh">
-        {/* Header */}
         <header className="flex items-center gap-3 p-4 border-b bg-card">
           <Link to="/matches">
             <Button variant="ghost" size="icon">
@@ -84,9 +83,7 @@ export default function Chat() {
 
           <div className="flex-1">
             <h2 className="font-semibold">{otherProfile.name}</h2>
-            <p className="text-xs text-muted-foreground">
-              {isClinic ? "בית עסק" : "עובד/ת"}
-            </p>
+            <p className="text-xs text-muted-foreground">{isClinic ? "בית עסק" : "עובד/ת"}</p>
           </div>
 
           {!match.isClosed && (
@@ -104,8 +101,7 @@ export default function Chat() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>סגירת ההתאמה</AlertDialogTitle>
                   <AlertDialogDescription>
-                    האם אתה בטוח שברצונך לסגור את ההתאמה עם {otherProfile.name}?
-                    פעולה זו אינה ניתנת לביטול.
+                    האם בטוח שברצונך לסגור את ההתאמה עם {otherProfile.name}? פעולה זו אינה ניתנת לביטול.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -122,10 +118,8 @@ export default function Chat() {
           )}
         </header>
 
-        {/* Messages */}
         <ChatMessages messages={messages || []} isClosed={match.isClosed} />
 
-        {/* AI Assistant */}
         {!match.isClosed && (
           <AIChatAssistant
             otherProfile={otherProfile}
@@ -134,22 +128,10 @@ export default function Chat() {
           />
         )}
 
-        {/* Input */}
-        {!match.isClosed && (
-          <ChatInput
-            onSend={sendMessage}
-            value={inputMessage}
-            onChange={setInputMessage}
-          />
-        )}
+        {!match.isClosed && <ChatInput onSend={sendMessage} value={inputMessage} onChange={setInputMessage} />}
 
-        {match.isClosed && (
-          <div className="p-4 bg-muted text-center text-sm text-muted-foreground">
-            ההתאמה הזו נסגרה
-          </div>
-        )}
+        {match.isClosed && <div className="p-4 bg-muted text-center text-sm text-muted-foreground">ההתאמה הזו נסגרה</div>}
       </div>
     </AppLayout>
   );
 }
-

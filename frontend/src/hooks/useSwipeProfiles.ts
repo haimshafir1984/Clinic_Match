@@ -34,11 +34,11 @@ export function useSwipe() {
   const swipeMutation = useMutation({
     mutationFn: async ({ targetId, type }: { targetId: string; type: SwipeType }) => {
       if (!currentUser?.profileId) {
-        throw new Error("לא מחובר - נא להתחבר מחדש");
+        throw new Error("לא מחובר/ת. צריך להתחבר מחדש.");
       }
 
       if (!targetId) {
-        throw new Error("מזהה משתמש לא תקין");
+        throw new Error("מזהה משתמש לא תקין.");
       }
 
       return postSwipe({
@@ -53,31 +53,22 @@ export function useSwipe() {
     },
     onError: (error: Error) => {
       console.error("[useSwipe] Mutation error:", error);
-      toast.error("Match נכשל", {
-        description: error.message || "אירעה שגיאה - נסה שוב",
+      toast.error("ההתאמה נכשלה", {
+        description: error.message || "אירעה שגיאה. נסה/י שוב.",
       });
     },
   });
 
   const like = async (targetId: string) => {
-    try {
-      const result = await swipeMutation.mutateAsync({ targetId, type: "LIKE" });
-      return {
-        isMatch: result.isMatch,
-        matchId: result.matchId,
-      };
-    } catch (error) {
-      // Error toast is handled by onError callback
-      return { isMatch: false, matchId: undefined };
-    }
+    const result = await swipeMutation.mutateAsync({ targetId, type: "LIKE" });
+    return {
+      isMatch: result.isMatch,
+      matchId: result.matchId,
+    };
   };
 
   const pass = async (targetId: string) => {
-    try {
-      await swipeMutation.mutateAsync({ targetId, type: "PASS" });
-    } catch (error) {
-      // Error toast is handled by onError callback
-    }
+    await swipeMutation.mutateAsync({ targetId, type: "PASS" });
   };
 
   return {
