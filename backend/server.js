@@ -527,7 +527,7 @@ app.post("/api/swipe", authenticateToken, async (req, res) => {
     await pool.query(
       `
         INSERT INTO swipes (swiper_id, swiped_id, type)
-        VALUES ($1, $2, $3)
+        VALUES ($1::bigint, $2::bigint, $3)
         ON CONFLICT (swiper_id, swiped_id)
         DO UPDATE SET type = EXCLUDED.type
       `,
@@ -536,7 +536,7 @@ app.post("/api/swipe", authenticateToken, async (req, res) => {
 
     if (type === "LIKE") {
       const matchCheck = await pool.query(
-        `SELECT id FROM swipes WHERE swiper_id = $1 AND swiped_id = $2 AND type = 'LIKE'`,
+        `SELECT id FROM swipes WHERE swiper_id = $1::bigint AND swiped_id = $2::bigint AND type = 'LIKE'`,
         [swipedId, swiperId]
       );
 
@@ -544,7 +544,7 @@ app.post("/api/swipe", authenticateToken, async (req, res) => {
         const matchRes = await pool.query(
           `
             INSERT INTO matches (user_one_id, user_two_id)
-            VALUES (LEAST($1, $2), GREATEST($1, $2))
+            VALUES (LEAST($1::bigint, $2::bigint), GREATEST($1::bigint, $2::bigint))
             ON CONFLICT DO NOTHING
             RETURNING id
           `,
@@ -554,7 +554,7 @@ app.post("/api/swipe", authenticateToken, async (req, res) => {
         let matchId = matchRes.rows[0]?.id;
         if (!matchId) {
           const existingMatch = await pool.query(
-            `SELECT id FROM matches WHERE LEAST(user_one_id, user_two_id) = LEAST($1, $2) AND GREATEST(user_one_id, user_two_id) = GREATEST($1, $2)`,
+            `SELECT id FROM matches WHERE LEAST(user_one_id, user_two_id) = LEAST($1::bigint, $2::bigint) AND GREATEST(user_one_id, user_two_id) = GREATEST($1::bigint, $2::bigint)`,
             [swiperId, swipedId]
           );
           matchId = existingMatch.rows[0]?.id;
@@ -568,8 +568,8 @@ app.post("/api/swipe", authenticateToken, async (req, res) => {
 
           const clinic = profiles.rows.find((profile) => profile.role === "CLINIC" && profile.is_auto_screener_active === true);
           if (clinic && Array.isArray(clinic.screening_questions) && clinic.screening_questions.length > 0) {
-            const questionsList = clinic.screening_questions.map((question) => `• ${question}`).join("\n");
-            const botMessage = `היי, שמחים על ההתאמה!\nכדי להתקדם, נשמח שתענה/י על מספר שאלות קצרות:\n\n${questionsList}`;
+            const questionsList = clinic.screening_questions.map((question) => `- ${question}`).join("\n");
+            const botMessage = `\u05d4\u05d9\u05d9, \u05e9\u05de\u05d7\u05d9\u05dd \u05e2\u05dc \u05d4\u05d4\u05ea\u05d0\u05de\u05d4!\n\u05db\u05d3\u05d9 \u05dc\u05d4\u05ea\u05e7\u05d3\u05dd, \u05e0\u05e9\u05de\u05d7 \u05e9\u05ea\u05e2\u05e0\u05d4/\u05d9 \u05e2\u05dc \u05de\u05e1\u05e4\u05e8 \u05e9\u05d0\u05dc\u05d5\u05ea \u05e7\u05e6\u05e8\u05d5\u05ea:\n\n${questionsList}`;
 
             try {
               await pool.query(
@@ -783,7 +783,7 @@ app.post("/api/messages", authenticateToken, async (req, res) => {
     }
 
     const result = await pool.query(
-      `INSERT INTO messages (match_id, sender_id, content) VALUES ($1, $2, $3) RETURNING *`,
+      `INSERT INTO messages (match_id, sender_id, content) VALUES ($1::bigint, $2::bigint, $3) RETURNING *`,
       [matchId, senderId, content]
     );
     res.status(201).json(result.rows[0]);
