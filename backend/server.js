@@ -509,8 +509,14 @@ app.get("/api/feed/:userId", authenticateToken, async (req, res) => {
 });
 
 app.post("/api/swipe", authenticateToken, async (req, res) => {
-  const { swiper_id, swiped_id, type } = req.body;
-  if (String(req.user.id) !== String(swiper_id)) {
+  const swiperId = coerceInteger(req.body.swiper_id);
+  const swipedId = coerceInteger(req.body.swiped_id);
+  const { type } = req.body;
+
+  if (!swiperId || !swipedId) {
+    return res.status(400).json({ error: "Invalid swipe identifiers" });
+  }
+  if (String(req.user.id) !== String(swiperId)) {
     return res.status(403).json({ error: "Identity mismatch" });
   }
   if (!["LIKE", "PASS"].includes(type)) {
@@ -525,13 +531,13 @@ app.post("/api/swipe", authenticateToken, async (req, res) => {
         ON CONFLICT (swiper_id, swiped_id)
         DO UPDATE SET type = EXCLUDED.type
       `,
-      [swiper_id, swiped_id, type]
+      [swiperId, swipedId, type]
     );
 
     if (type === "LIKE") {
       const matchCheck = await pool.query(
         `SELECT id FROM swipes WHERE swiper_id = $1 AND swiped_id = $2 AND type = 'LIKE'`,
-        [swiped_id, swiper_id]
+        [swipedId, swiperId]
       );
 
       if (matchCheck.rows.length > 0) {
@@ -542,14 +548,14 @@ app.post("/api/swipe", authenticateToken, async (req, res) => {
             ON CONFLICT DO NOTHING
             RETURNING id
           `,
-          [swiper_id, swiped_id]
+          [swiperId, swipedId]
         );
 
         let matchId = matchRes.rows[0]?.id;
         if (!matchId) {
           const existingMatch = await pool.query(
             `SELECT id FROM matches WHERE LEAST(user_one_id, user_two_id) = LEAST($1, $2) AND GREATEST(user_one_id, user_two_id) = GREATEST($1, $2)`,
-            [swiper_id, swiped_id]
+            [swiperId, swipedId]
           );
           matchId = existingMatch.rows[0]?.id;
         }
@@ -557,7 +563,7 @@ app.post("/api/swipe", authenticateToken, async (req, res) => {
         if (matchId) {
           const profiles = await pool.query(
             `SELECT id, role, is_auto_screener_active, screening_questions FROM profiles WHERE id IN ($1, $2)`,
-            [swiper_id, swiped_id]
+            [swiperId, swipedId]
           );
 
           const clinic = profiles.rows.find((profile) => profile.role === "CLINIC" && profile.is_auto_screener_active === true);
@@ -594,7 +600,12 @@ app.post("/api/swipe", authenticateToken, async (req, res) => {
 });
 
 app.get("/api/matches/:userId", authenticateToken, async (req, res) => {
-  if (String(req.user.id) !== String(req.params.userId) && !req.user.is_admin) {
+  const userId = coerceInteger(req.params.userId);
+  if (!userId) {
+    return res.status(400).json({ error: "Invalid user id" });
+  }
+
+  if (String(req.user.id) !== String(userId) && !req.user.is_admin) {
     return res.status(403).json({ error: "Access denied" });
   }
 
@@ -620,7 +631,7 @@ app.get("/api/matches/:userId", authenticateToken, async (req, res) => {
       ORDER BY m.created_at DESC
     `;
 
-    const result = await pool.query(query, [req.params.userId]);
+    const result = await pool.query(query, [userId]);
     const mapped = result.rows.map((row) => ({
       ...row,
       position: row.role === "CLINIC" ? row.required_position || row.position : row.position,
@@ -634,7 +645,13 @@ app.get("/api/matches/:userId", authenticateToken, async (req, res) => {
 });
 
 app.get("/api/matches/:userId/:matchId", authenticateToken, async (req, res) => {
-  if (String(req.user.id) !== String(req.params.userId) && !req.user.is_admin) {
+  const userId = coerceInteger(req.params.userId);
+  const matchId = coerceInteger(req.params.matchId);
+  if (!userId || !matchId) {
+    return res.status(400).json({ error: "Invalid identifiers" });
+  }
+
+  if (String(req.user.id) !== String(userId) && !req.user.is_admin) {
     return res.status(403).json({ error: "Access denied" });
   }
 
@@ -660,7 +677,7 @@ app.get("/api/matches/:userId/:matchId", authenticateToken, async (req, res) => 
           AND p.id != $1
         LIMIT 1
       `,
-      [req.params.userId, req.params.matchId]
+      [userId, matchId]
     );
 
     if (result.rows.length === 0) {
@@ -688,17 +705,23 @@ app.get("/api/matches/:userId/:matchId", authenticateToken, async (req, res) => 
 });
 
 app.post("/api/matches/:matchId/close", authenticateToken, async (req, res) => {
+  const matchId = coerceInteger(req.params.matchId);
+  const currentUserId = coerceInteger(req.user.id);
+  if (!matchId || !currentUserId) {
+    return res.status(400).json({ error: "Invalid identifiers" });
+  }
+
   try {
     const check = await pool.query(
       `SELECT id FROM matches WHERE id = $1 AND (user_one_id = $2 OR user_two_id = $2)`,
-      [req.params.matchId, String(req.user.id)]
+      [matchId, currentUserId]
     );
 
     if (check.rows.length === 0) {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    await pool.query(`UPDATE matches SET is_closed = true WHERE id = $1`, [req.params.matchId]);
+    await pool.query(`UPDATE matches SET is_closed = true WHERE id = $1`, [matchId]);
     res.json({ success: true });
   } catch (err) {
     console.error("CLOSE MATCH ERROR:", err);
@@ -707,10 +730,16 @@ app.post("/api/matches/:matchId/close", authenticateToken, async (req, res) => {
 });
 
 app.get("/api/messages/:matchId", authenticateToken, async (req, res) => {
+  const matchId = coerceInteger(req.params.matchId);
+  const currentUserId = coerceInteger(req.user.id);
+  if (!matchId || !currentUserId) {
+    return res.status(400).json({ error: "Invalid identifiers" });
+  }
+
   try {
     const membership = await pool.query(
       `SELECT id FROM matches WHERE id = $1 AND (user_one_id = $2 OR user_two_id = $2)`,
-      [req.params.matchId, String(req.user.id)]
+      [matchId, currentUserId]
     );
 
     if (membership.rows.length === 0) {
@@ -719,7 +748,7 @@ app.get("/api/messages/:matchId", authenticateToken, async (req, res) => {
 
     const result = await pool.query(
       `SELECT * FROM messages WHERE match_id = $1 ORDER BY created_at ASC`,
-      [req.params.matchId]
+      [matchId]
     );
     res.json(result.rows);
   } catch (err) {
@@ -729,7 +758,13 @@ app.get("/api/messages/:matchId", authenticateToken, async (req, res) => {
 });
 
 app.post("/api/messages", authenticateToken, async (req, res) => {
-  if (String(req.user.id) !== String(req.body.sender_id)) {
+  const matchId = coerceInteger(req.body.match_id);
+  const senderId = coerceInteger(req.body.sender_id);
+  if (!matchId || !senderId) {
+    return res.status(400).json({ error: "Invalid message identifiers" });
+  }
+
+  if (String(req.user.id) !== String(senderId)) {
     return res.status(403).json({ error: "Identity mismatch" });
   }
 
@@ -741,7 +776,7 @@ app.post("/api/messages", authenticateToken, async (req, res) => {
   try {
     const matchCheck = await pool.query(
       `SELECT id FROM matches WHERE id = $1 AND (user_one_id = $2 OR user_two_id = $2)`,
-      [req.body.match_id, req.body.sender_id]
+      [matchId, senderId]
     );
     if (matchCheck.rows.length === 0) {
       return res.status(403).json({ error: "Not part of this match" });
@@ -749,7 +784,7 @@ app.post("/api/messages", authenticateToken, async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO messages (match_id, sender_id, content) VALUES ($1, $2, $3) RETURNING *`,
-      [req.body.match_id, req.body.sender_id, content]
+      [matchId, senderId, content]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
