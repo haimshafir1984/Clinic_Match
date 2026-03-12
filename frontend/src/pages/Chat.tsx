@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ChatMessages } from "@/components/chat/ChatMessages";
@@ -28,11 +28,22 @@ export default function Chat() {
   const { messages, isLoading: messagesLoading, sendMessage } = useChatMessages(matchId!);
   const [inputMessage, setInputMessage] = useState("");
 
+  const handleSendMessage = async (content: string) => {
+    try {
+      await sendMessage(content);
+    } catch (error) {
+      toast.error("שליחת ההודעה נכשלה", {
+        description: error instanceof Error ? error.message : "נסו שוב בעוד רגע.",
+      });
+      throw error;
+    }
+  };
+
   if (matchLoading || messagesLoading) {
     return (
       <AppLayout showNav={false}>
-        <div className="flex items-center justify-center h-screen">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="flex h-screen items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </AppLayout>
     );
@@ -41,9 +52,9 @@ export default function Chat() {
   if (!match) {
     return (
       <AppLayout showNav={false}>
-        <div className="flex flex-col items-center justify-center h-screen p-4">
-          <p className="text-muted-foreground">ההתאמה לא נמצאה או שאי אפשר לפתוח את הצ'אט כרגע.</p>
-          <Link to="/matches" className="text-primary mt-2">
+        <div className="flex h-screen flex-col items-center justify-center p-4">
+          <p className="text-muted-foreground">ההתאמה לא נמצאה או שלא ניתן לפתוח את הצ'אט כרגע.</p>
+          <Link to="/matches" className="mt-2 text-primary">
             חזרה להתאמות
           </Link>
         </div>
@@ -66,18 +77,18 @@ export default function Chat() {
 
   return (
     <AppLayout showNav={false}>
-      <div className="flex flex-col h-dvh">
-        <header className="flex items-center gap-3 p-4 border-b bg-card">
+      <div className="flex h-dvh flex-col">
+        <header className="flex items-center gap-3 border-b bg-card p-4">
           <Link to="/matches">
             <Button variant="ghost" size="icon">
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight className="h-5 w-5" />
             </Button>
           </Link>
 
-          <Avatar className="w-10 h-10">
+          <Avatar className="h-10 w-10">
             <AvatarImage src={otherProfile.imageUrl || undefined} />
             <AvatarFallback>
-              <RoleIcon className="w-5 h-5 text-primary" />
+              <RoleIcon className="h-5 w-5 text-primary" />
             </AvatarFallback>
           </Avatar>
 
@@ -92,16 +103,16 @@ export default function Chat() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                 >
-                  <XCircle className="w-5 h-5" />
+                  <XCircle className="h-5 w-5" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>סגירת ההתאמה</AlertDialogTitle>
+                  <AlertDialogTitle>סגירת התאמה</AlertDialogTitle>
                   <AlertDialogDescription>
-                    האם בטוח שברצונך לסגור את ההתאמה עם {otherProfile.name}? פעולה זו אינה ניתנת לביטול.
+                    {`האם בטוחים שרוצים לסגור את ההתאמה עם ${otherProfile.name}? פעולה זו אינה ניתנת לביטול.`}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -110,7 +121,7 @@ export default function Chat() {
                     onClick={handleCloseMatch}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
-                    סגור התאמה
+                    סגירת התאמה
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -118,19 +129,21 @@ export default function Chat() {
           )}
         </header>
 
-        <ChatMessages messages={messages || []} isClosed={match.isClosed} />
+        <ChatMessages messages={messages} isClosed={match.isClosed} />
 
         {!match.isClosed && (
           <AIChatAssistant
             otherProfile={otherProfile}
             onSelectSuggestion={(suggestion) => setInputMessage(suggestion)}
-            isFirstMessage={!messages || messages.length === 0}
+            isFirstMessage={messages.length === 0}
           />
         )}
 
-        {!match.isClosed && <ChatInput onSend={sendMessage} value={inputMessage} onChange={setInputMessage} />}
+        {!match.isClosed && <ChatInput onSend={handleSendMessage} value={inputMessage} onChange={setInputMessage} />}
 
-        {match.isClosed && <div className="p-4 bg-muted text-center text-sm text-muted-foreground">ההתאמה הזו נסגרה</div>}
+        {match.isClosed && (
+          <div className="bg-muted p-4 text-center text-sm text-muted-foreground">ההתאמה הזו נסגרה</div>
+        )}
       </div>
     </AppLayout>
   );

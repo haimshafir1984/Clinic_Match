@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+﻿import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, ArrowRight, Building2, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,7 +31,7 @@ export function MatchCelebration({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm"
         onClick={onClose}
       >
         <motion.div
@@ -39,48 +39,44 @@ export function MatchCelebration({
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          className="bg-card rounded-2xl p-8 max-w-md w-full text-center shadow-lg border"
+          className="w-full max-w-md rounded-2xl border bg-card p-8 text-center shadow-lg"
           onClick={(event) => event.stopPropagation()}
         >
-          <div className="flex items-center justify-center gap-4 mb-6">
-            <div className="relative">
-              <Avatar className="w-20 h-20 border-4 border-primary/20">
-                <AvatarImage src={currentUser?.imageUrl || undefined} />
-                <AvatarFallback className="bg-primary/10 text-lg">
-                  <CurrentIcon className="w-8 h-8 text-primary" />
-                </AvatarFallback>
-              </Avatar>
+          <div className="mb-6 flex items-center justify-center gap-4">
+            <Avatar className="h-20 w-20 border-4 border-primary/20">
+              <AvatarImage src={currentUser?.imageUrl || undefined} />
+              <AvatarFallback className="bg-primary/10 text-lg">
+                <CurrentIcon className="h-8 w-8 text-primary" />
+              </AvatarFallback>
+            </Avatar>
+
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <MessageCircle className="h-6 w-6 text-primary" />
             </div>
 
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <MessageCircle className="w-6 h-6 text-primary" />
-            </div>
-
-            <div className="relative">
-              <Avatar className="w-20 h-20 border-4 border-primary/20">
-                <AvatarImage src={matchedProfile.imageUrl || undefined} />
-                <AvatarFallback className="bg-primary/10 text-lg">
-                  <MatchedIcon className="w-8 h-8 text-primary" />
-                </AvatarFallback>
-              </Avatar>
-            </div>
+            <Avatar className="h-20 w-20 border-4 border-primary/20">
+              <AvatarImage src={matchedProfile.imageUrl || undefined} />
+              <AvatarFallback className="bg-primary/10 text-lg">
+                <MatchedIcon className="h-8 w-8 text-primary" />
+              </AvatarFallback>
+            </Avatar>
           </div>
 
-          <h2 className="text-2xl font-bold text-foreground mb-2">נמצאה התאמה!</h2>
+          <h2 className="mb-2 text-2xl font-bold text-foreground">נמצאה התאמה!</h2>
 
-          <p className="text-muted-foreground mb-2">
-            גם <span className="font-semibold text-foreground">{matchedProfile.name}</span> סימנו עניין בכם!
+          <p className="mb-2 text-muted-foreground">
+            גם <span className="font-semibold text-foreground">{matchedProfile.name}</span> סימנו עניין.
           </p>
-          <p className="text-sm text-primary mb-8">עכשיו אפשר לפתוח שיחה ולהתקדם</p>
+          <p className="mb-8 text-sm text-primary">אפשר לפתוח שיחה ולהמשיך משם.</p>
 
           <div className="flex flex-col gap-3">
             <Button size="lg" className="w-full gap-2" onClick={onChat}>
-              <MessageCircle className="w-5 h-5" />
-              לפתוח שיחה
+              <MessageCircle className="h-5 w-5" />
+              פתיחת שיחה
             </Button>
             <Button variant="outline" size="lg" className="w-full gap-2" onClick={onClose}>
-              להמשיך לגלות התאמות
-              <ArrowRight className="w-4 h-4" />
+              המשך לגלות התאמות
+              <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
         </motion.div>

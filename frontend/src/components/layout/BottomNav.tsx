@@ -1,11 +1,11 @@
-import { NavLink, useLocation } from "react-router-dom";
+﻿import { NavLink, useLocation } from "react-router-dom";
 import { Heart, MessageCircle, User, Sparkles, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useMatches } from "@/hooks/useMatches";
 
 const navItems = [
-  { path: "/swipe", icon: Sparkles, label: "גלות" },
+  { path: "/swipe", icon: Sparkles, label: "גילוי" },
   { path: "/matches", icon: Heart, label: "התאמות" },
   { path: "/chat", icon: MessageCircle, label: "שיחות", showBadge: true },
   { path: "/insights", icon: BarChart3, label: "תובנות" },
@@ -16,15 +16,13 @@ export function BottomNav() {
   const location = useLocation();
   const { matches } = useMatches();
 
-  const activeMatchCount = matches.filter((m) => !m.isClosed).length;
+  const activeMatchCount = matches.filter((match) => !match.isClosed).length;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 glass border-t safe-bottom">
-      <div className="flex items-center justify-around h-16 max-w-md mx-auto">
+      <div className="mx-auto flex h-16 max-w-md items-center justify-around">
         {navItems.map((item) => {
-          const isActive =
-            location.pathname === item.path ||
-            (item.path === "/chat" && location.pathname.startsWith("/chat"));
+          const isActive = location.pathname === item.path || (item.path === "/chat" && location.pathname.startsWith("/chat"));
           const Icon = item.icon;
           const showUnread = item.showBadge && activeMatchCount > 0 && !isActive;
 
@@ -32,7 +30,7 @@ export function BottomNav() {
             <NavLink
               key={item.path}
               to={item.path}
-              className="relative flex flex-col items-center justify-center w-full h-full"
+              className="relative flex h-full w-full flex-col items-center justify-center"
             >
               <motion.div
                 className={cn(
@@ -42,16 +40,16 @@ export function BottomNav() {
                 whileTap={{ scale: 0.95 }}
               >
                 <div className="relative">
-                  <Icon className="w-5 h-5" />
+                  <Icon className="h-5 w-5" />
                   {isActive && (
                     <motion.div
                       layoutId="navIndicator"
-                      className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"
+                      className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary"
                       transition={{ type: "spring", stiffness: 500, damping: 30 }}
                     />
                   )}
                   {showUnread && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
                       {activeMatchCount > 9 ? "9+" : activeMatchCount}
                     </span>
                   )}
@@ -65,4 +63,3 @@ export function BottomNav() {
     </nav>
   );
 }
-

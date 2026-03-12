@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+﻿import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { getFeed, postSwipe } from "@/lib/api";
-import { MatchCardData, SwipeType } from "@/types";
+import { SwipeType } from "@/types";
 import { toast } from "sonner";
 
 export function useSwipeProfiles() {
@@ -34,11 +34,11 @@ export function useSwipe() {
   const swipeMutation = useMutation({
     mutationFn: async ({ targetId, type }: { targetId: string; type: SwipeType }) => {
       if (!currentUser?.profileId) {
-        throw new Error("לא מחובר/ת. צריך להתחבר מחדש.");
+        throw new Error("יש להתחבר מחדש כדי להמשיך.");
       }
 
       if (!targetId) {
-        throw new Error("מזהה משתמש לא תקין.");
+        throw new Error("מזהה המשתמש אינו תקין.");
       }
 
       return postSwipe({
@@ -53,8 +53,8 @@ export function useSwipe() {
     },
     onError: (error: Error) => {
       console.error("[useSwipe] Mutation error:", error);
-      toast.error("ההתאמה נכשלה", {
-        description: error.message || "אירעה שגיאה. נסה/י שוב.",
+      toast.error("שליחת הלייק נכשלה", {
+        description: error.message || "אירעה שגיאה. נסה או נסי שוב.",
       });
     },
   });

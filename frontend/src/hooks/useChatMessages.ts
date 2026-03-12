@@ -1,7 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+﻿import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMessages, sendMessage as apiSendMessage } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { Message } from "@/types";
+
+const MESSAGES_POLL_MS = 2000;
 
 export function useChatMessages(matchId: string) {
   const queryClient = useQueryClient();
@@ -9,28 +11,38 @@ export function useChatMessages(matchId: string) {
 
   const query = useQuery({
     queryKey: ["messages", matchId],
-    queryFn: async () => {
-      return getMessages(matchId);
-    },
+    queryFn: async () => getMessages(matchId),
     enabled: !!matchId,
-    refetchInterval: 5000, // Poll every 5 seconds for new messages
+    refetchInterval: MESSAGES_POLL_MS,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   const sendMutation = useMutation({
     mutationFn: async (content: string) => {
-      if (!currentUser?.profileId) throw new Error("No profile");
+      if (!currentUser?.profileId) {
+        throw new Error("No profile");
+      }
 
       return apiSendMessage(matchId, currentUser.profileId, content);
     },
-    onSuccess: () => {
+    onSuccess: (message) => {
+      queryClient.setQueryData<Message[] | undefined>(["messages", matchId], (existing) => {
+        if (!existing) return [message];
+        if (existing.some((item) => item.id === message.id)) return existing;
+        return [...existing, message];
+      });
+
       queryClient.invalidateQueries({ queryKey: ["messages", matchId] });
+      queryClient.invalidateQueries({ queryKey: ["matches"] });
+      queryClient.invalidateQueries({ queryKey: ["match"] });
     },
   });
 
   return {
-    messages: query.data,
+    messages: query.data || [],
     isLoading: query.isLoading,
     sendMessage: sendMutation.mutateAsync,
+    isSending: sendMutation.isPending,
   };
 }
-

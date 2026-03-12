@@ -41,7 +41,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}, timeoutMs
   } catch (error) {
     window.clearTimeout(timeoutId);
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("הבקשה נכשלה - השרת לא מגיב. נסה שוב.");
+      throw new Error("\u05d4\u05d1\u05e7\u05e9\u05d4 \u05e0\u05db\u05e9\u05dc\u05d4 - \u05d4\u05e9\u05e8\u05ea \u05dc\u05d0 \u05de\u05d2\u05d9\u05d1. \u05e0\u05e1\u05d4 \u05d0\u05d5 \u05e0\u05e1\u05d9 \u05e9\u05d5\u05d1.");
     }
     throw error;
   }
@@ -373,11 +373,11 @@ export async function login(email: string): Promise<{ user: CurrentUser | null; 
     if (error instanceof Error) {
       const message = error.message.toLowerCase();
       if (message.includes("not found")) {
-        return { user: null, error: "האימייל לא נמצא, אפשר להירשם", needsRegistration: true };
+        return { user: null, error: "\u05d4\u05d0\u05d9\u05de\u05d9\u05d9\u05dc \u05dc\u05d0 \u05e0\u05de\u05e6\u05d0, \u05d0\u05e4\u05e9\u05e8 \u05dc\u05d4\u05d9\u05e8\u05e9\u05dd", needsRegistration: true };
       }
       return { user: null, error: error.message };
     }
-    return { user: null, error: "ההתחברות נכשלה" };
+    return { user: null, error: "\u05d4\u05d4\u05ea\u05d7\u05d1\u05e8\u05d5\u05ea \u05e0\u05db\u05e9\u05dc\u05d4" };
   }
 }
 
@@ -399,10 +399,9 @@ export async function createProfile(data: ProfileCreateData): Promise<{ user: Cu
     if (error instanceof Error) {
       return { user: null, error: error.message };
     }
-    return { user: null, error: "יצירת הפרופיל נכשלה" };
+    return { user: null, error: "\u05d9\u05e6\u05d9\u05e8\u05ea \u05d4\u05e4\u05e8\u05d5\u05e4\u05d9\u05dc \u05e0\u05db\u05e9\u05dc\u05d4" };
   }
 }
-
 export interface ProfileUpdateData {
   name?: string;
   role?: "CLINIC" | "STAFF" | "clinic" | "worker";
@@ -524,7 +523,7 @@ export async function updateProfileApi(profileId: string, data: ProfileUpdateDat
     if (error instanceof Error) {
       return { profile: null, error: error.message };
     }
-    return { profile: null, error: "עדכון הפרופיל נכשל" };
+    return { profile: null, error: "\u05e2\u05d3\u05db\u05d5\u05df \u05d4\u05e4\u05e8\u05d5\u05e4\u05d9\u05dc \u05e0\u05db\u05e9\u05dc" };
   }
 }
 

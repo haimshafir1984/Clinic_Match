@@ -1,4 +1,4 @@
-import { AppLayout } from "@/components/layout/AppLayout";
+﻿import { AppLayout } from "@/components/layout/AppLayout";
 import { useMatches } from "@/hooks/useMatches";
 import { MatchCard } from "@/components/matches/MatchCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,15 +10,15 @@ import { Button } from "@/components/ui/button";
 function MatchesSkeleton() {
   return (
     <div className="space-y-3">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="flex items-center gap-4 p-4 rounded-lg border bg-card">
-          <Skeleton className="w-14 h-14 rounded-full flex-shrink-0" />
+      {[1, 2, 3].map((item) => (
+        <div key={item} className="flex items-center gap-4 rounded-lg border bg-card p-4">
+          <Skeleton className="h-14 w-14 flex-shrink-0 rounded-full" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-3 w-48" />
             <Skeleton className="h-3 w-24" />
           </div>
-          <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
+          <Skeleton className="h-10 w-10 flex-shrink-0 rounded-full" />
         </div>
       ))}
     </div>
@@ -28,21 +28,20 @@ function MatchesSkeleton() {
 export default function Matches() {
   const { matches, isLoading } = useMatches();
 
-  const activeMatches = matches.filter((m) => !m.isClosed);
-  const closedMatches = matches.filter((m) => m.isClosed);
+  const activeMatches = matches.filter((match) => !match.isClosed);
+  const closedMatches = matches.filter((match) => match.isClosed);
 
   return (
     <AppLayout>
-      <div className="p-4 max-w-md mx-auto pb-24">
-        {/* Header */}
+      <div className="mx-auto max-w-md p-4 pb-24">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground">ההתאמות שלי</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="mt-1 text-sm text-muted-foreground">
             {isLoading
               ? "טוען התאמות..."
               : activeMatches.length > 0
-                ? `יש לך ${activeMatches.length} התאמות`
-                : "אין עדיין התאמות — המשך להסוויפ"}
+                ? `יש לך ${activeMatches.length} התאמות פעילות`
+                : "עדיין אין התאמות. ממשיכים לגלות פרופילים."}
           </p>
         </div>
 
@@ -52,25 +51,25 @@ export default function Matches() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
+            className="py-16 text-center"
           >
             <motion.div
-              className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mx-auto mb-6"
+              className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/5"
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ repeat: Infinity, duration: 3 }}
             >
-              <Heart className="w-12 h-12 text-primary" />
+              <Heart className="h-12 w-12 text-primary" />
             </motion.div>
 
-            <h3 className="text-xl font-semibold mb-2">עדיין אין לך התאמות</h3>
-            <p className="text-muted-foreground mb-8 max-w-xs mx-auto">
-              המשך לסוויפ על פרופילים שמעניינים אותך — כשמישהו יסוויפ גם עליך, תקבל התאמה!
+            <h3 className="mb-2 text-xl font-semibold">עדיין אין לך התאמות</h3>
+            <p className="mx-auto mb-8 max-w-xs text-muted-foreground">
+              המשיכו לסמן עניין בפרופילים מתאימים. ברגע ששני הצדדים מסמנים לייק, ההתאמה תופיע כאן.
             </p>
 
             <Link to="/swipe">
               <Button className="gap-2">
-                חזור לגלות פרופילים
-                <ArrowLeft className="w-4 h-4" />
+                חזרה לגילוי פרופילים
+                <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
           </motion.div>
@@ -78,10 +77,10 @@ export default function Matches() {
           <div className="space-y-6">
             {activeMatches.length > 0 && (
               <section>
-                <div className="flex items-center gap-2 mb-3">
-                  <Users className="w-4 h-4 text-primary" />
+                <div className="mb-3 flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary" />
                   <h2 className="text-sm font-medium text-muted-foreground">
-                    התאמות פעילות ({activeMatches.length})
+                    {`התאמות פעילות (${activeMatches.length})`}
                   </h2>
                 </div>
                 <div className="space-y-3">
@@ -101,8 +100,8 @@ export default function Matches() {
 
             {closedMatches.length > 0 && (
               <section>
-                <h2 className="text-sm font-medium text-muted-foreground mb-3">
-                  התאמות שנסגרו ({closedMatches.length})
+                <h2 className="mb-3 text-sm font-medium text-muted-foreground">
+                  {`התאמות שנסגרו (${closedMatches.length})`}
                 </h2>
                 <div className="space-y-3 opacity-60">
                   {closedMatches.map((match) => (
@@ -117,4 +116,3 @@ export default function Matches() {
     </AppLayout>
   );
 }
-

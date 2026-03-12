@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+﻿import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SwipeCard } from "@/components/swipe/SwipeCard";
@@ -81,10 +81,11 @@ export default function Swipe() {
           setMatchedProfile(currentProfile);
           setLastMatchId(result.matchId || null);
           setShowMatchCelebration(true);
+          toast.success("נוצרה התאמה חדשה");
         }
       }, 300);
     } catch {
-      toast.error("שגיאה בשליחת הלייק");
+      toast.error("שגיאה בשליחת לייק");
       setDirection(null);
     }
   };
@@ -102,7 +103,7 @@ export default function Swipe() {
         setCurrentIndex((prev) => prev + 1);
       }, 300);
     } catch {
-      toast.error("שגיאה");
+      toast.error("שגיאה בשליחת הפעולה");
       setDirection(null);
     }
   };
@@ -125,17 +126,17 @@ export default function Swipe() {
       return;
     }
 
-    toast.error("הצ'אט עדיין לא זמין. נסה/י לפתוח מתוך מסך ההתאמות.");
+    toast.error("הצ'אט עדיין לא זמין. אפשר לפתוח אותו ממסך ההתאמות.");
     navigate("/matches");
   };
 
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-[80vh]">
+        <div className="flex h-[80vh] items-center justify-center">
           <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">מחפש פרופילים...</p>
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">מחפש פרופילים מתאימים...</p>
           </div>
         </div>
       </AppLayout>
@@ -145,20 +146,20 @@ export default function Swipe() {
   if (isError) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-[80vh]">
-          <div className="flex flex-col items-center gap-4 text-center px-4">
-            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
-              <AlertTriangle className="w-8 h-8 text-destructive" />
+        <div className="flex h-[80vh] items-center justify-center">
+          <div className="flex flex-col items-center gap-4 px-4 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+              <AlertTriangle className="h-8 w-8 text-destructive" />
             </div>
             <h2 className="text-xl font-semibold text-foreground">שגיאה בטעינת הפרופילים</h2>
-            <p className="text-muted-foreground max-w-sm">
-              {error instanceof Error ? error.message : "לא הצלחנו לטעון את הפרופילים. נסה/י שוב."}
+            <p className="max-w-sm text-muted-foreground">
+              {error instanceof Error ? error.message : "לא הצלחנו לטעון את הפרופילים. נסו שוב."}
             </p>
             <button
               onClick={() => refetch()}
-              className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+              className="rounded-lg bg-primary px-6 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
             >
-              נסה/י שוב
+              נסו שוב
             </button>
           </div>
         </div>
@@ -168,17 +169,17 @@ export default function Swipe() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col h-[calc(100dvh-9rem)] max-w-md mx-auto p-4">
-        <div className="text-center mb-2">
+      <div className="mx-auto flex h-[calc(100dvh-9rem)] max-w-md flex-col p-4">
+        <div className="mb-2 text-center">
           <h1 className="text-2xl font-bold text-foreground">גלו התאמות</h1>
-          <p className="text-sm text-muted-foreground">החליקו ימינה לסימון עניין, שמאלה לדילוג</p>
+          <p className="text-sm text-muted-foreground">החליקו ימינה לסימון עניין, שמאלה כדי לדלג.</p>
         </div>
 
         <div className="mb-3">
           <NaturalLanguageSearch onFiltersChange={handleFiltersChange} role={currentUser?.role || "worker"} />
         </div>
 
-        <div className="flex-1 relative">
+        <div className="relative flex-1">
           <AnimatePresence mode="popLayout">
             {hasMoreProfiles && currentProfile ? (
               <SwipeCard

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useMatches } from "@/hooks/useMatches";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,14 +10,14 @@ import { motion } from "framer-motion";
 function ChatListSkeleton() {
   return (
     <div className="space-y-2">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="flex items-center gap-4 p-4 rounded-lg border bg-card">
-          <Skeleton className="w-12 h-12 rounded-full flex-shrink-0" />
+      {[1, 2, 3].map((item) => (
+        <div key={item} className="flex items-center gap-4 rounded-lg border bg-card p-4">
+          <Skeleton className="h-12 w-12 flex-shrink-0 rounded-full" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-28" />
             <Skeleton className="h-3 w-40" />
           </div>
-          <Skeleton className="w-5 h-5 rounded" />
+          <Skeleton className="h-5 w-5 rounded" />
         </div>
       ))}
     </div>
@@ -27,12 +27,12 @@ function ChatListSkeleton() {
 export default function ChatList() {
   const { matches, isLoading } = useMatches();
 
-  const activeMatches = matches.filter((m) => !m.isClosed);
+  const activeMatches = matches.filter((match) => !match.isClosed);
 
   return (
     <AppLayout>
-      <div className="p-4 max-w-md mx-auto">
-        <h1 className="text-2xl font-bold text-foreground mb-6">שיחות</h1>
+      <div className="mx-auto max-w-md p-4">
+        <h1 className="mb-6 text-2xl font-bold text-foreground">שיחות</h1>
 
         {isLoading ? (
           <ChatListSkeleton />
@@ -40,15 +40,13 @@ export default function ChatList() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
+            className="py-16 text-center"
           >
-            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-              <MessageCircle className="w-10 h-10 text-muted-foreground" />
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+              <MessageCircle className="h-10 w-10 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">אין שיחות פעילות</h3>
-            <p className="text-muted-foreground">
-              כשתהיה התאמה, תוכל להתחיל לדבר איתה כאן
-            </p>
+            <h3 className="mb-2 text-lg font-semibold">אין שיחות פעילות</h3>
+            <p className="text-muted-foreground">כשתיווצר התאמה, אפשר יהיה להתחיל כאן שיחה.</p>
           </motion.div>
         ) : (
           <div className="space-y-2">
@@ -65,21 +63,21 @@ export default function ChatList() {
                   transition={{ delay: index * 0.05 }}
                 >
                   <Link to={`/chat/${match.id}`}>
-                    <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer">
+                    <Card className="cursor-pointer p-4 transition-colors hover:bg-accent/50">
                       <div className="flex items-center gap-4">
-                        <Avatar className="w-12 h-12">
+                        <Avatar className="h-12 w-12">
                           <AvatarImage src={otherProfile.imageUrl || undefined} />
                           <AvatarFallback>
-                            <RoleIcon className="w-6 h-6 text-primary" />
+                            <RoleIcon className="h-6 w-6 text-primary" />
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold truncate">{otherProfile.name}</h3>
-                          <p className="text-sm text-muted-foreground truncate">
-                            {otherProfile.position}
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate font-semibold">{otherProfile.name}</h3>
+                          <p className="truncate text-sm text-muted-foreground">
+                            {otherProfile.position || "ללא תיאור תפקיד"}
                           </p>
                         </div>
-                        <MessageCircle className="w-5 h-5 text-primary" />
+                        <MessageCircle className="h-5 w-5 text-primary" />
                       </div>
                     </Card>
                   </Link>
@@ -92,4 +90,3 @@ export default function ChatList() {
     </AppLayout>
   );
 }
-
