@@ -1,14 +1,15 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
+import { useProfileHighlights } from "@/hooks/useProfileHighlights";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ProfileView } from "@/components/profile/ProfileView";
 import { ProfileProgress } from "@/components/profile/ProfileProgress";
 import { calculateProfileCompletion } from "@/lib/profileCompletion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, LogOut, Edit2, ArrowLeft, Sparkles, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,12 +18,11 @@ import { motion } from "framer-motion";
 export default function Profile() {
   const { signOut, refreshCurrentUser } = useAuth();
   const { data: profile, isLoading } = useProfile();
+  const { data: highlightsData } = useProfileHighlights(profile?.id);
   const navigate = useNavigate();
   const location = useLocation();
   const [isEditing, setIsEditing] = useState(false);
 
-  // Check if user was redirected here from a protected route
-  const fromLocation = location.state?.from?.pathname;
   const needsCompletion = location.state?.needsCompletion;
   const isNewUser = location.state?.isNew;
 
@@ -35,20 +35,17 @@ export default function Profile() {
   const handleProfileSuccess = async () => {
     setIsEditing(false);
     await refreshCurrentUser();
-    
-    // Always navigate to swipe after successful save - ProfileGuard will handle incomplete profiles
-    toast.success("הפרופיל נשמר! מעביר אותך להתאמות...");
+    toast.success("הפרופיל נשמר. מעביר אותך להתאמות...");
     setTimeout(() => {
       navigate("/swipe", { replace: true });
     }, 500);
   };
 
-  // Handle "Save & Start Matching" button
   const handleSaveAndStartMatching = async () => {
     if (profile) {
       const { isComplete } = calculateProfileCompletion(profile);
       if (isComplete) {
-        toast.success("יוצאים למצוא התאמות! 🎉");
+        toast.success("יוצאים למצוא התאמות");
         navigate("/swipe");
       } else {
         toast.error("נא להשלים את שדות החובה לפני שממשיכים");
@@ -72,8 +69,8 @@ export default function Profile() {
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-[80vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="flex h-[80vh] items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </AppLayout>
     );
@@ -81,46 +78,18 @@ export default function Profile() {
 
   const completion = calculateProfileCompletion(profile);
 
-  // No profile yet - show creation form with welcome message
   if (!profile) {
     return (
       <AppLayout showNav={false}>
-        <div className="min-h-screen flex flex-col p-4 max-w-md mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
-          >
-            {/* Welcome Header */}
-            <div className="text-center pt-8 pb-4">
-              <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto mb-4 flex items-center justify-center">
-                <Sparkles className="w-8 h-8 text-primary" />
+        <div className="mx-auto flex min-h-screen max-w-md flex-col p-4">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            <div className="pb-4 pt-8 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                <Sparkles className="h-8 w-8 text-primary" />
               </div>
-              <h1 className="text-2xl font-bold text-foreground mb-2">
-                ברוכים הבאים ל-ShiftMatch! 👋
-              </h1>
-              <p className="text-muted-foreground">
-                בואו ניצור את הפרופיל שלכם כדי להתחיל לקבל התאמות מותאמות אישית
-              </p>
+              <h1 className="mb-2 text-2xl font-bold text-foreground">ברוכים הבאים ל-ShiftMatch</h1>
+              <p className="text-muted-foreground">בואו ניצור את הפרופיל שלכם כדי להתחיל לקבל התאמות איכותיות.</p>
             </div>
-
-            {/* Steps Indicator */}
-            <div className="flex justify-center gap-2 pb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                  1
-                </div>
-                <span className="text-sm font-medium">מילוי פרופיל</span>
-              </div>
-              <div className="w-8 border-t border-border mt-4" />
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-sm">
-                  2
-                </div>
-                <span className="text-sm text-muted-foreground">קבלת התאמות</span>
-              </div>
-            </div>
-
             <ProfileForm onSuccess={handleProfileSuccess} />
           </motion.div>
         </div>
@@ -128,108 +97,65 @@ export default function Profile() {
     );
   }
 
-  // Editing existing profile
   if (isEditing) {
     return (
       <AppLayout>
-        <div className="p-4 max-w-md mx-auto pb-24">
-          <div className="flex items-center justify-between mb-6">
+        <div className="mx-auto max-w-md p-4 pb-24">
+          <div className="mb-6 flex items-center justify-between">
             <h1 className="text-2xl font-bold text-foreground">עריכת פרופיל</h1>
-            <Button variant="ghost" onClick={() => setIsEditing(false)}>
-              ביטול
-            </Button>
+            <Button variant="ghost" onClick={() => setIsEditing(false)}>ביטול</Button>
           </div>
-          
+
           <ProfileProgress completion={completion} className="mb-6" />
-          
-          <ProfileForm 
-            initialData={profile} 
-            onSuccess={handleProfileSuccess} 
-          />
+          <ProfileForm initialData={profile} onSuccess={handleProfileSuccess} />
         </div>
       </AppLayout>
     );
   }
 
-  // View profile
   return (
     <AppLayout>
-      <div className="p-4 max-w-md mx-auto pb-24">
-        {/* Redirect Alert */}
+      <div className="mx-auto max-w-md p-4 pb-24">
         {needsCompletion && (
           <Alert className="mb-4 border-amber-500/50 bg-amber-500/10">
-            <AlertDescription className="text-amber-700 dark:text-amber-400">
-              כדי להתחיל לקבל התאמות – השלימו את הפרטים החסרים בפרופיל
-            </AlertDescription>
+            <AlertDescription className="text-amber-700">כדי להתחיל לקבל התאמות, חשוב להשלים את כל הפרטים החסרים בפרופיל.</AlertDescription>
           </Alert>
         )}
 
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">הפרופיל שלי</h1>
             <p className="text-sm text-muted-foreground">
-              {completion.isComplete 
-                ? "הפרופיל מוכן לקבלת התאמות" 
-                : "השלימו את הפרטים להתחלת התאמות"
-              }
+              {completion.isComplete ? "הפרופיל מוכן לקבלת התאמות" : "השלימו את הפרטים כדי להתחיל לקבל התאמות"}
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="icon" onClick={() => setIsEditing(true)}>
-              <Edit2 className="w-4 h-4" />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={handleSignOut}
-              className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-            >
-              <LogOut className="w-4 h-4" />
-            </Button>
+            <Button variant="outline" size="icon" onClick={() => setIsEditing(true)}><Edit2 className="h-4 w-4" /></Button>
+            <Button variant="outline" size="icon" onClick={handleSignOut} className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"><LogOut className="h-4 w-4" /></Button>
           </div>
         </div>
-        
-        {/* Progress Card */}
+
         <Card className="mb-4">
           <CardContent className="pt-4">
             <ProfileProgress completion={completion} />
           </CardContent>
         </Card>
 
-        <ProfileView profile={profile} />
+        <ProfileView profile={profile} highlights={highlightsData?.highlights || []} />
 
-        {/* Sticky CTA */}
-        <div className="fixed bottom-20 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent">
-          <div className="max-w-md mx-auto">
+        <div className="fixed bottom-20 left-0 right-0 bg-gradient-to-t from-background via-background to-transparent p-4">
+          <div className="mx-auto max-w-md">
             {isNewUser || needsCompletion ? (
-              // New user or redirected user
-              <Button
-                onClick={handleSaveAndStartMatching}
-                className="w-full gap-2 shadow-lg"
-                size="lg"
-              >
-                <Sparkles className="w-5 h-5" />
-                התחל לקבל התאמות
-                <ArrowLeft className="w-4 h-4" />
+              <Button onClick={handleSaveAndStartMatching} className="w-full gap-2 shadow-lg" size="lg">
+                <Sparkles className="h-5 w-5" />התחל לקבל התאמות<ArrowLeft className="h-4 w-4" />
               </Button>
             ) : completion.isComplete ? (
-              <Button
-                onClick={handleContinueToMatches}
-                className="w-full gap-2"
-                size="lg"
-              >
-                <CheckCircle2 className="w-5 h-5" />
-                צפייה בהתאמות
-                <ArrowLeft className="w-4 h-4" />
+              <Button onClick={handleContinueToMatches} className="w-full gap-2" size="lg">
+                <CheckCircle2 className="h-5 w-5" />צפייה בהתאמות<ArrowLeft className="h-4 w-4" />
               </Button>
             ) : (
-              <Button
-                onClick={() => setIsEditing(true)}
-                className="w-full gap-2"
-                size="lg"
-                variant="outline"
-              >
-                השלימו את הפרופיל לפתיחת התאמות
+              <Button onClick={() => setIsEditing(true)} className="w-full gap-2" size="lg" variant="outline">
+                השלימו את הפרופיל כדי להתחיל לקבל התאמות
               </Button>
             )}
           </div>

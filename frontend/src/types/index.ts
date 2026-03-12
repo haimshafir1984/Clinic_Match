@@ -1,7 +1,11 @@
-export type UserRole = "clinic" | "worker";
+﻿export type UserRole = "clinic" | "worker";
 export type JobType = "daily" | "temporary" | "permanent";
 export type SwipeType = "LIKE" | "PASS";
 export type Industry = "medical" | "tech" | "education" | "construction" | "daily" | "communication" | "insurance";
+export type RecruitmentStage = "matched" | "screening" | "interview" | "offer" | "hired" | "archived";
+export type TalentPoolStatus = "saved" | "contacted" | "future_fit" | "archived";
+export type InterviewStatus = "pending" | "confirmed" | "completed" | "cancelled";
+export type InterviewType = "phone" | "video" | "onsite";
 
 export interface Availability {
   days: string[];
@@ -30,6 +34,7 @@ export interface MatchCardData {
   createdAt: string | null;
   isUrgent?: boolean | null;
   industry?: Industry | null;
+  strengths?: string[];
 }
 
 export interface CurrentUser {
@@ -58,11 +63,58 @@ export interface SwipeResponse {
   matchId?: string;
 }
 
+export interface RecruitmentPipeline {
+  matchId: string;
+  clinicId: string;
+  candidateId: string;
+  stage: RecruitmentStage;
+  summary: string | null;
+  nextStep: string | null;
+  aiNotes: string | null;
+  savedToTalent: boolean;
+  updatedAt: string;
+}
+
+export interface InterviewSchedule {
+  id: string;
+  matchId: string;
+  createdBy: string;
+  scheduledFor: string;
+  status: InterviewStatus;
+  interviewType: InterviewType;
+  location: string | null;
+  notes: string | null;
+}
+
+export interface TalentPoolEntry {
+  id: string;
+  clinicId: string;
+  candidateId: string;
+  matchId: string | null;
+  tags: string[];
+  notes: string | null;
+  status: TalentPoolStatus;
+  createdAt: string;
+  updatedAt: string;
+  candidate: MatchCardData;
+}
+
+export interface AnalyticsSummary {
+  profileCompletion: number;
+  totalMatches: number;
+  activeMatches: number;
+  totalMessages: number;
+  savedCandidates: number;
+  scheduledInterviews: number;
+  pipelineBreakdown: Array<{ stage: RecruitmentStage; count: number }>;
+}
+
 export interface Match {
   id: string;
   createdAt: string;
   isClosed: boolean;
   otherProfile: MatchCardData;
+  pipeline?: RecruitmentPipeline | null;
 }
 
 export interface Message {
@@ -92,4 +144,3 @@ export interface AuthResponse {
   user: CurrentUser | null;
   token: string | null;
 }
-

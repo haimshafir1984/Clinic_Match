@@ -146,3 +146,51 @@ CREATE TRIGGER trg_matches_updated_at
   BEFORE UPDATE ON matches
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
+
+CREATE TABLE IF NOT EXISTS recruitment_pipeline (
+  match_id         BIGINT PRIMARY KEY REFERENCES matches(id) ON DELETE CASCADE,
+  clinic_id        BIGINT      NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  candidate_id     BIGINT      NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  stage            TEXT        NOT NULL DEFAULT 'matched' CHECK (stage IN ('matched','screening','interview','offer','hired','archived')),
+  summary          TEXT,
+  next_step        TEXT,
+  ai_notes         TEXT,
+  saved_to_talent  BOOLEAN     NOT NULL DEFAULT FALSE,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS talent_pool (
+  id               BIGSERIAL PRIMARY KEY,
+  clinic_id        BIGINT      NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  candidate_id     BIGINT      NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  match_id         BIGINT      REFERENCES matches(id) ON DELETE SET NULL,
+  tags             TEXT[]      NOT NULL DEFAULT '{}',
+  notes            TEXT,
+  status           TEXT        NOT NULL DEFAULT 'saved' CHECK (status IN ('saved','contacted','future_fit','archived')),
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT unique_talent_pool_candidate UNIQUE (clinic_id, candidate_id)
+);
+
+CREATE TABLE IF NOT EXISTS interviews (
+  id               BIGSERIAL PRIMARY KEY,
+  match_id         BIGINT      NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+  created_by       BIGINT      NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  scheduled_for    TIMESTAMPTZ NOT NULL,
+  status           TEXT        NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','confirmed','completed','cancelled')),
+  interview_type   TEXT        NOT NULL DEFAULT 'video' CHECK (interview_type IN ('phone','video','onsite')),
+  location         TEXT,
+  notes            TEXT,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_recruitment_pipeline_clinic
+  ON recruitment_pipeline (clinic_id, stage);
+
+CREATE INDEX IF NOT EXISTS idx_talent_pool_clinic
+  ON talent_pool (clinic_id, status);
+
+CREATE INDEX IF NOT EXISTS idx_interviews_match
+  ON interviews (match_id, scheduled_for DESC);

@@ -593,3 +593,180 @@ export async function generateScreeningQuestions(position?: string, workplaceTyp
 }
 
 
+
+interface BackendInterview {
+  id: string;
+  match_id: string;
+  created_by: string;
+  scheduled_for: string;
+  status: InterviewSchedule["status"];
+  interview_type: InterviewSchedule["interviewType"];
+  location?: string | null;
+  notes?: string | null;
+}
+
+interface BackendTalentPoolEntry {
+  id: string;
+  clinic_id: string;
+  candidate_id: string;
+  match_id?: string | null;
+  tags?: string[];
+  notes?: string | null;
+  status: TalentPoolEntry["status"];
+  created_at: string;
+  updated_at: string;
+  name: string;
+  position?: string | null;
+  location?: string | null;
+  role?: string;
+  image_url?: string | null;
+}
+
+function transformInterview(interview: BackendInterview): InterviewSchedule {
+  return {
+    id: interview.id,
+    matchId: interview.match_id,
+    createdBy: interview.created_by,
+    scheduledFor: interview.scheduled_for,
+    status: interview.status,
+    interviewType: interview.interview_type,
+    location: interview.location || null,
+    notes: interview.notes || null,
+  };
+}
+
+function transformTalentPoolEntry(entry: BackendTalentPoolEntry): TalentPoolEntry {
+  const candidate = transformToMatchCardData({
+    id: entry.candidate_id,
+    name: entry.name,
+    position: entry.position,
+    location: entry.location,
+    image_url: entry.image_url,
+    role: entry.role,
+  });
+
+  return {
+    id: entry.id,
+    clinicId: entry.clinic_id,
+    candidateId: entry.candidate_id,
+    matchId: entry.match_id || null,
+    tags: entry.tags || [],
+    notes: entry.notes || null,
+    status: entry.status,
+    createdAt: entry.created_at,
+    updatedAt: entry.updated_at,
+    candidate,
+  };
+}
+
+export async function getRecruitment(matchId: string): Promise<{ pipeline: RecruitmentPipeline | null; interviews: InterviewSchedule[]; canManage: boolean }> {
+  const response = await apiCall<{ pipeline?: BackendPipeline | null; interviews?: BackendInterview[]; can_manage?: boolean }>(`/recruitment/${matchId}`);
+  return {
+    pipeline: transformPipeline(response.pipeline || null),
+    interviews: (response.interviews || []).map(transformInterview),
+    canManage: response.can_manage === true,
+  };
+}
+
+export async function updateRecruitment(matchId: string, payload: Partial<Pick<RecruitmentPipeline, "stage" | "summary" | "nextStep" | "aiNotes" | "savedToTalent">>): Promise<RecruitmentPipeline | null> {
+  const response = await apiCall<BackendPipeline>(`/recruitment/${matchId}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      stage: payload.stage,
+      summary: payload.summary,
+      next_step: payload.nextStep,
+      ai_notes: payload.aiNotes,
+      saved_to_talent: payload.savedToTalent,
+    }),
+  });
+  return transformPipeline(response);
+}
+
+export async function getTalentPool(currentUser: CurrentUser): Promise<TalentPoolEntry[]> {
+  if (!currentUser.profileId) return [];
+  const response = await apiCall<BackendTalentPoolEntry[]>(`/talent-pool/${currentUser.profileId}`);
+  return response.map(transformTalentPoolEntry);
+}
+
+export async function saveToTalentPool(candidateId: string, matchId: string, payload?: { tags?: string[]; notes?: string; status?: TalentPoolEntry["status"] }): Promise<void> {
+  await apiCall("/talent-pool", {
+    method: "POST",
+    body: JSON.stringify({
+      candidate_id: candidateId,
+      match_id: matchId,
+      tags: payload?.tags || [],
+      notes: payload?.notes || null,
+      status: payload?.status || "saved",
+    }),
+  });
+}
+
+export async function scheduleInterview(matchId: string, payload: { scheduledFor: string; interviewType: InterviewSchedule["interviewType"]; location?: string; notes?: string }): Promise<InterviewSchedule> {
+  const response = await apiCall<BackendInterview>("/interviews", {
+    method: "POST",
+    body: JSON.stringify({
+      match_id: matchId,
+      scheduled_for: payload.scheduledFor,
+      interview_type: payload.interviewType,
+      location: payload.location || null,
+      notes: payload.notes || null,
+    }),
+  });
+  return transformInterview(response);
+}
+
+export async function updateInterview(interviewId: string, payload: { status: InterviewSchedule["status"]; notes?: string }): Promise<InterviewSchedule> {
+  const response = await apiCall<BackendInterview>(`/interviews/${interviewId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: payload.status, notes: payload.notes || null }),
+  });
+  return transformInterview(response);
+}
+
+export async function getAnalytics(currentUser: CurrentUser): Promise<AnalyticsSummary> {
+  if (!currentUser.profileId) {
+    return {
+      profileCompletion: 0,
+      totalMatches: 0,
+      activeMatches: 0,
+      totalMessages: 0,
+      savedCandidates: 0,
+      scheduledInterviews: 0,
+      pipelineBreakdown: [],
+    };
+  }
+
+  const response = await apiCall<{
+    profile_completion?: number;
+    total_matches?: number;
+    active_matches?: number;
+    total_messages?: number;
+    saved_candidates?: number;
+    scheduled_interviews?: number;
+    pipeline_breakdown?: Array<{ stage: RecruitmentPipeline["stage"]; count: number | string }>;
+  }>(`/analytics/${currentUser.profileId}`);
+
+  return {
+    profileCompletion: response.profile_completion ?? 0,
+    totalMatches: response.total_matches ?? 0,
+    activeMatches: response.active_matches ?? 0,
+    totalMessages: response.total_messages ?? 0,
+    savedCandidates: response.saved_candidates ?? 0,
+    scheduledInterviews: response.scheduled_interviews ?? 0,
+    pipelineBreakdown: (response.pipeline_breakdown || []).map((item) => ({ stage: item.stage, count: Number(item.count) })),
+  };
+}
+
+export async function parseSearchQuery(query: string): Promise<Record<string, unknown>> {
+  return apiCall<Record<string, unknown>>("/ai/parse-search", {
+    method: "POST",
+    body: JSON.stringify({ query }),
+  });
+}
+
+export async function getProfileHighlights(profileId: string): Promise<{ highlights: string[]; suggestions: string[] }> {
+  return apiCall<{ highlights: string[]; suggestions: string[] }>("/ai/profile-highlights", {
+    method: "POST",
+    body: JSON.stringify({ profile_id: profileId }),
+  });
+}

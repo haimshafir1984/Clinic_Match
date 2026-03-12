@@ -1,7 +1,7 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+﻿import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Banknote, Briefcase, Building2, Calendar, Clock, MapPin, UserRound } from "lucide-react";
+import { Banknote, Briefcase, Building2, Calendar, Clock, MapPin, Sparkles, UserRound } from "lucide-react";
 
 interface Profile {
   id?: string;
@@ -27,6 +27,7 @@ interface Profile {
 
 interface ProfileViewProps {
   profile: Profile;
+  highlights?: string[];
 }
 
 const jobTypeLabels: Record<string, string> = {
@@ -45,7 +46,7 @@ const dayLabels: Record<string, string> = {
   saturday: "שבת",
 };
 
-export function ProfileView({ profile }: ProfileViewProps) {
+export function ProfileView({ profile, highlights = [] }: ProfileViewProps) {
   const isClinic = profile.role === "clinic";
   const RoleIcon = isClinic ? Building2 : UserRound;
   const imageUrl = isClinic ? profile.logo_url || profile.avatar_url : profile.avatar_url || profile.logo_url;
@@ -85,6 +86,19 @@ export function ProfileView({ profile }: ProfileViewProps) {
           {profile.description ? <p className="mt-4 text-sm text-muted-foreground">{profile.description}</p> : null}
         </CardContent>
       </Card>
+
+      {highlights.length > 0 ? (
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="mb-3 flex items-center gap-2 font-semibold"><Sparkles className="h-4 w-4 text-primary" />חוזקות בולטות</h3>
+            <div className="flex flex-wrap gap-2">
+              {highlights.map((highlight) => (
+                <Badge key={highlight} variant="secondary" className="text-xs">{highlight}</Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {(profile.city || profile.preferred_area) && (
         <Card>
@@ -127,4 +141,3 @@ export function ProfileView({ profile }: ProfileViewProps) {
     </div>
   );
 }
-

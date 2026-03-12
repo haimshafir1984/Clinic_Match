@@ -2,10 +2,14 @@
 import { useMatches } from "@/hooks/useMatches";
 import { MatchCard } from "@/components/matches/MatchCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Heart, Users, ArrowLeft } from "lucide-react";
+import { Heart, Users, ArrowLeft, Bookmark } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTalentPool } from "@/hooks/useTalentPool";
+import { toast } from "sonner";
+import { Match } from "@/types";
 
 function MatchesSkeleton() {
   return (
@@ -26,10 +30,22 @@ function MatchesSkeleton() {
 }
 
 export default function Matches() {
+  const { currentUser } = useAuth();
   const { matches, isLoading } = useMatches();
+  const { talentPool, saveToTalentPool } = useTalentPool();
+  const isClinic = currentUser?.role === "clinic";
 
   const activeMatches = matches.filter((match) => !match.isClosed);
   const closedMatches = matches.filter((match) => match.isClosed);
+
+  const handleSaveToTalentPool = async (match: Match) => {
+    try {
+      await saveToTalentPool({ candidateId: match.otherProfile.id, matchId: match.id, tags: [match.otherProfile.position || "מועמד/ת"] });
+      toast.success("המועמד/ת נשמרו ל-Talent Pool");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "שמירה ל-Talent Pool נכשלה");
+    }
+  };
 
   return (
     <AppLayout>
@@ -45,14 +61,17 @@ export default function Matches() {
           </p>
         </div>
 
+        {isClinic ? (
+          <div className="mb-4 rounded-xl border bg-card p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium"><Bookmark className="h-4 w-4 text-primary" />Talent Pool</div>
+            <p className="text-sm text-muted-foreground">כרגע שמורים {talentPool.length} מועמדים לעבודה עתידית.</p>
+          </div>
+        ) : null}
+
         {isLoading ? (
           <MatchesSkeleton />
         ) : activeMatches.length === 0 && closedMatches.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="py-16 text-center"
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="py-16 text-center">
             <motion.div
               className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/5"
               animate={{ scale: [1, 1.05, 1] }}
@@ -79,19 +98,12 @@ export default function Matches() {
               <section>
                 <div className="mb-3 flex items-center gap-2">
                   <Users className="h-4 w-4 text-primary" />
-                  <h2 className="text-sm font-medium text-muted-foreground">
-                    {`התאמות פעילות (${activeMatches.length})`}
-                  </h2>
+                  <h2 className="text-sm font-medium text-muted-foreground">{`התאמות פעילות (${activeMatches.length})`}</h2>
                 </div>
                 <div className="space-y-3">
                   {activeMatches.map((match, index) => (
-                    <motion.div
-                      key={match.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <MatchCard match={match} />
+                    <motion.div key={match.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
+                      <MatchCard match={match} canSave={isClinic} onSaveToTalentPool={handleSaveToTalentPool} />
                     </motion.div>
                   ))}
                 </div>
@@ -100,9 +112,7 @@ export default function Matches() {
 
             {closedMatches.length > 0 && (
               <section>
-                <h2 className="mb-3 text-sm font-medium text-muted-foreground">
-                  {`התאמות שנסגרו (${closedMatches.length})`}
-                </h2>
+                <h2 className="mb-3 text-sm font-medium text-muted-foreground">{`התאמות שנסגרו (${closedMatches.length})`}</h2>
                 <div className="space-y-3 opacity-60">
                   {closedMatches.map((match) => (
                     <MatchCard key={match.id} match={match} />

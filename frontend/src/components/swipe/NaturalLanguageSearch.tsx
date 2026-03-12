@@ -1,9 +1,10 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Banknote, Briefcase, Calendar, Loader2, MapPin, Search, Sparkles, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { parseSearchQuery } from "@/lib/api";
 
 export interface SearchFilters {
   position?: string;
@@ -21,47 +22,33 @@ interface NaturalLanguageSearchProps {
 
 type FilterValue = string | number | string[];
 
-function parseNaturalLanguage(query: string): SearchFilters {
+function parseFallback(query: string): SearchFilters {
   const filters: SearchFilters = {};
   const normalizedQuery = query.toLowerCase();
-
   const positions = ["שיננית", "סייעת", "מנהל/ת", "נציג/ת שירות", "חתם/ת", "מפתח/ת"];
   const locations = ["תל אביב", "ירושלים", "חיפה", "באר שבע", "רמת גן", "נתניה", "מרכז", "צפון", "דרום"];
-  const dayMappings: Record<string, string> = {
-    ראשון: "sunday",
-    שני: "monday",
-    שלישי: "tuesday",
-    רביעי: "wednesday",
-    חמישי: "thursday",
-    שישי: "friday",
-    שבת: "saturday",
-  };
+  const dayMappings: Record<string, string> = { ראשון: "sunday", שני: "monday", שלישי: "tuesday", רביעי: "wednesday", חמישי: "thursday", שישי: "friday", שבת: "saturday" };
 
   filters.position = positions.find((position) => normalizedQuery.includes(position.toLowerCase()));
   filters.location = locations.find((location) => normalizedQuery.includes(location.toLowerCase()));
 
-  const detectedDays = Object.entries(dayMappings)
-    .filter(([hebrew]) => normalizedQuery.includes(hebrew.toLowerCase()))
-    .map(([, english]) => english);
+  const detectedDays = Object.entries(dayMappings).filter(([hebrew]) => normalizedQuery.includes(hebrew.toLowerCase())).map(([, english]) => english);
   if (detectedDays.length > 0) filters.days = detectedDays;
 
   const salaryMatch = normalizedQuery.match(/(\d+)/);
   if (salaryMatch) filters.salaryMin = Number.parseInt(salaryMatch[1], 10);
-
   if (normalizedQuery.includes("יומי")) filters.jobType = "daily";
   if (normalizedQuery.includes("זמני")) filters.jobType = "temporary";
   if (normalizedQuery.includes("קבוע")) filters.jobType = "permanent";
 
-  return Object.fromEntries(
-    Object.entries(filters).filter(([, value]) => (Array.isArray(value) ? value.length > 0 : Boolean(value)))
-  ) as SearchFilters;
+  return Object.fromEntries(Object.entries(filters).filter(([, value]) => (Array.isArray(value) ? value.length > 0 : Boolean(value)))) as SearchFilters;
 }
 
 function getFilterLabel(key: string, value: FilterValue): { icon: typeof Search; text: string } {
   if (key === "position") return { icon: Briefcase, text: String(value) };
   if (key === "location") return { icon: MapPin, text: String(value) };
   if (key === "days") return { icon: Calendar, text: (value as string[]).join(", ") };
-  if (key === "salaryMin") return { icon: Banknote, text: `מ-₪${value}` };
+  if (key === "salaryMin") return { icon: Banknote, text: `מ-${value}` };
   if (key === "jobType") return { icon: Briefcase, text: String(value) };
   return { icon: Search, text: String(value) };
 }
@@ -79,12 +66,28 @@ export function NaturalLanguageSearch({ onFiltersChange, role }: NaturalLanguage
   const handleSearch = async () => {
     if (!query.trim()) return;
     setIsProcessing(true);
-    await new Promise((resolve) => window.setTimeout(resolve, 300));
-    const filters = parseNaturalLanguage(query);
-    const nextFilters = Object.keys(filters).length > 0 ? filters : null;
-    setActiveFilters(nextFilters);
-    onFiltersChange(nextFilters);
-    setIsProcessing(false);
+    try {
+      const parsed = await parseSearchQuery(query);
+      const filters: SearchFilters = {
+        position: typeof parsed.position === "string" ? parsed.position : undefined,
+        location: typeof parsed.location === "string" ? parsed.location : undefined,
+        days: Array.isArray(parsed.days) ? parsed.days.filter((value): value is string => typeof value === "string") : undefined,
+        salaryMin: typeof parsed.salaryMin === "number" ? parsed.salaryMin : undefined,
+        salaryMax: typeof parsed.salaryMax === "number" ? parsed.salaryMax : undefined,
+        jobType: typeof parsed.jobType === "string" ? parsed.jobType : undefined,
+      };
+      const nextFilters = Object.values(filters).some(Boolean) ? filters : parseFallback(query);
+      const normalized = Object.keys(nextFilters).length > 0 ? nextFilters : null;
+      setActiveFilters(normalized);
+      onFiltersChange(normalized);
+    } catch {
+      const fallback = parseFallback(query);
+      const normalized = Object.keys(fallback).length > 0 ? fallback : null;
+      setActiveFilters(normalized);
+      onFiltersChange(normalized);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const clearFilters = () => {
@@ -108,12 +111,7 @@ export function NaturalLanguageSearch({ onFiltersChange, role }: NaturalLanguage
   return (
     <div className="space-y-3">
       {!isExpanded && (
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          onClick={() => setIsExpanded(true)}
-          className="flex w-full items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 transition-colors hover:border-primary/50"
-        >
+        <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => setIsExpanded(true)} className="flex w-full items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 transition-colors hover:border-primary/50">
           <Search className="h-4 w-4 text-muted-foreground" />
           <span className="flex-1 text-start text-sm text-muted-foreground">חיפוש חכם...</span>
           <Sparkles className="h-4 w-4 text-primary" />
@@ -122,21 +120,11 @@ export function NaturalLanguageSearch({ onFiltersChange, role }: NaturalLanguage
 
       <AnimatePresence>
         {isExpanded && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
             <div className="space-y-3 rounded-xl border border-border bg-card p-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  חיפוש בשפה טבעית
-                </div>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsExpanded(false)}>
-                  <X className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-2 text-sm font-medium"><Sparkles className="h-4 w-4 text-primary" />חיפוש בשפה טבעית</div>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsExpanded(false)}><X className="h-4 w-4" /></Button>
               </div>
               <div className="flex gap-2">
                 <Input
@@ -186,12 +174,9 @@ export function NaturalLanguageSearch({ onFiltersChange, role }: NaturalLanguage
               </Badge>
             );
           })}
-          <button type="button" onClick={clearFilters} className="text-xs text-destructive hover:underline">
-            נקה הכל
-          </button>
+          <button type="button" onClick={clearFilters} className="text-xs text-destructive hover:underline">נקה הכל</button>
         </div>
       )}
     </div>
   );
 }
-
