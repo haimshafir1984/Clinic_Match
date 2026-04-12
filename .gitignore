@@ -11,3 +11,6 @@ node_modules/
 # Build
 dist/
 build/
+
+# Browser caches
+backend/.cache/

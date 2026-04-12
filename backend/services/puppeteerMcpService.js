@@ -10,7 +10,8 @@ const DEFAULT_LAUNCH_OPTIONS = process.env.PUPPETEER_LAUNCH_OPTIONS
   ? safeParseJson(process.env.PUPPETEER_LAUNCH_OPTIONS, { headless: true })
   : { headless: true };
 const DEFAULT_TOOL_TIMEOUT_MS = Number.parseInt(process.env.PUPPETEER_MCP_TOOL_TIMEOUT_MS || "45000", 10);
-const DEFAULT_CACHE_DIR = process.env.PUPPETEER_CACHE_DIR || path.join(process.cwd(), ".cache", "puppeteer");
+const DEFAULT_CACHE_DIR =
+  process.env.PUPPETEER_CACHE_DIR || path.join(__dirname, "..", ".cache", "puppeteer");
 
 function safeParseJson(value, fallback) {
   try {

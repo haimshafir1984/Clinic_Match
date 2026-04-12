@@ -4,7 +4,7 @@
   "description": "Backend for ClinicMatch app",
   "main": "server.js",
   "scripts": {
-    "postinstall": "npx puppeteer browsers install chrome",
+    "postinstall": "npx puppeteer browsers install chrome@131.0.6778.204",
     "start": "node server.js",
     "test:mcp:puppeteer": "node scripts/testPuppeteerMcp.js",
     "import:market-jobs": "node scripts/importMarketJobs.js"

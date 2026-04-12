@@ -10,6 +10,10 @@ interface ExternalJobCardProps {
 
 const sourceLabels: Record<string, string> = {
   indeed: "Indeed",
+  linkedin: "LinkedIn",
+  drushim: "דרושים IL",
+  jobmaster: "JobMaster",
+  alljobs: "AllJobs",
 };
 
 const jobTypeLabels: Record<string, string> = {
@@ -65,7 +69,7 @@ export function ExternalJobCard({ job }: ExternalJobCardProps) {
 
       <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
         <RefreshCw className="h-3.5 w-3.5" />
-        <span>{`נמשכה מהאתר ב-${new Date(job.fetchedAt).toLocaleDateString("he-IL")}`}</span>
+        <span>{`נמשך מהאתר ב-${new Date(job.fetchedAt).toLocaleDateString("he-IL")}`}</span>
       </div>
     </Card>
   );
