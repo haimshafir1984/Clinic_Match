@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTalentPool } from "@/hooks/useTalentPool";
 import { useMarketJobs } from "@/hooks/useMarketJobs";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Match } from "@/types";
 
@@ -196,19 +195,17 @@ export default function Matches() {
           </div>
         ) : null}
 
-        {!isClinic ? (
-          <Tabs defaultValue="matches" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="matches">התאמות במערכת</TabsTrigger>
-              <TabsTrigger value="external">התאמות מאתרים</TabsTrigger>
-            </TabsList>
+        {matchesContent}
 
-            <TabsContent value="matches">{matchesContent}</TabsContent>
-            <TabsContent value="external">{marketJobsContent}</TabsContent>
-          </Tabs>
-        ) : (
-          matchesContent
-        )}
+        {!isClinic ? (
+          <section className="mt-8 space-y-4">
+            <div className="flex items-center gap-2">
+              <BriefcaseBusiness className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-medium text-muted-foreground">התאמות מאתרים</h2>
+            </div>
+            {marketJobsContent}
+          </section>
+        ) : null}
       </div>
     </AppLayout>
   );
