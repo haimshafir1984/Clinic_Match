@@ -91,7 +91,7 @@ export function useMarketJobs() {
     mutationFn: async () => importMarketJobsApi(filters),
     onSuccess: (result) => {
       queryClient.setQueryData(queryKey, result.jobs || []);
-      setImportWarnings((result.warnings || []).map((w) => `[${w.source}] ${w.message}`));
+      setImportWarnings((result.warnings || []).map((w) => w.message));
     },
   });
 

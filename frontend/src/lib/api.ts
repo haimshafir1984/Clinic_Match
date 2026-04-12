@@ -844,7 +844,10 @@ export async function importMarketJobs(params: {
   jobType?: string;
   limit?: number;
 }): Promise<ImportMarketJobsResult> {
-  const response = await apiCall<{ jobs: BackendMarketJob[]; warnings?: Array<{ source: string; message: string }> }>("/market-jobs/import", {
+  const response = await apiCall<{
+    jobs: BackendMarketJob[];
+    warnings: Array<{ source: string; message: string }>;
+  }>("/market-jobs/import", {
     method: "POST",
     body: JSON.stringify(params),
   }, 60000);
