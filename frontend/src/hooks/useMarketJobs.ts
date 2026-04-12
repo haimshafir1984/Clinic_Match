@@ -8,14 +8,18 @@ function cleanFilter(value: string | null | undefined) {
   return value && value.trim() ? value.trim() : undefined;
 }
 
-// Map industry English key to Hebrew label for fallback query
 const INDUSTRY_HEBREW: Record<string, string> = {
-  insurance: "ביטוח",
-  communication: "תקשורת",
-  retail: "קמעונאות",
-  hospitality: "אירוח",
-  technology: "טכנולוגיה",
-  healthcare: "רפואה",
+  insurance: "\u05d1\u05d9\u05d8\u05d5\u05d7",
+  communication: "\u05ea\u05e7\u05e9\u05d5\u05e8\u05ea",
+  retail: "\u05e7\u05de\u05e2\u05d5\u05e0\u05d0\u05d5\u05ea",
+  hospitality: "\u05d0\u05d9\u05e8\u05d5\u05d7",
+  technology: "\u05d8\u05db\u05e0\u05d5\u05dc\u05d5\u05d2\u05d9\u05d4",
+  tech: "\u05d8\u05db\u05e0\u05d5\u05dc\u05d5\u05d2\u05d9\u05d4",
+  healthcare: "\u05e8\u05e4\u05d5\u05d0\u05d4",
+  medical: "\u05e8\u05e4\u05d5\u05d0\u05d4",
+  education: "\u05d7\u05d9\u05e0\u05d5\u05da",
+  construction: "\u05d1\u05e0\u05d9\u05d9\u05d4",
+  daily: "\u05de\u05e9\u05e8\u05d5\u05ea \u05d9\u05d5\u05de\u05d9\u05d5\u05ea",
 };
 
 export function useMarketJobs() {
@@ -26,7 +30,6 @@ export function useMarketJobs() {
   const [importWarnings, setImportWarnings] = useState<string[]>([]);
 
   const filters = useMemo(() => {
-    // Bug 2 fix: try more profile fields for the query
     const profilePosition =
       cleanFilter(profile?.required_position) ||
       cleanFilter(profile?.positions?.[0]) ||
@@ -37,24 +40,17 @@ export function useMarketJobs() {
       cleanFilter(profile?.city) ||
       cleanFilter(currentUser?.location);
 
-    const industryKey = cleanFilter(currentUser?.industry);
-    const profileIndustry = industryKey;
-
-    // If position is missing, fall back to industry in Hebrew as a broad query
+    const industryKey = cleanFilter(profile?.industry) || cleanFilter(currentUser?.industry);
     const effectiveQuery =
       profilePosition ||
       (industryKey ? INDUSTRY_HEBREW[industryKey] || industryKey : undefined);
-
-    if (!effectiveQuery && !profileLocation) {
-      console.warn("[useMarketJobs] All filters are empty — market jobs search will be broad");
-    }
 
     const profileJobType = cleanFilter(profile?.job_type);
 
     return {
       query: effectiveQuery,
       location: profileLocation,
-      industry: profileIndustry,
+      industry: industryKey,
       jobType: profileJobType,
       limit: 20,
     };
@@ -62,6 +58,7 @@ export function useMarketJobs() {
     currentUser?.industry,
     currentUser?.location,
     profile?.city,
+    profile?.industry,
     profile?.job_type,
     profile?.position,
     profile?.positions,
@@ -69,15 +66,8 @@ export function useMarketJobs() {
     profile?.required_position,
   ]);
 
-  const queryKey = [
-    "market-jobs",
-    currentUser?.profileId,
-    filters.query || "",
-    filters.location || "",
-    filters.industry || "",
-    filters.jobType || "",
-  ];
-
+  const filterSignature = JSON.stringify(filters);
+  const queryKey = ["market-jobs", currentUser?.profileId, filterSignature];
   const isEnabled = currentUser?.role === "worker" && !!currentUser?.profileId;
 
   const jobsQuery = useQuery({
@@ -91,9 +81,18 @@ export function useMarketJobs() {
     mutationFn: async () => importMarketJobsApi(filters),
     onSuccess: (result) => {
       queryClient.setQueryData(queryKey, result.jobs || []);
-      setImportWarnings((result.warnings || []).map((w) => w.message));
+      setImportWarnings(
+        (result.warnings || []).map((warning) =>
+          warning.source ? `${warning.source}: ${warning.message}` : warning.message
+        )
+      );
     },
   });
+
+  useEffect(() => {
+    hasAutoRefreshed.current = false;
+    setImportWarnings([]);
+  }, [filterSignature]);
 
   useEffect(() => {
     if (!isEnabled || jobsQuery.isLoading || refreshMutation.isPending || hasAutoRefreshed.current) {

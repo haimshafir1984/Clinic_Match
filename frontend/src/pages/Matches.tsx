@@ -50,7 +50,15 @@ export default function Matches() {
   const { currentUser } = useAuth();
   const { matches, isLoading } = useMatches();
   const { talentPool, saveToTalentPool } = useTalentPool();
-  const { jobs: marketJobs, isLoading: marketJobsLoading, isRefreshing: marketJobsRefreshing, refreshFromSites, filters, error: marketJobsError } = useMarketJobs();
+  const {
+    jobs: marketJobs,
+    isLoading: marketJobsLoading,
+    isRefreshing: marketJobsRefreshing,
+    refreshFromSites,
+    filters,
+    importWarnings,
+    error: marketJobsError,
+  } = useMarketJobs();
   const isClinic = currentUser?.role === "clinic";
 
   const activeMatches = matches.filter((match) => !match.isClosed);
@@ -64,6 +72,17 @@ export default function Matches() {
       toast.error(error instanceof Error ? error.message : "שמירה ל-Talent Pool נכשלה");
     }
   };
+
+  const marketJobsWarnings = importWarnings.length > 0 ? (
+    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+      <div className="mb-1 font-medium">חלק ממקורות החיפוש לא החזירו תוצאות כרגע</div>
+      <div className="space-y-1">
+        {importWarnings.map((warning) => (
+          <p key={warning}>{warning}</p>
+        ))}
+      </div>
+    </div>
+  ) : null;
 
   const handleRefreshMarketJobs = async () => {
     try {
@@ -147,9 +166,11 @@ export default function Matches() {
       {marketJobsError instanceof Error ? (
         <p className="mt-4 text-sm text-destructive">{marketJobsError.message}</p>
       ) : null}
+      {marketJobsWarnings ? <div className="mt-4 text-start">{marketJobsWarnings}</div> : null}
     </div>
   ) : (
     <div className="space-y-4">
+      {marketJobsWarnings}
       <div className="flex items-start justify-between gap-4 rounded-xl border bg-card p-4">
         <div>
           <div className="mb-1 flex items-center gap-2 text-sm font-medium">

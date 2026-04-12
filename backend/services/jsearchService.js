@@ -8,7 +8,7 @@ async function fetchJSearchJobs({ query, location, jobType, industry, limit = 10
   }
 
   // Build a combined search query for Israel
-  const searchQuery = [query, location].filter(Boolean).join(' in ') || 'jobs in Israel';
+  const searchQuery = [query, industry, location].filter(Boolean).join(" ") || "jobs in Israel";
 
   const params = new URLSearchParams({
     query: searchQuery,

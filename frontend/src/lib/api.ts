@@ -406,6 +406,7 @@ export async function createProfile(data: ProfileCreateData): Promise<{ user: Cu
 export interface ProfileUpdateData {
   name?: string;
   role?: "CLINIC" | "STAFF" | "clinic" | "worker";
+  industry?: string | null;
   position?: string | null;
   positions?: string[] | null;
   workplace_types?: string[] | null;
@@ -445,6 +446,7 @@ export function transformToProfile(profile: FullBackendProfile) {
     positions: profile.positions || (profile.position ? [profile.position] : []),
     required_position: profile.required_position || profile.position || null,
     workplace_types: profile.workplace_types || [],
+    industry: profile.industry || null,
     description: profile.description || null,
     city: role === "clinic" ? profile.location || null : null,
     preferred_area: role === "worker" ? profile.location || null : null,
@@ -481,6 +483,7 @@ export async function updateProfileApi(profileId: string, data: ProfileUpdateDat
       positions: data.positions,
       required_position: data.required_position,
       workplace_types: data.workplace_types,
+      industry: data.industry ?? null,
       location: data.city || data.preferred_area || null,
       description: data.description || null,
       radius_km: data.radius_km ?? null,
@@ -511,6 +514,7 @@ export async function updateProfileApi(profileId: string, data: ProfileUpdateDat
         ...currentUser,
         name: profile.name,
         role: profile.role,
+        industry: profile.industry,
         position: profile.role === "clinic" ? profile.required_position : profile.position,
         location: profile.city || profile.preferred_area,
         imageUrl: profile.role === "clinic" ? profile.logo_url || profile.avatar_url : profile.avatar_url || profile.logo_url,

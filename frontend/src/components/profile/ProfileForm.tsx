@@ -66,6 +66,7 @@ interface Profile {
   user_id: string;
   name: string;
   role: "clinic" | "worker";
+  industry?: string | null;
   position?: string | null;
   positions?: string[] | null;
   workplace_types?: string[] | null;
@@ -236,6 +237,7 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
     const payload: ProfileFormInput = {
       name: data.name,
       role: currentRole,
+      industry: selectedDomain ? getDomainConfig(selectedDomain)?.industry || null : null,
       position: selectedPositions[0] || null,
       positions: selectedPositions,
       required_position: currentRole === "clinic" ? selectedPositions[0] || null : null,

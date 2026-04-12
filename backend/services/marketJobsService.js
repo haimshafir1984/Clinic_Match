@@ -83,6 +83,89 @@ const JOB_TYPE_ALIASES = {
   permanent: { he: "משרה מלאה", en: "full time" },
 };
 
+const NORMALIZED_LOCATION_ALIASES = {
+  "\u05ea\u05dc \u05d0\u05d1\u05d9\u05d1": { he: "\u05ea\u05dc \u05d0\u05d1\u05d9\u05d1", en: "Tel Aviv" },
+  "\u05ea\u05dc \u05d0\u05d1\u05d9\u05d1 \u05d9\u05e4\u05d5": { he: "\u05ea\u05dc \u05d0\u05d1\u05d9\u05d1 \u05d9\u05e4\u05d5", en: "Tel Aviv-Yafo" },
+  "\u05d7\u05d9\u05e4\u05d4": { he: "\u05d7\u05d9\u05e4\u05d4", en: "Haifa" },
+  "\u05d9\u05e8\u05d5\u05e9\u05dc\u05d9\u05dd": { he: "\u05d9\u05e8\u05d5\u05e9\u05dc\u05d9\u05dd", en: "Jerusalem" },
+  "\u05e8\u05e2\u05e0\u05e0\u05d4": { he: "\u05e8\u05e2\u05e0\u05e0\u05d4", en: "Raanana" },
+  "\u05e4\u05ea\u05d7 \u05ea\u05e7\u05d5\u05d5\u05d4": { he: "\u05e4\u05ea\u05d7 \u05ea\u05e7\u05d5\u05d5\u05d4", en: "Petah Tikva" },
+  "\u05e8\u05d0\u05e9\u05d5\u05df \u05dc\u05e6\u05d9\u05d5\u05df": { he: "\u05e8\u05d0\u05e9\u05d5\u05df \u05dc\u05e6\u05d9\u05d5\u05df", en: "Rishon LeZion" },
+  "\u05d1\u05d0\u05e8 \u05e9\u05d1\u05e2": { he: "\u05d1\u05d0\u05e8 \u05e9\u05d1\u05e2", en: "Beer Sheva" },
+  "\u05d0\u05e9\u05d3\u05d5\u05d3": { he: "\u05d0\u05e9\u05d3\u05d5\u05d3", en: "Ashdod" },
+  "\u05e0\u05ea\u05e0\u05d9\u05d4": { he: "\u05e0\u05ea\u05e0\u05d9\u05d4", en: "Netanya" },
+  "\u05e8\u05de\u05ea \u05d2\u05df": { he: "\u05e8\u05de\u05ea \u05d2\u05df", en: "Ramat Gan" },
+  remote: { he: "\u05e2\u05d1\u05d5\u05d3\u05d4 \u05de\u05d4\u05d1\u05d9\u05ea", en: "Remote" },
+};
+
+const NORMALIZED_JOB_QUERY_ALIASES = [
+  {
+    terms: ["\u05e0\u05e6\u05d9\u05d2 \u05e9\u05d9\u05e8\u05d5\u05ea", "\u05e0\u05e6\u05d9\u05d2\u05ea \u05e9\u05d9\u05e8\u05d5\u05ea", "\u05e9\u05d9\u05e8\u05d5\u05ea \u05dc\u05e7\u05d5\u05d7\u05d5\u05ea", "customer service"],
+    he: "\u05e0\u05e6\u05d9\u05d2 \u05e9\u05d9\u05e8\u05d5\u05ea",
+    en: "customer service representative",
+  },
+  {
+    terms: ["\u05de\u05d5\u05e7\u05d3", "call center"],
+    he: "\u05de\u05d5\u05e7\u05d3\u05df",
+    en: "call center representative",
+  },
+  {
+    terms: ["\u05de\u05db\u05d9\u05e8\u05d5\u05ea", "sales"],
+    he: "\u05e0\u05e6\u05d9\u05d2 \u05de\u05db\u05d9\u05e8\u05d5\u05ea",
+    en: "sales representative",
+  },
+  {
+    terms: ["\u05d1\u05d9\u05d8\u05d5\u05d7", "insurance"],
+    he: "\u05d1\u05d9\u05d8\u05d5\u05d7",
+    en: "insurance",
+  },
+  {
+    terms: ["\u05ea\u05e7\u05e9\u05d5\u05e8\u05ea", "telecom", "communication"],
+    he: "\u05ea\u05e7\u05e9\u05d5\u05e8\u05ea",
+    en: "telecommunications",
+  },
+  {
+    terms: ["\u05d0\u05d3\u05de\u05d9\u05df", "\u05de\u05d6\u05db\u05d9\u05e8", "\u05de\u05d6\u05db\u05d9\u05e8\u05d4", "\u05e4\u05e7\u05d9\u05d3", "\u05e4\u05e7\u05d9\u05d3\u05d4", "office"],
+    he: "\u05d0\u05d3\u05de\u05d9\u05e0\u05d9\u05e1\u05d8\u05e8\u05e6\u05d9\u05d4",
+    en: "office administration",
+  },
+  {
+    terms: ["\u05de\u05ea\u05d0\u05dd", "\u05e8\u05db\u05d6", "\u05e8\u05db\u05d6\u05ea", "coordinator"],
+    he: "\u05e8\u05db\u05d6 \u05e9\u05d9\u05e8\u05d5\u05ea",
+    en: "coordinator",
+  },
+  {
+    terms: ["qa"],
+    he: "\u05d1\u05d5\u05d3\u05e7 \u05ea\u05d5\u05db\u05e0\u05d4",
+    en: "qa engineer",
+  },
+  {
+    terms: ["support", "\u05ea\u05de\u05d9\u05db\u05d4"],
+    he: "\u05ea\u05de\u05d9\u05db\u05d4",
+    en: "support",
+  },
+];
+
+const NORMALIZED_INDUSTRY_ALIASES = {
+  insurance: { he: "\u05d1\u05d9\u05d8\u05d5\u05d7", en: "insurance" },
+  communication: { he: "\u05ea\u05e7\u05e9\u05d5\u05e8\u05ea", en: "telecommunications" },
+  retail: { he: "\u05e7\u05de\u05e2\u05d5\u05e0\u05d0\u05d5\u05ea", en: "retail" },
+  hospitality: { he: "\u05d0\u05d9\u05e8\u05d5\u05d7", en: "hospitality" },
+  technology: { he: "\u05d8\u05db\u05e0\u05d5\u05dc\u05d5\u05d2\u05d9\u05d4", en: "technology" },
+  tech: { he: "\u05d8\u05db\u05e0\u05d5\u05dc\u05d5\u05d2\u05d9\u05d4", en: "technology" },
+  healthcare: { he: "\u05e8\u05e4\u05d5\u05d0\u05d4", en: "healthcare" },
+  medical: { he: "\u05e8\u05e4\u05d5\u05d0\u05d4", en: "healthcare" },
+  education: { he: "\u05d7\u05d9\u05e0\u05d5\u05da", en: "education" },
+  construction: { he: "\u05d1\u05e0\u05d9\u05d9\u05d4", en: "construction" },
+  daily: { he: "\u05de\u05e9\u05e8\u05d5\u05ea \u05d9\u05d5\u05de\u05d9\u05d5\u05ea", en: "shift work" },
+};
+
+const NORMALIZED_JOB_TYPE_ALIASES = {
+  daily: { he: "\u05e2\u05d1\u05d5\u05d3\u05d4 \u05d9\u05d5\u05de\u05d9\u05ea", en: "daily" },
+  temporary: { he: "\u05e2\u05d1\u05d5\u05d3\u05d4 \u05d6\u05de\u05e0\u05d9\u05ea", en: "temporary" },
+  permanent: { he: "\u05de\u05e9\u05e8\u05d4 \u05de\u05dc\u05d0\u05d4", en: "full time" },
+};
+
 const MARKET_JOBS_SCHEMA_QUERIES = [
   `
     CREATE TABLE IF NOT EXISTS market_jobs (
@@ -179,7 +262,7 @@ function interpolateTemplate(template, values) {
 function getLocaleLocation(location, locale) {
   const normalized = normalizeText(location);
   if (!normalized) return "";
-  const alias = LOCATION_ALIASES[normalized];
+  const alias = NORMALIZED_LOCATION_ALIASES[normalized] || LOCATION_ALIASES[normalized];
   if (alias) {
     return locale === "he" ? alias.he : alias.en;
   }
@@ -190,7 +273,10 @@ function getQueryAlias(value, locale) {
   const normalized = normalizeText(value);
   if (!normalized) return "";
 
-  const alias = JOB_QUERY_ALIASES.find((item) => item.match.test(normalized));
+  const lower = normalized.toLowerCase();
+  const alias = NORMALIZED_JOB_QUERY_ALIASES.find((item) =>
+    item.terms.some((term) => lower.includes(term.toLowerCase()))
+  );
   if (alias) {
     return locale === "he" ? alias.he : alias.en;
   }
@@ -201,14 +287,14 @@ function getQueryAlias(value, locale) {
 function getIndustryAlias(value, locale) {
   const normalized = normalizeText(value);
   if (!normalized) return "";
-  const alias = INDUSTRY_ALIASES[normalized.toLowerCase()];
+  const alias = NORMALIZED_INDUSTRY_ALIASES[normalized.toLowerCase()] || INDUSTRY_ALIASES[normalized.toLowerCase()];
   return alias ? (locale === "he" ? alias.he : alias.en) : normalized;
 }
 
 function getJobTypeAlias(value, locale) {
   const normalized = normalizeText(value);
   if (!normalized) return "";
-  const alias = JOB_TYPE_ALIASES[normalized.toLowerCase()];
+  const alias = NORMALIZED_JOB_TYPE_ALIASES[normalized.toLowerCase()] || JOB_TYPE_ALIASES[normalized.toLowerCase()];
   return alias ? (locale === "he" ? alias.he : alias.en) : normalized;
 }
 
@@ -218,11 +304,20 @@ function resolveIndustryVariants(value) {
   if (!normalized) return [];
 
   const lower = normalized.toLowerCase();
-  // Check if it's an English key
+  if (NORMALIZED_INDUSTRY_ALIASES[lower]) {
+    return [NORMALIZED_INDUSTRY_ALIASES[lower].he, NORMALIZED_INDUSTRY_ALIASES[lower].en];
+  }
+
   if (INDUSTRY_ALIASES[lower]) {
     return [INDUSTRY_ALIASES[lower].he, INDUSTRY_ALIASES[lower].en];
   }
-  // Check if it matches a Hebrew value
+
+  for (const [, alias] of Object.entries(NORMALIZED_INDUSTRY_ALIASES)) {
+    if (alias.he === normalized || alias.en.toLowerCase() === lower) {
+      return [alias.he, alias.en];
+    }
+  }
+
   for (const [, alias] of Object.entries(INDUSTRY_ALIASES)) {
     if (alias.he === normalized || alias.en.toLowerCase() === lower) {
       return [alias.he, alias.en];
@@ -824,11 +919,11 @@ async function searchMarketJobs(pool, filters = {}) {
     if (industry) {
       const variants = resolveIndustryVariants(industry);
       if (variants.length === 1) {
-        values.push(variants[0]);
+        values.push(`%${variants[0]}%`);
         clauses.push(`industry ILIKE $${values.length}`);
       } else {
         const industryConditions = variants.map((v) => {
-          values.push(v);
+          values.push(`%${v}%`);
           return `industry ILIKE $${values.length}`;
         });
         clauses.push(`(${industryConditions.join(" OR ")})`);

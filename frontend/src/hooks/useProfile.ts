@@ -13,6 +13,7 @@ export type Profile = ReturnType<typeof transformToProfile>;
 export interface ProfileFormInput {
   name: string;
   role: "clinic" | "worker";
+  industry?: string | null;
   position?: string | null;
   positions?: string[] | null;
   workplace_types?: string[] | null;
@@ -74,6 +75,7 @@ export function useCreateProfile() {
         positions: profile.positions || undefined,
         required_position: profile.required_position || undefined,
         workplace_types: profile.workplace_types || undefined,
+        industry: profile.industry || undefined,
         location: profile.city || profile.preferred_area || undefined,
         description: profile.description || undefined,
         radius_km: profile.radius_km ?? undefined,
