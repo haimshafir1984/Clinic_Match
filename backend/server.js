@@ -59,6 +59,8 @@ const PIPELINE_STAGES = ["matched", "screening", "interview", "offer", "hired", 
 const TALENT_POOL_STATUSES = ["saved", "contacted", "future_fit", "archived"];
 const INTERVIEW_STATUSES = ["pending", "confirmed", "completed", "cancelled"];
 const INTERVIEW_TYPES = ["phone", "video", "onsite"];
+const SCHEMA_INIT_MAX_RETRIES = Number.parseInt(process.env.SCHEMA_INIT_MAX_RETRIES || "10", 10);
+const SCHEMA_INIT_RETRY_DELAY_MS = Number.parseInt(process.env.SCHEMA_INIT_RETRY_DELAY_MS || "5000", 10);
 
 async function ensureExtendedSchema() {
   await pool.query(`
@@ -134,6 +136,32 @@ async function ensureExtendedSchema() {
   `);
 
   await ensureMarketJobsSchema(pool);
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function initializeSchemaWithRetry() {
+  let attempt = 0;
+
+  while (attempt < SCHEMA_INIT_MAX_RETRIES) {
+    attempt += 1;
+
+    try {
+      await ensureExtendedSchema();
+      console.log(`Schema initialization completed on attempt ${attempt}`);
+      return;
+    } catch (err) {
+      console.error(`SCHEMA INIT ERROR (attempt ${attempt}/${SCHEMA_INIT_MAX_RETRIES}):`, err);
+      if (attempt >= SCHEMA_INIT_MAX_RETRIES) {
+        console.error("Schema initialization failed after maximum retries. The server will stay up, but database-backed features may fail until the database is reachable.");
+        return;
+      }
+
+      await wait(SCHEMA_INIT_RETRY_DELAY_MS * attempt);
+    }
+  }
 }
 function parseDateTime(value) {
   if (!value) return null;
@@ -1450,12 +1478,10 @@ app.post("/api/admin/toggle-block", authenticateToken, verifyAdminRole, async (r
 
 const PORT = process.env.PORT || 10000;
 
-ensureExtendedSchema()
-  .then(() => {
-    app.listen(PORT, () => console.log(`ClinicMatch Backend Running on port ${PORT}`));
-  })
-  .catch((err) => {
-    console.error("SCHEMA INIT ERROR:", err);
-    process.exit(1);
+app.listen(PORT, () => {
+  console.log(`ClinicMatch Backend Running on port ${PORT}`);
+  initializeSchemaWithRetry().catch((err) => {
+    console.error("UNEXPECTED SCHEMA INIT FAILURE:", err);
   });
+});
 
