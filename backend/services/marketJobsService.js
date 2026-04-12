@@ -315,6 +315,7 @@ async function importMarketJobs(pool, filters = {}) {
   const limit = Math.min(Math.max(coerceInteger(filters.limit) || 20, 1), 50);
   const sources = getConfiguredSources();
   const importedJobs = [];
+  const warnings = [];
 
   for (const source of sources) {
     const searchQuery = [normalizedFilters.query, normalizedFilters.industry, normalizedFilters.jobType]
@@ -335,7 +336,16 @@ async function importMarketJobs(pool, filters = {}) {
       limit,
     });
 
-    const scrapedJobs = await scrapeJobsWithPuppeteer({ url, extractorScript });
+    let scrapedJobs = [];
+    try {
+      scrapedJobs = await scrapeJobsWithPuppeteer({ url, extractorScript });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown market jobs scraping error";
+      warnings.push({ source: source.name, message });
+      console.error(`[market-jobs] source "${source.name}" failed:`, message);
+      continue;
+    }
+
     for (const rawJob of scrapedJobs) {
       const normalizedJob = normalizeImportedJob(rawJob, normalizedFilters, source.name);
       if (!normalizedJob) continue;
@@ -348,6 +358,7 @@ async function importMarketJobs(pool, filters = {}) {
     importedCount: importedJobs.length,
     jobs: importedJobs,
     filters: normalizedFilters,
+    warnings,
   };
 }
 

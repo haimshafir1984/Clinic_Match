@@ -1,3 +1,4 @@
+const path = require("path");
 const { Client } = require("@modelcontextprotocol/sdk/client");
 const { StdioClientTransport } = require("@modelcontextprotocol/sdk/client/stdio.js");
 
@@ -9,6 +10,7 @@ const DEFAULT_LAUNCH_OPTIONS = process.env.PUPPETEER_LAUNCH_OPTIONS
   ? safeParseJson(process.env.PUPPETEER_LAUNCH_OPTIONS, { headless: true })
   : { headless: true };
 const DEFAULT_TOOL_TIMEOUT_MS = Number.parseInt(process.env.PUPPETEER_MCP_TOOL_TIMEOUT_MS || "45000", 10);
+const DEFAULT_CACHE_DIR = process.env.PUPPETEER_CACHE_DIR || path.join(process.cwd(), ".cache", "puppeteer");
 
 function safeParseJson(value, fallback) {
   try {
@@ -49,6 +51,7 @@ async function withPuppeteerClient(work) {
     stderr: process.env.NODE_ENV === "development" ? "inherit" : "pipe",
     env: {
       ...process.env,
+      PUPPETEER_CACHE_DIR: DEFAULT_CACHE_DIR,
       PUPPETEER_LAUNCH_OPTIONS: JSON.stringify(DEFAULT_LAUNCH_OPTIONS),
     },
   });
