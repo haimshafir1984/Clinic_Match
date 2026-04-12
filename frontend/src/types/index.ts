@@ -109,6 +109,25 @@ export interface AnalyticsSummary {
   pipelineBreakdown: Array<{ stage: RecruitmentStage; count: number }>;
 }
 
+export interface MarketJob {
+  id: string;
+  source: string;
+  externalId: string | null;
+  title: string;
+  company: string | null;
+  location: string | null;
+  jobType: string | null;
+  industry: string | null;
+  employmentType: string | null;
+  description: string | null;
+  applyUrl: string;
+  sourceUrl: string | null;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  postedAt: string | null;
+  fetchedAt: string;
+}
+
 export interface Match {
   id: string;
   createdAt: string;

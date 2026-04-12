@@ -2,6 +2,7 @@ import {
   CurrentUser,
   Match,
   MatchCardData,
+  MarketJob,
   Message,
   SwipeRequest,
   SwipeResponse,
@@ -769,4 +770,79 @@ export async function getProfileHighlights(profileId: string): Promise<{ highlig
     method: "POST",
     body: JSON.stringify({ profile_id: profileId }),
   });
+}
+
+interface BackendMarketJob {
+  id: string;
+  source: string;
+  external_id?: string | null;
+  title: string;
+  company?: string | null;
+  location?: string | null;
+  job_type?: string | null;
+  industry?: string | null;
+  employment_type?: string | null;
+  description?: string | null;
+  apply_url: string;
+  source_url?: string | null;
+  salary_min?: number | null;
+  salary_max?: number | null;
+  posted_at?: string | null;
+  fetched_at: string;
+}
+
+function transformMarketJob(job: BackendMarketJob): MarketJob {
+  return {
+    id: job.id,
+    source: job.source,
+    externalId: job.external_id || null,
+    title: job.title,
+    company: job.company || null,
+    location: job.location || null,
+    jobType: job.job_type || null,
+    industry: job.industry || null,
+    employmentType: job.employment_type || null,
+    description: job.description || null,
+    applyUrl: job.apply_url,
+    sourceUrl: job.source_url || null,
+    salaryMin: job.salary_min ?? null,
+    salaryMax: job.salary_max ?? null,
+    postedAt: job.posted_at || null,
+    fetchedAt: job.fetched_at,
+  };
+}
+
+export async function searchMarketJobs(params: {
+  query?: string;
+  location?: string;
+  industry?: string;
+  jobType?: string;
+  limit?: number;
+  refresh?: boolean;
+}): Promise<MarketJob[]> {
+  const searchParams = new URLSearchParams();
+  if (params.query) searchParams.set("query", params.query);
+  if (params.location) searchParams.set("location", params.location);
+  if (params.industry) searchParams.set("industry", params.industry);
+  if (params.jobType) searchParams.set("jobType", params.jobType);
+  if (params.limit) searchParams.set("limit", String(params.limit));
+  if (params.refresh) searchParams.set("refresh", "true");
+
+  const response = await apiCall<{ jobs: BackendMarketJob[] }>(`/market-jobs/search?${searchParams.toString()}`);
+  return (response.jobs || []).map(transformMarketJob);
+}
+
+export async function importMarketJobs(params: {
+  query?: string;
+  location?: string;
+  industry?: string;
+  jobType?: string;
+  limit?: number;
+}): Promise<MarketJob[]> {
+  const response = await apiCall<{ jobs: BackendMarketJob[] }>("/market-jobs/import", {
+    method: "POST",
+    body: JSON.stringify(params),
+  }, 60000);
+
+  return (response.jobs || []).map(transformMarketJob);
 }

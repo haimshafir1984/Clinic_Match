@@ -3,6 +3,7 @@ const { Pool } = require("pg");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const OpenAI = require("openai");
+const { MARKET_JOBS_SCHEMA_SQL, importMarketJobs, searchMarketJobs } = require("./services/marketJobsService");
 require("dotenv").config();
 
 const app = express();
@@ -130,6 +131,8 @@ async function ensureExtendedSchema() {
     CREATE TRIGGER trg_interviews_updated_at
       BEFORE UPDATE ON interviews
       FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+    ${MARKET_JOBS_SCHEMA_SQL}
   `);
 }
 function parseDateTime(value) {
@@ -1356,6 +1359,52 @@ app.post("/api/ai/profile-highlights", authenticateToken, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+app.get("/api/market-jobs/search", authenticateToken, async (req, res) => {
+  try {
+    const refresh = String(req.query.refresh || "").toLowerCase() === "true";
+    if (refresh) {
+      await importMarketJobs(pool, {
+        query: req.query.query,
+        location: req.query.location,
+        industry: req.query.industry,
+        jobType: req.query.jobType,
+        limit: req.query.limit,
+      });
+    }
+
+    const jobs = await searchMarketJobs(pool, {
+      query: req.query.query,
+      location: req.query.location,
+      industry: req.query.industry,
+      jobType: req.query.jobType,
+      limit: req.query.limit,
+    });
+
+    res.json({ jobs, refreshed: refresh });
+  } catch (err) {
+    console.error("MARKET JOB SEARCH ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/market-jobs/import", authenticateToken, async (req, res) => {
+  try {
+    const result = await importMarketJobs(pool, {
+      query: req.body.query,
+      location: req.body.location,
+      industry: req.body.industry,
+      jobType: req.body.jobType,
+      limit: req.body.limit,
+    });
+
+    res.json(result);
+  } catch (err) {
+    console.error("MARKET JOB IMPORT ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const verifyAdminRole = (req, res, next) => {
   if (!req.user || !req.user.is_admin) {
     return res.status(403).json({ error: "Admin access required" });
