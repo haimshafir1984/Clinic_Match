@@ -5,41 +5,49 @@ const DEFAULT_MARKET_JOB_SOURCE = {
   urlTemplate: "https://www.indeed.com/jobs?q={{query}}&l={{location}}",
 };
 
-const MARKET_JOBS_SCHEMA_SQL = `
-  CREATE TABLE IF NOT EXISTS market_jobs (
-    id BIGSERIAL PRIMARY KEY,
-    source TEXT NOT NULL,
-    external_id TEXT,
-    title TEXT NOT NULL,
-    company TEXT,
-    location TEXT,
-    job_type TEXT,
-    industry TEXT,
-    employment_type TEXT,
-    description TEXT,
-    apply_url TEXT NOT NULL,
-    source_url TEXT,
-    salary_min INTEGER,
-    salary_max INTEGER,
-    posted_at TIMESTAMPTZ,
-    fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT unique_market_job UNIQUE (source, apply_url)
-  );
+const MARKET_JOBS_SCHEMA_QUERIES = [
+  `
+    CREATE TABLE IF NOT EXISTS market_jobs (
+      id BIGSERIAL PRIMARY KEY,
+      source TEXT NOT NULL,
+      external_id TEXT,
+      title TEXT NOT NULL,
+      company TEXT,
+      location TEXT,
+      job_type TEXT,
+      industry TEXT,
+      employment_type TEXT,
+      description TEXT,
+      apply_url TEXT NOT NULL,
+      source_url TEXT,
+      salary_min INTEGER,
+      salary_max INTEGER,
+      posted_at TIMESTAMPTZ,
+      fetched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      raw_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CONSTRAINT unique_market_job UNIQUE (source, apply_url)
+    )
+  `,
+  `CREATE INDEX IF NOT EXISTS idx_market_jobs_location ON market_jobs (location)`,
+  `CREATE INDEX IF NOT EXISTS idx_market_jobs_job_type ON market_jobs (job_type)`,
+  `CREATE INDEX IF NOT EXISTS idx_market_jobs_industry ON market_jobs (industry)`,
+  `CREATE INDEX IF NOT EXISTS idx_market_jobs_posted_at ON market_jobs (posted_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_market_jobs_fetched_at ON market_jobs (fetched_at DESC)`,
+  `DROP TRIGGER IF EXISTS trg_market_jobs_updated_at ON market_jobs`,
+  `
+    CREATE TRIGGER trg_market_jobs_updated_at
+      BEFORE UPDATE ON market_jobs
+      FOR EACH ROW EXECUTE FUNCTION set_updated_at()
+  `,
+];
 
-  CREATE INDEX IF NOT EXISTS idx_market_jobs_location ON market_jobs (location);
-  CREATE INDEX IF NOT EXISTS idx_market_jobs_job_type ON market_jobs (job_type);
-  CREATE INDEX IF NOT EXISTS idx_market_jobs_industry ON market_jobs (industry);
-  CREATE INDEX IF NOT EXISTS idx_market_jobs_posted_at ON market_jobs (posted_at DESC);
-  CREATE INDEX IF NOT EXISTS idx_market_jobs_fetched_at ON market_jobs (fetched_at DESC);
-
-  DROP TRIGGER IF EXISTS trg_market_jobs_updated_at ON market_jobs;
-  CREATE TRIGGER trg_market_jobs_updated_at
-    BEFORE UPDATE ON market_jobs
-    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-`;
+async function ensureMarketJobsSchema(pool) {
+  for (const query of MARKET_JOBS_SCHEMA_QUERIES) {
+    await pool.query(query);
+  }
+}
 
 function normalizeText(value) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
@@ -408,7 +416,7 @@ async function searchMarketJobs(pool, filters = {}) {
 }
 
 module.exports = {
-  MARKET_JOBS_SCHEMA_SQL,
+  ensureMarketJobsSchema,
   importMarketJobs,
   searchMarketJobs,
 };

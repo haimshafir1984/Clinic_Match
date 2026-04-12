@@ -3,7 +3,7 @@ const { Pool } = require("pg");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const OpenAI = require("openai");
-const { MARKET_JOBS_SCHEMA_SQL, importMarketJobs, searchMarketJobs } = require("./services/marketJobsService");
+const { ensureMarketJobsSchema, importMarketJobs, searchMarketJobs } = require("./services/marketJobsService");
 require("dotenv").config();
 
 const app = express();
@@ -131,9 +131,9 @@ async function ensureExtendedSchema() {
     CREATE TRIGGER trg_interviews_updated_at
       BEFORE UPDATE ON interviews
       FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-
-    ${MARKET_JOBS_SCHEMA_SQL}
   `);
+
+  await ensureMarketJobsSchema(pool);
 }
 function parseDateTime(value) {
   if (!value) return null;
