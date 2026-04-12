@@ -45,6 +45,7 @@ export function useProfile() {
       return getProfile(currentUser.profileId);
     },
     enabled: !!currentUser?.profileId,
+    retry: false,
   });
 }
 
