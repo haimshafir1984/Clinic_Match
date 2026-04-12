@@ -832,17 +832,25 @@ export async function searchMarketJobs(params: {
   return (response.jobs || []).map(transformMarketJob);
 }
 
+export interface ImportMarketJobsResult {
+  jobs: MarketJob[];
+  warnings: Array<{ source: string; message: string }>;
+}
+
 export async function importMarketJobs(params: {
   query?: string;
   location?: string;
   industry?: string;
   jobType?: string;
   limit?: number;
-}): Promise<MarketJob[]> {
-  const response = await apiCall<{ jobs: BackendMarketJob[] }>("/market-jobs/import", {
+}): Promise<ImportMarketJobsResult> {
+  const response = await apiCall<{ jobs: BackendMarketJob[]; warnings?: Array<{ source: string; message: string }> }>("/market-jobs/import", {
     method: "POST",
     body: JSON.stringify(params),
   }, 60000);
 
-  return (response.jobs || []).map(transformMarketJob);
+  return {
+    jobs: (response.jobs || []).map(transformMarketJob),
+    warnings: response.warnings || [],
+  };
 }

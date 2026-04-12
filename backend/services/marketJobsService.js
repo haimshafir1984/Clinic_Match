@@ -1,4 +1,6 @@
+const cheerio = require("cheerio");
 const { scrapeJobsWithPuppeteer } = require("./puppeteerMcpService");
+const { fetchJSearchJobs } = require("./jsearchService");
 
 const USER_AGENT =
   process.env.MARKET_JOBS_USER_AGENT ||
@@ -10,15 +12,9 @@ const DEFAULT_PUPPETEER_SOURCE = {
   urlTemplate: "https://www.indeed.com/jobs?q={{query}}&l={{location}}",
 };
 
+// LinkedIn removed — it blocks scraping (HTTP 999 / login page).
+// LinkedIn jobs are now covered by JSearch API.
 const DEFAULT_PUBLIC_SOURCES = [
-  {
-    name: "linkedin",
-    locale: "en",
-    includeIndustry: false,
-    buildUrl: ({ query, location }) =>
-      `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(query)}&location=${encodeURIComponent(location)}`,
-    parser: parseLinkedInJobs,
-  },
   {
     name: "jobmaster",
     locale: "he",
@@ -168,20 +164,12 @@ function coerceDate(value) {
   return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 function absoluteUrl(baseUrl, href) {
   try {
     return href ? new URL(href, baseUrl).href : null;
   } catch (_error) {
     return null;
   }
-}
-
-function uniqueValues(values) {
-  return Array.from(new Set(values.filter(Boolean)));
 }
 
 function interpolateTemplate(template, values) {
@@ -222,6 +210,25 @@ function getJobTypeAlias(value, locale) {
   if (!normalized) return "";
   const alias = JOB_TYPE_ALIASES[normalized.toLowerCase()];
   return alias ? (locale === "he" ? alias.he : alias.en) : normalized;
+}
+
+// Normalize an industry value to both its Hebrew and English forms for DB search
+function resolveIndustryVariants(value) {
+  const normalized = normalizeText(value);
+  if (!normalized) return [];
+
+  const lower = normalized.toLowerCase();
+  // Check if it's an English key
+  if (INDUSTRY_ALIASES[lower]) {
+    return [INDUSTRY_ALIASES[lower].he, INDUSTRY_ALIASES[lower].en];
+  }
+  // Check if it matches a Hebrew value
+  for (const [, alias] of Object.entries(INDUSTRY_ALIASES)) {
+    if (alias.he === normalized || alias.en.toLowerCase() === lower) {
+      return [alias.he, alias.en];
+    }
+  }
+  return [normalized];
 }
 
 function buildSearchTerms(filters, locale, options = {}) {
@@ -405,99 +412,71 @@ async function fetchHtml(url) {
   }
 }
 
-function parseLinkedInJobs(html, context) {
-  const cards = html.match(/<div class="base-card[\s\S]*?<\/div>\s*<\/div>\s*<\/li>/g) || [];
-  const jobs = [];
-
-  for (const card of cards.slice(0, context.limit)) {
-    const href = absoluteUrl(context.url, decodeHtml(card.match(/class="base-card__full-link[^"]*"[^>]*href="([^"]+)"/)?.[1] || ""));
-    const title = stripTags(card.match(/class="base-search-card__title[\s\S]*?>([\s\S]*?)<\/h3>/)?.[1] || "");
-    const company = stripTags(card.match(/class="base-search-card__subtitle[\s\S]*?>([\s\S]*?)<\/h4>/)?.[1] || "");
-    const location = stripTags(card.match(/class="job-search-card__location[\s\S]*?>([\s\S]*?)<\/span>/)?.[1] || "") || context.filters.location;
-    const postedAt = stripTags(card.match(/<time[^>]*datetime="([^"]+)"/)?.[1] || card.match(/<time[^>]*>([\s\S]*?)<\/time>/)?.[1] || "");
-    const externalId = card.match(/urn:li:jobPosting:(\d+)/)?.[1] || card.match(/jobs\/view\/[^-]+-(\d+)/)?.[1] || null;
-
-    if (!href || !title) continue;
-
-    jobs.push({
-      source: "linkedin",
-      external_id: externalId,
-      title,
-      company,
-      location,
-      job_type: context.filters.jobType || null,
-      industry: context.filters.industry || null,
-      employment_type: null,
-      description: null,
-      apply_url: href,
-      source_url: context.url,
-      posted_at: postedAt,
-      salary_min: null,
-      salary_max: null,
-    });
-  }
-
-  return jobs;
-}
-
 function parseJobMasterJobs(html, context) {
-  const cards = html.match(/<article id="misra\d+"[\s\S]*?<\/article>/g) || [];
+  const $ = cheerio.load(html);
   const jobs = [];
 
-  for (const card of cards.slice(0, context.limit)) {
-    const href = absoluteUrl(context.url, decodeHtml(card.match(/class="CardHeader[\s\S]*?href=['"]([^'"]+)['"]/i)?.[1] || ""));
-    const title = stripTags(card.match(/class="CardHeader[\s\S]*?>([\s\S]*?)<\/a>/i)?.[1] || "");
-    const company = stripTags(card.match(/class="font14 CompanyNameLink"[\s\S]*?<span>([\s\S]*?)<\/span>/i)?.[1] || "");
-    const location = stripTags(card.match(/class="jobLocation"[\s\S]*?<span>([\s\S]*?)<\/span>/i)?.[1] || "") || context.filters.location;
-    const jobType = stripTags(card.match(/class="jobType"[\s\S]*?>([\s\S]*?)<\/li>/i)?.[1] || "") || context.filters.jobType;
-    const description = stripTags(card.match(/class="jobShortDescription[^"]*"[^>]*>([\s\S]*?)<\/div>/i)?.[1] || "");
-    const postedAt = stripTags(card.match(/<span class="Gray">([\s\S]*?)<\/span>/i)?.[1] || "");
-    const externalId = card.match(/id="misra(\d+)"/i)?.[1] || card.match(/applyJob\((\d+),null\)/)?.[1] || null;
+  $("article[id^='misra']").slice(0, context.limit).each((_i, el) => {
+    const $el = $(el);
+    const externalId = (el.attribs.id || "").replace("misra", "") || null;
 
-    if (!href || !title) continue;
+    const $link = $el.find("a.CardHeader, a[class*='CardHeader']").first();
+    const href = absoluteUrl(context.url, $link.attr("href") || "");
+    const title = $link.text().trim();
+
+    if (!href || !title) return;
+
+    const company = $el.find(".CompanyNameLink span, [class*='CompanyName'] span").first().text().trim();
+    const location = $el.find(".jobLocation span, [class*='jobLocation'] span").first().text().trim() || context.filters.location;
+    const jobType = $el.find(".jobType li, [class*='jobType']").first().text().trim() || context.filters.jobType;
+    const description = $el.find("[class*='jobShortDescription']").first().text().trim();
+    const postedAt = $el.find("span.Gray, span[class*='Gray']").first().text().trim();
 
     jobs.push({
       source: "jobmaster",
       external_id: externalId,
       title,
-      company,
-      location,
+      company: company || null,
+      location: location || null,
       job_type: jobType || null,
       industry: context.filters.industry || null,
       employment_type: null,
       description: description || null,
       apply_url: href,
       source_url: context.url,
-      posted_at: postedAt,
+      posted_at: postedAt || null,
       salary_min: null,
       salary_max: null,
     });
-  }
+  });
 
   return jobs;
 }
 
 function parseDrushimJobs(html, context) {
-  const chunks = html.split(/data-cy="job-item\d+"/).slice(1);
+  const $ = cheerio.load(html);
   const jobs = [];
 
-  for (const chunk of chunks.slice(0, context.limit)) {
-    const block = chunk.slice(0, 5000);
-    const href = absoluteUrl(context.url, decodeHtml(block.match(/<a href="([^"]*\/job\/[^"]+)"/i)?.[1] || ""));
-    const title = stripTags(block.match(/class="job-url[^"]*"[^>]*>([\s\S]*?)<\/span>/i)?.[1] || "");
-    const company = stripTags(block.match(/class="display-22[\s\S]*?<span[^>]*>([\s\S]*?)<\/span>/i)?.[1] || "");
-    const location = context.filters.location || null;
-    const externalId = block.match(/listingid="(\d+)"/i)?.[1] || block.match(/\/job\/(\d+)/i)?.[1] || null;
-    const description = stripTags(block.match(/class="display-18 region-item"[\s\S]*?>([\s\S]*?)<\/span>/i)?.[1] || "");
+  $("[data-cy^='job-item']").slice(0, context.limit).each((_i, el) => {
+    const $el = $(el);
 
-    if (!href || !title) continue;
+    const $link = $el.find("a[href*='/job/']").first();
+    const href = absoluteUrl(context.url, $link.attr("href") || "");
+    const title = $el.find(".job-url, [class*='job-url']").first().text().trim() || $link.text().trim();
+
+    if (!href || !title) return;
+
+    const externalId = ($link.attr("href") || "").match(/\/job\/(\d+)/i)?.[1] ||
+      $el.attr("listingid") || null;
+    const company = $el.find(".display-22 span, [class*='display-22'] span").first().text().trim();
+    const description = $el.find(".display-18.region-item, [class*='display-18']").first().text().trim();
 
     jobs.push({
       source: "drushim",
       external_id: externalId,
       title,
-      company,
-      location,
+      company: company || null,
+      location: context.filters.location || null,
       job_type: context.filters.jobType || null,
       industry: context.filters.industry || null,
       employment_type: null,
@@ -508,7 +487,7 @@ function parseDrushimJobs(html, context) {
       salary_min: null,
       salary_max: null,
     });
-  }
+  });
 
   return jobs;
 }
@@ -518,20 +497,27 @@ function parseAllJobs(html, context) {
     throw new Error("AllJobs returned a protection page");
   }
 
-  const cards = html.match(/<div class="job-listing"[\s\S]*?<\/div>\s*<\/div>/g) || [];
+  const $ = cheerio.load(html);
   const jobs = [];
 
-  for (const card of cards.slice(0, context.limit)) {
-    const href = absoluteUrl(context.url, decodeHtml(card.match(/<a href="([^"]+)"/i)?.[1] || ""));
-    const title = stripTags(card.match(/<h\d[^>]*>([\s\S]*?)<\/h\d>/i)?.[1] || "");
-    const company = stripTags(card.match(/class="company[^"]*"[^>]*>([\s\S]*?)<\/span>/i)?.[1] || "");
-    if (!href || !title) continue;
+  // Try multiple selectors as AllJobs may change their HTML
+  const $cards = $(".job-listing, [class*='job-listing'], .job-item, [class*='job-item']");
+
+  $cards.slice(0, context.limit).each((_i, el) => {
+    const $el = $(el);
+    const $link = $el.find("a[href]").first();
+    const href = absoluteUrl(context.url, $link.attr("href") || "");
+    const title = $el.find("h2, h3, h4").first().text().trim() || $link.text().trim();
+
+    if (!href || !title) return;
+
+    const company = $el.find(".company, [class*='company']").first().text().trim();
 
     jobs.push({
       source: "alljobs",
       external_id: null,
       title,
-      company,
+      company: company || null,
       location: context.filters.location || null,
       job_type: context.filters.jobType || null,
       industry: context.filters.industry || null,
@@ -543,7 +529,7 @@ function parseAllJobs(html, context) {
       salary_min: null,
       salary_max: null,
     });
-  }
+  });
 
   return jobs;
 }
@@ -642,11 +628,19 @@ async function scrapePublicSource(source, filters, limit) {
   const query = buildSearchTerms(filters, source.locale, { includeIndustry: source.includeIndustry !== false });
   const location = getLocaleLocation(filters.location, source.locale);
 
-  if (!query) {
-    return { jobs: [], warning: { source: source.name, message: "Missing search query for source" } };
+  // Bug 1 fix: instead of bailing on empty query, fall back to location-only or a broad default
+  let effectiveQuery = query;
+  if (!effectiveQuery) {
+    if (location) {
+      // Use location-only search — some sites support this
+      effectiveQuery = "";
+    } else {
+      // Last resort: broad default so we return something
+      effectiveQuery = source.locale === "he" ? "עבודה" : "jobs";
+    }
   }
 
-  const url = source.buildUrl({ query, location, filters });
+  const url = source.buildUrl({ query: effectiveQuery, location, filters });
   let response;
 
   try {
@@ -700,7 +694,7 @@ async function scrapePuppeteerSource(source, filters, limit) {
   });
 
   try {
-    const jobs = await scrapeJobsWithPuppeteer({ url, extractorScript });
+    const jobs = await scrapeJobsWithPuppeteer({ url, extractorScript, sourceName: source.name });
     return { jobs, warning: null };
   } catch (error) {
     return {
@@ -726,12 +720,28 @@ async function importMarketJobs(pool, filters = {}) {
   const warnings = [];
   const seen = new Set();
 
-  const publicResults = await Promise.all(
-    DEFAULT_PUBLIC_SOURCES.map(async (source) => ({
-      source,
-      result: await scrapePublicSource(source, normalizedFilters, limit),
-    }))
-  );
+  // Run public HTML sources + JSearch API + Puppeteer sources in parallel
+  const [publicResults, jsearchResult, puppeteerResults] = await Promise.all([
+    Promise.all(
+      DEFAULT_PUBLIC_SOURCES.map(async (source) => ({
+        source,
+        result: await scrapePublicSource(source, normalizedFilters, limit),
+      }))
+    ),
+    fetchJSearchJobs({
+      query: normalizedFilters.query || undefined,
+      location: normalizedFilters.location || undefined,
+      jobType: normalizedFilters.jobType || undefined,
+      industry: normalizedFilters.industry || undefined,
+      limit,
+    }),
+    Promise.all(
+      getConfiguredPuppeteerSources().map(async (source) => ({
+        source,
+        result: await scrapePuppeteerSource(source, normalizedFilters, limit),
+      }))
+    ),
+  ]);
 
   for (const { source, result } of publicResults) {
     if (result.warning) {
@@ -750,14 +760,22 @@ async function importMarketJobs(pool, filters = {}) {
     }
   }
 
-  const puppeteerSources = getConfiguredPuppeteerSources();
-  const puppeteerResults = await Promise.all(
-    puppeteerSources.map(async (source) => ({
-      source,
-      result: await scrapePuppeteerSource(source, normalizedFilters, limit),
-    }))
-  );
+  // JSearch results
+  if (jsearchResult.warning) {
+    warnings.push(jsearchResult.warning);
+    console.error(`[market-jobs] source "jsearch" failed:`, jsearchResult.warning.message);
+  }
+  for (const rawJob of jsearchResult.jobs) {
+    const normalizedJob = normalizeImportedJob(rawJob, normalizedFilters, "jsearch");
+    if (!normalizedJob) continue;
+    const dedupeKey = `${normalizedJob.source}:${normalizedJob.apply_url}`;
+    if (seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
+    const savedJob = await upsertMarketJob(pool, normalizedJob);
+    importedJobs.push(savedJob);
+  }
 
+  // Puppeteer sources
   for (const { source, result } of puppeteerResults) {
     if (result.warning) {
       warnings.push(result.warning);
@@ -801,10 +819,20 @@ async function searchMarketJobs(pool, filters = {}) {
       clauses.push(`location ILIKE $${values.length}`);
     }
 
+    // Bug 5 fix: use ILIKE and search both Hebrew and English industry variants
     const industry = normalizeText(filters.industry);
     if (industry) {
-      values.push(industry);
-      clauses.push(`industry = $${values.length}`);
+      const variants = resolveIndustryVariants(industry);
+      if (variants.length === 1) {
+        values.push(variants[0]);
+        clauses.push(`industry ILIKE $${values.length}`);
+      } else {
+        const industryConditions = variants.map((v) => {
+          values.push(v);
+          return `industry ILIKE $${values.length}`;
+        });
+        clauses.push(`(${industryConditions.join(" OR ")})`);
+      }
     }
 
     const jobType = normalizeText(filters.jobType || filters.job_type);

@@ -77,7 +77,11 @@ function withTimeout(promise, label, timeoutMs = DEFAULT_TOOL_TIMEOUT_MS) {
   return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
 }
 
-async function scrapeJobsWithPuppeteer({ url, extractorScript, launchOptions = DEFAULT_LAUNCH_OPTIONS }) {
+async function scrapeJobsWithPuppeteer({ url, extractorScript, launchOptions = DEFAULT_LAUNCH_OPTIONS, sourceName = 'puppeteer' }) {
+  if (!process.env.ENABLE_PUPPETEER_SCRAPING) {
+    throw new Error(`Puppeteer scraping disabled (set ENABLE_PUPPETEER_SCRAPING=true to enable) [source: ${sourceName}]`);
+  }
+
   return withPuppeteerClient(async (client) => {
     await withTimeout(
       client.callTool({
