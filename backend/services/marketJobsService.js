@@ -28,6 +28,11 @@ const DEFAULT_PUBLIC_SOURCES = [
     name: "drushim",
     locale: "he",
     includeIndustry: false,
+    browserFallback: true,
+    headers: {
+      Referer: "https://www.drushim.co.il/",
+      Origin: "https://www.drushim.co.il",
+    },
     buildUrl: ({ query, location }) =>
       `https://www.drushim.co.il/jobs/search/${encodeURIComponent(query)}/${encodeURIComponent(location)}/`,
     parser: parseDrushimJobs,
@@ -36,8 +41,10 @@ const DEFAULT_PUBLIC_SOURCES = [
     name: "alljobs",
     locale: "he",
     includeIndustry: false,
-    buildUrl: ({ query, location }) =>
-      `https://www.alljobs.co.il/SearchResultsGuest.aspx?position=${encodeURIComponent(query)}&region=&type=&city=${encodeURIComponent(location || "")}`,
+    useBrowser: true,
+    forceBrowser: true,
+    buildUrl: ({ query }) =>
+      `https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=${encodeURIComponent(query)}&city=&region=`,
     parser: parseAllJobs,
   },
 ];
@@ -828,6 +835,8 @@ function buildExtractorScript({ sourceName, filters, limit }) {
       const extractFromCard = (card) => {
         const link =
           card.querySelector('a[href*="/viewjob"]') ||
+          card.querySelector('a[href*="UploadSingle.aspx"]') ||
+          card.querySelector('a[href*="/job/"]') ||
           card.querySelector('a[href*="jk="]') ||
           card.querySelector("h2 a") ||
           card.querySelector("a");
@@ -897,7 +906,7 @@ function buildExtractorScript({ sourceName, filters, limit }) {
             const href = absoluteUrl(link.href);
             const text = clean(link.textContent);
             if (!href || !text) return null;
-            if (!/job|career|position|opening|viewjob|jk=/i.test(href)) return null;
+            if (!/job|career|position|opening|viewjob|jk=|uploadsingle/i.test(href)) return null;
 
             return {
               source,
@@ -924,18 +933,34 @@ function buildExtractorScript({ sourceName, filters, limit }) {
   `;
 }
 
-async function fetchHtml(url) {
+async function fetchHtml(url, source = {}) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 12_000);
+  const requestHeaders = {
+    "User-Agent": USER_AGENT,
+    "Accept-Language": "he-IL,he;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Site": "cross-site",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Dest": "document",
+    ...(source.headers || {}),
+  };
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": USER_AGENT,
-        "Accept-Language": "he-IL,he;q=0.9,en-US;q=0.8,en;q=0.7",
-      },
+    let response = await fetch(url, {
+      headers: requestHeaders,
       signal: controller.signal,
     });
+
+    if (response.status === 403 && source.retryHeaders) {
+      response = await fetch(url, {
+        headers: {
+          ...requestHeaders,
+          ...source.retryHeaders,
+        },
+        signal: controller.signal,
+      });
+    }
 
     return {
       ok: response.ok,
@@ -1160,6 +1185,10 @@ async function upsertMarketJob(pool, job) {
 }
 
 async function scrapePublicSource(source, filters, limit) {
+  if (source.useBrowser) {
+    return scrapeBrowserSource(source, filters, limit);
+  }
+
   const location = getLocaleLocation(filters.location, source.locale);
   const queryVariants = buildQueryVariants(filters, source.locale, { maxVariants: 3 });
   const effectiveQueries = queryVariants.length
@@ -1174,7 +1203,7 @@ async function scrapePublicSource(source, filters, limit) {
     let response;
 
     try {
-      response = await fetchHtml(url);
+      response = await fetchHtml(url, source);
     } catch (error) {
       warnings.push(error instanceof Error ? error.message : "Failed to fetch source HTML");
       continue;
@@ -1205,16 +1234,84 @@ async function scrapePublicSource(source, filters, limit) {
     }
   }
 
+  if ((jobs.length === 0 || warnings.some((warning) => /403/i.test(warning))) && source.browserFallback) {
+    const browserResult = await scrapeBrowserSource(
+      {
+        ...source,
+        useBrowser: true,
+        forceBrowser: true,
+      },
+      filters,
+      limit
+    );
+
+    if (browserResult.jobs.length > 0) {
+      return browserResult;
+    }
+
+    if (browserResult.warning?.message) {
+      warnings.push(browserResult.warning.message);
+    }
+  }
+
   return {
     jobs: jobs.slice(0, limit),
     warning: warnings.length ? { source: source.name, message: warnings.join(" | ") } : null,
   };
 }
 
-async function scrapePuppeteerSource(source, filters, limit) {
-  const query = buildSearchTerms(filters, source.locale || "en", { includeIndustry: source.includeIndustry !== false });
-  const location = getLocaleLocation(filters.location, source.locale || "en");
-  const url = interpolateTemplate(source.urlTemplate, {
+async function scrapeBrowserSource(source, filters, limit) {
+  const queryVariants = buildQueryVariants(filters, source.locale || "he", { maxVariants: 3 });
+  const effectiveQueries = queryVariants.length ? queryVariants : [filters.query || ""];
+  const jobs = [];
+  const seen = new Set();
+  const warnings = [];
+
+  for (const query of effectiveQueries) {
+    const url = source.buildUrl({
+      query,
+      location: getLocaleLocation(filters.location, source.locale || "he"),
+      filters,
+    });
+
+    let result;
+    try {
+      result = await scrapePuppeteerSource(source, filters, limit, { url });
+    } catch (error) {
+      warnings.push(error instanceof Error ? error.message : "Browser scraping failed");
+      continue;
+    }
+
+    if (result.warning) {
+      warnings.push(result.warning.message);
+    }
+
+    for (const job of result.jobs) {
+      const dedupeKey = `${job.apply_url || ""}:${job.title || ""}`;
+      if (!dedupeKey.trim() || seen.has(dedupeKey)) {
+        continue;
+      }
+      seen.add(dedupeKey);
+      jobs.push(job);
+    }
+
+    if (jobs.length >= limit) {
+      break;
+    }
+  }
+
+  return {
+    jobs: jobs.slice(0, limit),
+    warning: warnings.length ? { source: source.name, message: warnings.join(" | ") } : null,
+  };
+}
+
+async function scrapePuppeteerSource(source, filters, limit, overrides = {}) {
+  const query =
+    overrides.query ||
+    buildSearchTerms(filters, source.locale || "en", { includeIndustry: source.includeIndustry !== false });
+  const location = overrides.location || getLocaleLocation(filters.location, source.locale || "en");
+  const url = overrides.url || interpolateTemplate(source.urlTemplate, {
     query,
     location,
     industry: getIndustryAlias(filters.industry, source.locale || "en"),
@@ -1228,7 +1325,12 @@ async function scrapePuppeteerSource(source, filters, limit) {
   });
 
   try {
-    const jobs = await scrapeJobsWithPuppeteer({ url, extractorScript, sourceName: source.name });
+    const jobs = await scrapeJobsWithPuppeteer({
+      url,
+      extractorScript,
+      sourceName: source.name,
+      forceEnable: source.forceBrowser === true,
+    });
     return { jobs, warning: null };
   } catch (error) {
     return {
