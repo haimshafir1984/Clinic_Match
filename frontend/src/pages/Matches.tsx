@@ -1,18 +1,29 @@
-﻿import { AppLayout } from "@/components/layout/AppLayout";
-import { useMatches } from "@/hooks/useMatches";
-import { MatchCard } from "@/components/matches/MatchCard";
-import { ExternalJobCard } from "@/components/matches/ExternalJobCard";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Heart, Users, ArrowLeft, Bookmark, BriefcaseBusiness, RefreshCw, SearchX } from "lucide-react";
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { toast } from "sonner";
+import {
+  ArrowLeft,
+  Bookmark,
+  BriefcaseBusiness,
+  Heart,
+  RefreshCw,
+  SearchX,
+  Users,
+} from "lucide-react";
+
+import { AppLayout } from "@/components/layout/AppLayout";
+import { MatchCard } from "@/components/matches/MatchCard";
+import { ExternalJobSwipeCard } from "@/components/matches/ExternalJobSwipeCard";
+import { SwipeActions } from "@/components/swipe/SwipeActions";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTalentPool } from "@/hooks/useTalentPool";
 import { useMarketJobs } from "@/hooks/useMarketJobs";
-import { toast } from "sonner";
-import { Match } from "@/types";
+import { useMatches } from "@/hooks/useMatches";
+import { useTalentPool } from "@/hooks/useTalentPool";
+import { MarketJob, Match } from "@/types";
 
 function MatchesSkeleton() {
   return (
@@ -35,14 +46,17 @@ function MatchesSkeleton() {
 function ExternalJobsSkeleton() {
   return (
     <div className="space-y-3">
-      {[1, 2, 3].map((item) => (
-        <div key={item} className="rounded-lg border bg-card p-4">
-          <Skeleton className="mb-3 h-5 w-2/3" />
-          <Skeleton className="mb-2 h-4 w-1/2" />
-          <Skeleton className="mb-2 h-4 w-1/3" />
-          <Skeleton className="h-10 w-28" />
+      <div className="rounded-xl border bg-card p-4">
+        <Skeleton className="mb-2 h-5 w-1/2" />
+        <Skeleton className="h-4 w-2/3" />
+      </div>
+      <div className="rounded-2xl border bg-card/40 p-4">
+        <Skeleton className="h-[560px] rounded-xl" />
+        <div className="mt-4 flex justify-center gap-6">
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <Skeleton className="h-20 w-20 rounded-full" />
         </div>
-      ))}
+      </div>
     </div>
   );
 }
@@ -60,14 +74,28 @@ export default function Matches() {
     importWarnings,
     error: marketJobsError,
   } = useMarketJobs();
+
   const isClinic = currentUser?.role === "clinic";
+  const [externalJobIndex, setExternalJobIndex] = useState(0);
+  const [externalSwipeDirection, setExternalSwipeDirection] = useState<"left" | "right" | null>(null);
 
   const activeMatches = matches.filter((match) => !match.isClosed);
   const closedMatches = matches.filter((match) => match.isClosed);
+  const currentExternalJob = marketJobs[externalJobIndex];
+  const hasMoreExternalJobs = externalJobIndex < marketJobs.length;
+
+  useEffect(() => {
+    setExternalJobIndex(0);
+    setExternalSwipeDirection(null);
+  }, [marketJobs.length, filters.query, filters.location, filters.industry, filters.jobType]);
 
   const handleSaveToTalentPool = async (match: Match) => {
     try {
-      await saveToTalentPool({ candidateId: match.otherProfile.id, matchId: match.id, tags: [match.otherProfile.position || "מועמד/ת"] });
+      await saveToTalentPool({
+        candidateId: match.otherProfile.id,
+        matchId: match.id,
+        tags: [match.otherProfile.position || "מועמד/ת"],
+      });
       toast.success("המועמד/ת נשמרו ל-Talent Pool");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "שמירה ל-Talent Pool נכשלה");
@@ -85,13 +113,47 @@ export default function Matches() {
     </div>
   ) : null;
 
+  const resetExternalJobsFlow = () => {
+    setExternalJobIndex(0);
+    setExternalSwipeDirection(null);
+  };
+
   const handleRefreshMarketJobs = async () => {
     try {
+      resetExternalJobsFlow();
       await refreshFromSites();
       toast.success("רשימת המשרות מאתרים עודכנה");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "רענון המשרות מאתרים נכשל");
     }
+  };
+
+  const advanceExternalJob = () => {
+    setTimeout(() => {
+      setExternalSwipeDirection(null);
+      setExternalJobIndex((prev) => prev + 1);
+    }, 260);
+  };
+
+  const openExternalJob = (job: MarketJob) => {
+    if (typeof window !== "undefined") {
+      window.open(job.applyUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleExternalJobLike = () => {
+    if (!currentExternalJob) return;
+
+    setExternalSwipeDirection("right");
+    openExternalJob(currentExternalJob);
+    advanceExternalJob();
+  };
+
+  const handleExternalJobPass = () => {
+    if (!currentExternalJob) return;
+
+    setExternalSwipeDirection("left");
+    advanceExternalJob();
   };
 
   const matchesContent = isLoading ? (
@@ -120,7 +182,7 @@ export default function Matches() {
     </motion.div>
   ) : (
     <div className="space-y-6">
-      {activeMatches.length > 0 && (
+      {activeMatches.length > 0 ? (
         <section>
           <div className="mb-3 flex items-center gap-2">
             <Users className="h-4 w-4 text-primary" />
@@ -128,15 +190,20 @@ export default function Matches() {
           </div>
           <div className="space-y-3">
             {activeMatches.map((match, index) => (
-              <motion.div key={match.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
+              <motion.div
+                key={match.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+              >
                 <MatchCard match={match} canSave={isClinic} onSaveToTalentPool={handleSaveToTalentPool} />
               </motion.div>
             ))}
           </div>
         </section>
-      )}
+      ) : null}
 
-      {closedMatches.length > 0 && (
+      {closedMatches.length > 0 ? (
         <section>
           <h2 className="mb-3 text-sm font-medium text-muted-foreground">{`התאמות שנסגרו (${closedMatches.length})`}</h2>
           <div className="space-y-3 opacity-60">
@@ -145,7 +212,7 @@ export default function Matches() {
             ))}
           </div>
         </section>
-      )}
+      ) : null}
     </div>
   );
 
@@ -172,6 +239,7 @@ export default function Matches() {
   ) : (
     <div className="space-y-4">
       {marketJobsWarnings}
+
       <div className="flex items-start justify-between gap-4 rounded-xl border bg-card p-4">
         <div>
           <div className="mb-1 flex items-center gap-2 text-sm font-medium">
@@ -182,16 +250,61 @@ export default function Matches() {
             {`נמצאו ${marketJobs.length} משרות חיצוניות לפי ${filters.query || "הפרופיל שלך"}${filters.location ? ` באזור ${filters.location}` : ""}.`}
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={handleRefreshMarketJobs} disabled={marketJobsRefreshing} className="gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefreshMarketJobs}
+          disabled={marketJobsRefreshing}
+          className="gap-2"
+        >
           <RefreshCw className={`h-4 w-4 ${marketJobsRefreshing ? "animate-spin" : ""}`} />
           רענון
         </Button>
       </div>
 
-      <div className="space-y-3">
-        {marketJobs.map((job) => (
-          <ExternalJobCard key={job.id} job={job} />
-        ))}
+      <div className="rounded-2xl border bg-card/40 p-4">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium">{`משרה ${Math.min(externalJobIndex + 1, marketJobs.length)} מתוך ${marketJobs.length}`}</p>
+            <p className="text-xs text-muted-foreground">החלקה ימינה תפתח את עמוד המשרה, שמאלה תדלג למשרה הבאה.</p>
+          </div>
+        </div>
+
+        <div className="relative h-[560px]">
+          <AnimatePresence mode="popLayout">
+            {hasMoreExternalJobs && currentExternalJob ? (
+              <ExternalJobSwipeCard
+                key={currentExternalJob.id}
+                job={currentExternalJob}
+                direction={externalSwipeDirection}
+                onSwipeLeft={handleExternalJobPass}
+                onSwipeRight={handleExternalJobLike}
+              />
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed bg-background/70 px-6 text-center">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                  <BriefcaseBusiness className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="mb-2 text-lg font-semibold">סיימת לעבור על המשרות שמצאנו</h3>
+                <p className="mb-5 max-w-sm text-sm text-muted-foreground">
+                  אפשר לרענן כדי למשוך משרות חדשות מאתרים, או לחזור ללשונית ההתאמות במערכת.
+                </p>
+                <Button onClick={handleRefreshMarketJobs} disabled={marketJobsRefreshing} className="gap-2">
+                  <RefreshCw className={`h-4 w-4 ${marketJobsRefreshing ? "animate-spin" : ""}`} />
+                  מצא משרות נוספות
+                </Button>
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {hasMoreExternalJobs ? (
+          <SwipeActions
+            onPass={handleExternalJobPass}
+            onLike={handleExternalJobLike}
+            disabled={marketJobsRefreshing}
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -223,7 +336,10 @@ export default function Matches() {
 
         {isClinic ? (
           <div className="mb-4 rounded-xl border bg-card p-4">
-            <div className="mb-2 flex items-center gap-2 text-sm font-medium"><Bookmark className="h-4 w-4 text-primary" />Talent Pool</div>
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+              <Bookmark className="h-4 w-4 text-primary" />
+              Talent Pool
+            </div>
             <p className="text-sm text-muted-foreground">כרגע שמורים {talentPool.length} מועמדים לעבודה עתידית.</p>
           </div>
         ) : null}
