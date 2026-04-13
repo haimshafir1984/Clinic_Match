@@ -1433,6 +1433,33 @@ app.post("/api/market-jobs/import", authenticateToken, async (req, res) => {
   }
 });
 
+app.post("/api/market-jobs/debug", authenticateToken, async (req, res) => {
+  try {
+    const filters = {
+      query: req.body.query,
+      location: req.body.location,
+      industry: req.body.industry,
+      jobType: req.body.jobType,
+      limit: req.body.limit,
+    };
+
+    const importResult = await importMarketJobs(pool, filters);
+    const searchResult = await searchMarketJobs(pool, filters);
+
+    res.json({
+      filters: importResult.filters,
+      importedCount: importResult.importedCount,
+      importedJobs: importResult.jobs,
+      warnings: importResult.warnings,
+      searchCount: searchResult.length,
+      searchedJobs: searchResult,
+    });
+  } catch (err) {
+    console.error("MARKET JOB DEBUG ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const verifyAdminRole = (req, res, next) => {
   if (!req.user || !req.user.is_admin) {
     return res.status(403).json({ error: "Admin access required" });

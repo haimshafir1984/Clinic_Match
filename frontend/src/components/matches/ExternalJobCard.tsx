@@ -11,9 +11,13 @@ interface ExternalJobCardProps {
 const sourceLabels: Record<string, string> = {
   indeed: "Indeed",
   linkedin: "LinkedIn",
+  glassdoor: "Glassdoor",
+  ziprecruiter: "ZipRecruiter",
+  monster: "Monster",
   drushim: "דרושים IL",
   jobmaster: "JobMaster",
   alljobs: "AllJobs",
+  jsearch: "JSearch",
 };
 
 const jobTypeLabels: Record<string, string> = {

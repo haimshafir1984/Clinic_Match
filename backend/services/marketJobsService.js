@@ -140,6 +140,26 @@ const NORMALIZED_JOB_QUERY_ALIASES = [
     en: "qa engineer",
   },
   {
+    terms: ["devops", "\u05d3\u05d1\u05d0\u05d5\u05e4\u05e1"],
+    he: "DevOps",
+    en: "devops engineer",
+  },
+  {
+    terms: ["\u05de\u05e0\u05d4\u05dc \u05de\u05d5\u05e6\u05e8", "\u05de\u05e0\u05d4\u05dc\u05ea \u05de\u05d5\u05e6\u05e8", "\u05de\u05e0\u05d4\u05dc/\u05ea \u05de\u05d5\u05e6\u05e8", "product manager"],
+    he: "\u05de\u05e0\u05d4\u05dc \u05de\u05d5\u05e6\u05e8",
+    en: "product manager",
+  },
+  {
+    terms: ["backend", "\u05d1\u05e7\u05d0\u05e0\u05d3"],
+    he: "\u05de\u05e4\u05ea\u05d7 \u05d1\u05e7\u05d0\u05e0\u05d3",
+    en: "backend engineer",
+  },
+  {
+    terms: ["frontend", "\u05e4\u05e8\u05d5\u05e0\u05d8\u05d0\u05e0\u05d3"],
+    he: "\u05de\u05e4\u05ea\u05d7 \u05e4\u05e8\u05d5\u05e0\u05d8\u05d0\u05e0\u05d3",
+    en: "frontend engineer",
+  },
+  {
     terms: ["support", "\u05ea\u05de\u05d9\u05db\u05d4"],
     he: "\u05ea\u05de\u05d9\u05db\u05d4",
     en: "support",
@@ -164,6 +184,12 @@ const NORMALIZED_JOB_TYPE_ALIASES = {
   daily: { he: "\u05e2\u05d1\u05d5\u05d3\u05d4 \u05d9\u05d5\u05de\u05d9\u05ea", en: "daily" },
   temporary: { he: "\u05e2\u05d1\u05d5\u05d3\u05d4 \u05d6\u05de\u05e0\u05d9\u05ea", en: "temporary" },
   permanent: { he: "\u05de\u05e9\u05e8\u05d4 \u05de\u05dc\u05d0\u05d4", en: "full time" },
+};
+
+const TECH_INDUSTRIES = new Set(["tech", "technology"]);
+const SOURCE_PRIORITY = {
+  tech: ["linkedin", "glassdoor", "indeed", "ziprecruiter", "jobmaster", "alljobs", "drushim", "jsearch", "monster"],
+  general: ["alljobs", "jobmaster", "drushim", "linkedin", "indeed", "glassdoor", "ziprecruiter", "jsearch", "monster"],
 };
 
 const MARKET_JOBS_SCHEMA_QUERIES = [
@@ -336,6 +362,30 @@ function buildSearchTerms(filters, locale, options = {}) {
   }
 
   return primaryRole || industry || getJobTypeAlias(filters.jobType, locale) || "";
+}
+
+function getSourcePriorityOrder(filters = {}) {
+  const industry = normalizeText(filters.industry)?.toLowerCase();
+  return TECH_INDUSTRIES.has(industry) ? SOURCE_PRIORITY.tech : SOURCE_PRIORITY.general;
+}
+
+function getSourcePriorityMap(filters = {}) {
+  return Object.fromEntries(getSourcePriorityOrder(filters).map((source, index) => [source, index]));
+}
+
+function prioritizeJobs(jobs, filters = {}) {
+  const priorityMap = getSourcePriorityMap(filters);
+  return [...jobs].sort((left, right) => {
+    const leftPriority = priorityMap[left.source] ?? 999;
+    const rightPriority = priorityMap[right.source] ?? 999;
+    if (leftPriority !== rightPriority) {
+      return leftPriority - rightPriority;
+    }
+
+    const leftDate = new Date(left.posted_at || left.fetched_at || 0).getTime();
+    const rightDate = new Date(right.posted_at || right.fetched_at || 0).getTime();
+    return rightDate - leftDate;
+  });
 }
 
 function getConfiguredPuppeteerSources() {
@@ -890,7 +940,7 @@ async function importMarketJobs(pool, filters = {}) {
 
   return {
     importedCount: importedJobs.length,
-    jobs: importedJobs,
+    jobs: prioritizeJobs(importedJobs, normalizedFilters),
     filters: normalizedFilters,
     warnings,
   };
@@ -898,6 +948,7 @@ async function importMarketJobs(pool, filters = {}) {
 
 async function searchMarketJobs(pool, filters = {}) {
   const limit = Math.min(Math.max(coerceInteger(filters.limit) || 20, 1), 100);
+  const sourceOrder = getSourcePriorityOrder(filters);
   const runSearch = async ({ includeQuery }) => {
     const values = [];
     const clauses = [];
@@ -938,6 +989,9 @@ async function searchMarketJobs(pool, filters = {}) {
 
     values.push(limit);
     const whereClause = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+    const sourceCase = sourceOrder
+      .map((source, index) => `WHEN source = '${source}' THEN ${index}`)
+      .join(" ");
 
     const result = await pool.query(
       `
@@ -962,7 +1016,7 @@ async function searchMarketJobs(pool, filters = {}) {
           updated_at
         FROM market_jobs
         ${whereClause}
-        ORDER BY COALESCE(posted_at, fetched_at) DESC, id DESC
+        ORDER BY CASE ${sourceCase} ELSE 999 END, COALESCE(posted_at, fetched_at) DESC, id DESC
         LIMIT $${values.length}
       `,
       values
