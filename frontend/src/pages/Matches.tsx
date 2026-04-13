@@ -51,7 +51,7 @@ function ExternalJobsSkeleton() {
         <Skeleton className="h-4 w-2/3" />
       </div>
       <div className="rounded-2xl border bg-card/40 p-4">
-        <Skeleton className="h-[560px] rounded-xl" />
+        <Skeleton className="h-[520px] rounded-xl sm:h-[560px]" />
         <div className="mt-4 flex justify-center gap-6">
           <Skeleton className="h-16 w-16 rounded-full" />
           <Skeleton className="h-20 w-20 rounded-full" />
@@ -262,7 +262,7 @@ export default function Matches() {
         </Button>
       </div>
 
-      <div className="rounded-2xl border bg-card/40 p-4">
+      <div className="rounded-2xl border bg-card/40 p-3 sm:p-4">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-medium">{`משרה ${Math.min(externalJobIndex + 1, marketJobs.length)} מתוך ${marketJobs.length}`}</p>
@@ -270,7 +270,7 @@ export default function Matches() {
           </div>
         </div>
 
-        <div className="relative h-[560px]">
+        <div className="relative h-[520px] sm:h-[560px]">
           <AnimatePresence mode="popLayout">
             {hasMoreExternalJobs && currentExternalJob ? (
               <ExternalJobSwipeCard
@@ -299,11 +299,13 @@ export default function Matches() {
         </div>
 
         {hasMoreExternalJobs ? (
-          <SwipeActions
-            onPass={handleExternalJobPass}
-            onLike={handleExternalJobLike}
-            disabled={marketJobsRefreshing}
-          />
+          <div className="pt-2">
+            <SwipeActions
+              onPass={handleExternalJobPass}
+              onLike={handleExternalJobLike}
+              disabled={marketJobsRefreshing}
+            />
+          </div>
         ) : null}
       </div>
     </div>
@@ -311,12 +313,26 @@ export default function Matches() {
 
   const workerTabs = !isClinic ? (
     <Tabs defaultValue="system" className="mt-6">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="system">התאמות במערכת</TabsTrigger>
-        <TabsTrigger value="external">התאמות מאתרים</TabsTrigger>
+      <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl bg-muted p-1">
+        <TabsTrigger
+          value="system"
+          className="min-h-[3rem] whitespace-normal px-2 py-2 text-center text-sm leading-tight"
+        >
+          התאמות במערכת
+        </TabsTrigger>
+        <TabsTrigger
+          value="external"
+          className="min-h-[3rem] whitespace-normal px-2 py-2 text-center text-sm leading-tight"
+        >
+          התאמות מאתרים
+        </TabsTrigger>
       </TabsList>
-      <TabsContent value="system">{matchesContent}</TabsContent>
-      <TabsContent value="external">{marketJobsContent}</TabsContent>
+      <TabsContent value="system" className="mt-4">
+        {matchesContent}
+      </TabsContent>
+      <TabsContent value="external" className="mt-4">
+        {marketJobsContent}
+      </TabsContent>
     </Tabs>
   ) : null;
 

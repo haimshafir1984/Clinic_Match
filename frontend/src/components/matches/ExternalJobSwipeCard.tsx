@@ -45,7 +45,7 @@ export function ExternalJobSwipeCard({
   const passOpacity = useTransform(x, [-100, 0], [1, 0]);
 
   const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const threshold = typeof window !== "undefined" ? window.innerWidth * 0.24 : 100;
+    const threshold = typeof window !== "undefined" ? window.innerWidth * 0.22 : 100;
     if (info.offset.x > threshold) onSwipeRight();
     if (info.offset.x < -threshold) onSwipeLeft();
   };
@@ -66,8 +66,8 @@ export function ExternalJobSwipeCard({
 
   return (
     <motion.div
-      className="absolute inset-0"
-      style={{ x, rotate }}
+      className="absolute inset-0 touch-pan-y"
+      style={{ x, rotate, touchAction: "pan-y" }}
       drag="x"
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.7}
@@ -79,20 +79,20 @@ export function ExternalJobSwipeCard({
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
       <motion.div
-        className="absolute right-6 top-6 z-10 rounded-lg border-4 border-primary bg-primary px-6 py-2 text-xl font-bold text-primary-foreground rotate-12"
+        className="absolute right-4 top-4 z-10 rounded-lg border-4 border-primary bg-primary px-4 py-2 text-sm font-bold text-primary-foreground rotate-12 sm:right-6 sm:top-6 sm:px-6 sm:text-xl"
         style={{ opacity: likeOpacity }}
       >
         פתח משרה
       </motion.div>
       <motion.div
-        className="absolute left-6 top-6 z-10 -rotate-12 rounded-lg border-4 border-destructive bg-destructive px-6 py-2 text-xl font-bold text-destructive-foreground"
+        className="absolute left-4 top-4 z-10 -rotate-12 rounded-lg border-4 border-destructive bg-destructive px-4 py-2 text-sm font-bold text-destructive-foreground sm:left-6 sm:top-6 sm:px-6 sm:text-xl"
         style={{ opacity: passOpacity }}
       >
         דלג
       </motion.div>
 
       <Card className="flex h-full flex-col overflow-hidden rounded-xl border-0 shadow-2xl">
-        <div className="relative flex min-h-[180px] items-center justify-center bg-gradient-to-br from-primary/15 via-accent/70 to-primary/5 p-6">
+        <div className="relative flex min-h-[170px] items-center justify-center bg-gradient-to-br from-primary/15 via-accent/70 to-primary/5 p-5 sm:min-h-[180px] sm:p-6">
           <div className="w-full">
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="bg-background/85 text-xs backdrop-blur">
@@ -110,7 +110,7 @@ export function ExternalJobSwipeCard({
               ) : null}
             </div>
 
-            <h2 className="line-clamp-2 text-2xl font-bold text-foreground">{job.title}</h2>
+            <h2 className="line-clamp-3 text-xl font-bold text-foreground sm:text-2xl">{job.title}</h2>
             {job.company ? (
               <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
                 <Building2 className="h-4 w-4 text-primary" />
