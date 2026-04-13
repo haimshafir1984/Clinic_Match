@@ -1,6 +1,7 @@
 const cheerio = require("cheerio");
 const { scrapeJobsWithPuppeteer } = require("./puppeteerMcpService");
 const { fetchJSearchJobs } = require("./jsearchService");
+const { fetchRemotiveJobs } = require("./remotiveService");
 
 const USER_AGENT =
   process.env.MARKET_JOBS_USER_AGENT ||
@@ -188,7 +189,7 @@ const NORMALIZED_JOB_TYPE_ALIASES = {
 
 const TECH_INDUSTRIES = new Set(["tech", "technology"]);
 const SOURCE_PRIORITY = {
-  tech: ["linkedin", "glassdoor", "indeed", "ziprecruiter", "jobmaster", "alljobs", "drushim", "jsearch", "monster"],
+  tech: ["linkedin", "glassdoor", "indeed", "ziprecruiter", "remotive", "jobmaster", "alljobs", "drushim", "jsearch", "monster"],
   general: ["alljobs", "jobmaster", "drushim", "linkedin", "indeed", "glassdoor", "ziprecruiter", "jsearch", "monster"],
 };
 
@@ -386,6 +387,43 @@ function prioritizeJobs(jobs, filters = {}) {
     const rightDate = new Date(right.posted_at || right.fetched_at || 0).getTime();
     return rightDate - leftDate;
   });
+}
+
+function buildSourceStats(filters, sourceResults, importedJobs) {
+  const importedBySource = importedJobs.reduce((acc, job) => {
+    acc[job.source] = (acc[job.source] || 0) + 1;
+    return acc;
+  }, {});
+
+  const stats = sourceResults.map((item) => ({
+    source: item.source,
+    fetched: item.fetched || 0,
+    imported: importedBySource[item.source] || 0,
+    warning: item.warning || null,
+  }));
+
+  return prioritizeJobs(
+    stats.map((stat, index) => ({
+      source: stat.source,
+      posted_at: null,
+      fetched_at: new Date(Date.now() - index).toISOString(),
+      ...stat,
+    })),
+    filters
+  ).map(({ source, fetched, imported, warning }) => ({ source, fetched, imported, warning }));
+}
+
+function buildPublisherStats(importedJobs) {
+  const stats = {};
+
+  for (const job of importedJobs) {
+    const publisher = job.raw_payload?.raw_publisher || job.source;
+    stats[publisher] = (stats[publisher] || 0) + 1;
+  }
+
+  return Object.entries(stats)
+    .map(([publisher, count]) => ({ publisher, count }))
+    .sort((a, b) => b.count - a.count);
 }
 
 function getConfiguredPuppeteerSources() {
@@ -866,7 +904,7 @@ async function importMarketJobs(pool, filters = {}) {
   const seen = new Set();
 
   // Run public HTML sources + JSearch API + Puppeteer sources in parallel
-  const [publicResults, jsearchResult, puppeteerResults] = await Promise.all([
+  const [publicResults, jsearchResult, remotiveResult, puppeteerResults] = await Promise.all([
     Promise.all(
       DEFAULT_PUBLIC_SOURCES.map(async (source) => ({
         source,
@@ -880,6 +918,12 @@ async function importMarketJobs(pool, filters = {}) {
       industry: normalizedFilters.industry || undefined,
       limit,
     }),
+    TECH_INDUSTRIES.has((normalizedFilters.industry || "").toLowerCase())
+      ? fetchRemotiveJobs({
+          query: normalizedFilters.query || undefined,
+          limit,
+        })
+      : Promise.resolve({ jobs: [], warning: null }),
     Promise.all(
       getConfiguredPuppeteerSources().map(async (source) => ({
         source,
@@ -920,6 +964,20 @@ async function importMarketJobs(pool, filters = {}) {
     importedJobs.push(savedJob);
   }
 
+  if (remotiveResult.warning) {
+    warnings.push(remotiveResult.warning);
+    console.error(`[market-jobs] source "remotive" failed:`, remotiveResult.warning.message);
+  }
+  for (const rawJob of remotiveResult.jobs) {
+    const normalizedJob = normalizeImportedJob(rawJob, normalizedFilters, "remotive");
+    if (!normalizedJob) continue;
+    const dedupeKey = `${normalizedJob.source}:${normalizedJob.apply_url}`;
+    if (seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
+    const savedJob = await upsertMarketJob(pool, normalizedJob);
+    importedJobs.push(savedJob);
+  }
+
   // Puppeteer sources
   for (const { source, result } of puppeteerResults) {
     if (result.warning) {
@@ -938,11 +996,33 @@ async function importMarketJobs(pool, filters = {}) {
     }
   }
 
+  const prioritizedJobs = prioritizeJobs(importedJobs, normalizedFilters);
+  const sourceStats = buildSourceStats(
+    normalizedFilters,
+    [
+      ...publicResults.map(({ source, result }) => ({
+        source: source.name,
+        fetched: result.jobs.length,
+        warning: result.warning?.message || null,
+      })),
+      { source: "jsearch", fetched: jsearchResult.jobs.length, warning: jsearchResult.warning?.message || null },
+      { source: "remotive", fetched: remotiveResult.jobs.length, warning: remotiveResult.warning?.message || null },
+      ...puppeteerResults.map(({ source, result }) => ({
+        source: source.name,
+        fetched: result.jobs.length,
+        warning: result.warning?.message || null,
+      })),
+    ],
+    prioritizedJobs
+  );
+
   return {
-    importedCount: importedJobs.length,
-    jobs: prioritizeJobs(importedJobs, normalizedFilters),
+    importedCount: prioritizedJobs.length,
+    jobs: prioritizedJobs,
     filters: normalizedFilters,
     warnings,
+    sourceStats,
+    publisherStats: buildPublisherStats(prioritizedJobs),
   };
 }
 

@@ -14,6 +14,7 @@ const sourceLabels: Record<string, string> = {
   glassdoor: "Glassdoor",
   ziprecruiter: "ZipRecruiter",
   monster: "Monster",
+  remotive: "Remotive",
   drushim: "דרושים IL",
   jobmaster: "JobMaster",
   alljobs: "AllJobs",

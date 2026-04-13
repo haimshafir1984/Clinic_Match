@@ -1451,6 +1451,8 @@ app.post("/api/market-jobs/debug", authenticateToken, async (req, res) => {
       importedCount: importResult.importedCount,
       importedJobs: importResult.jobs,
       warnings: importResult.warnings,
+      sourceStats: importResult.sourceStats || [],
+      publisherStats: importResult.publisherStats || [],
       searchCount: searchResult.length,
       searchedJobs: searchResult,
     });
