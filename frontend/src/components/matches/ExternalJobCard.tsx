@@ -25,6 +25,9 @@ const jobTypeLabels: Record<string, string> = {
   daily: "יומי",
   temporary: "זמני",
   permanent: "קבוע",
+  full_time: "משרה מלאה",
+  part_time: "משרה חלקית",
+  contract: "חוזה",
 };
 
 export function ExternalJobCard({ job }: ExternalJobCardProps) {
@@ -37,9 +40,19 @@ export function ExternalJobCard({ job }: ExternalJobCardProps) {
         <div className="min-w-0 flex-1">
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <h3 className="truncate text-base font-semibold text-foreground">{job.title}</h3>
-            <Badge variant="outline" className="text-xs">{sourceLabel}</Badge>
-            {jobTypeLabel ? <Badge variant="secondary" className="text-xs">{jobTypeLabel}</Badge> : null}
-            {job.industry ? <Badge variant="secondary" className="text-xs">{job.industry}</Badge> : null}
+            <Badge variant="outline" className="text-xs">
+              {sourceLabel}
+            </Badge>
+            {jobTypeLabel ? (
+              <Badge variant="secondary" className="text-xs">
+                {jobTypeLabel}
+              </Badge>
+            ) : null}
+            {job.industry ? (
+              <Badge variant="secondary" className="text-xs">
+                {job.industry}
+              </Badge>
+            ) : null}
           </div>
 
           <div className="space-y-1 text-sm text-muted-foreground">

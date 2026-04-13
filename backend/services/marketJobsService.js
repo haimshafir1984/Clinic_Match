@@ -36,8 +36,8 @@ const DEFAULT_PUBLIC_SOURCES = [
     name: "alljobs",
     locale: "he",
     includeIndustry: false,
-    buildUrl: ({ query }) =>
-      `https://www.alljobs.co.il/SearchResultsGuest.aspx?position=${encodeURIComponent(query)}&region=&type=&city=`,
+    buildUrl: ({ query, location }) =>
+      `https://www.alljobs.co.il/SearchResultsGuest.aspx?position=${encodeURIComponent(query)}&region=&type=&city=${encodeURIComponent(location || "")}`,
     parser: parseAllJobs,
   },
 ];
@@ -187,6 +187,81 @@ const NORMALIZED_JOB_TYPE_ALIASES = {
   permanent: { he: "\u05de\u05e9\u05e8\u05d4 \u05de\u05dc\u05d0\u05d4", en: "full time" },
 };
 
+const QUERY_VARIANT_ALIASES = [
+  {
+    terms: ["devops", "\u05d3\u05d1\u05d0\u05d5\u05e4\u05e1"],
+    he: ["DevOps", "\u05de\u05d4\u05e0\u05d3\u05e1 DevOps", "\u05d0\u05d9\u05e0\u05e4\u05e8\u05d4 \u05e2\u05e0\u05df"],
+    en: ["DevOps Engineer", "Platform Engineer", "Site Reliability Engineer"],
+  },
+  {
+    terms: ["\u05de\u05e0\u05d4\u05dc \u05de\u05d5\u05e6\u05e8", "\u05de\u05e0\u05d4\u05dc\u05ea \u05de\u05d5\u05e6\u05e8", "\u05de\u05e0\u05d4\u05dc/\u05ea \u05de\u05d5\u05e6\u05e8", "product manager"],
+    he: ["\u05de\u05e0\u05d4\u05dc \u05de\u05d5\u05e6\u05e8", "\u05de\u05d0\u05e4\u05d9\u05d9\u05df \u05de\u05d5\u05e6\u05e8", "\u05de\u05d5\u05e6\u05e8 \u05d8\u05db\u05e0\u05d5\u05dc\u05d5\u05d2\u05d9"],
+    en: ["Product Manager", "Technical Product Manager", "Product Owner"],
+  },
+  {
+    terms: ["backend", "\u05d1\u05e7\u05d0\u05e0\u05d3"],
+    he: ["\u05de\u05e4\u05ea\u05d7 \u05d1\u05e7\u05d0\u05e0\u05d3", "\u05de\u05e4\u05ea\u05d7 \u05e9\u05e8\u05ea"],
+    en: ["Backend Engineer", "Backend Developer", "Software Engineer"],
+  },
+  {
+    terms: ["frontend", "\u05e4\u05e8\u05d5\u05e0\u05d8\u05d0\u05e0\u05d3"],
+    he: ["\u05de\u05e4\u05ea\u05d7 \u05e4\u05e8\u05d5\u05e0\u05d8\u05d0\u05e0\u05d3", "\u05de\u05e4\u05ea\u05d7 UI"],
+    en: ["Frontend Engineer", "Frontend Developer", "React Developer"],
+  },
+  {
+    terms: ["full stack", "fullstack", "\u05e4\u05d5\u05dc \u05e1\u05d8\u05d0\u05e7"],
+    he: ["\u05de\u05e4\u05ea\u05d7 \u05e4\u05d5\u05dc \u05e1\u05d8\u05d0\u05e7"],
+    en: ["Full Stack Developer", "Full Stack Engineer"],
+  },
+  {
+    terms: ["qa", "\u05d1\u05d5\u05d3\u05e7", "\u05d1\u05d5\u05d3\u05e7\u05ea"],
+    he: ["\u05d1\u05d5\u05d3\u05e7 \u05ea\u05d5\u05db\u05e0\u05d4", "\u05d0\u05d5\u05d8\u05d5\u05de\u05e6\u05d9\u05d4 QA"],
+    en: ["QA Engineer", "Automation Engineer", "Software QA Engineer"],
+  },
+  {
+    terms: ["\u05e9\u05d9\u05e8\u05d5\u05ea \u05dc\u05e7\u05d5\u05d7\u05d5\u05ea", "\u05e0\u05e6\u05d9\u05d2 \u05e9\u05d9\u05e8\u05d5\u05ea", "customer service"],
+    he: ["\u05e0\u05e6\u05d9\u05d2 \u05e9\u05d9\u05e8\u05d5\u05ea", "\u05de\u05d5\u05e7\u05d3 \u05e9\u05d9\u05e8\u05d5\u05ea", "\u05e0\u05e6\u05d9\u05d2 \u05e9\u05d9\u05e8\u05d5\u05ea \u05dc\u05e7\u05d5\u05d7\u05d5\u05ea"],
+    en: ["customer service representative", "customer support", "call center representative"],
+  },
+  {
+    terms: ["\u05d1\u05d9\u05d8\u05d5\u05d7", "insurance"],
+    he: ["\u05e0\u05e6\u05d9\u05d2 \u05d1\u05d9\u05d8\u05d5\u05d7", "\u05e8\u05e4\u05e8\u05e0\u05d8 \u05d1\u05d9\u05d8\u05d5\u05d7", "\u05d7\u05ea\u05dd"],
+    en: ["insurance representative", "underwriter", "claims specialist"],
+  },
+  {
+    terms: ["\u05ea\u05e7\u05e9\u05d5\u05e8\u05ea", "telecom", "communication"],
+    he: ["\u05de\u05d5\u05e7\u05d3 \u05ea\u05e7\u05e9\u05d5\u05e8\u05ea", "\u05e0\u05e6\u05d9\u05d2 \u05e9\u05d9\u05e8\u05d5\u05ea", "\u05e0\u05e6\u05d9\u05d2 \u05ea\u05de\u05d9\u05db\u05d4"],
+    en: ["telecommunications", "customer support", "call center representative"],
+  },
+];
+
+const INDUSTRY_QUERY_FALLBACKS = {
+  insurance: {
+    he: ["\u05d1\u05d9\u05d8\u05d5\u05d7", "\u05e0\u05e6\u05d9\u05d2 \u05d1\u05d9\u05d8\u05d5\u05d7", "\u05e8\u05e4\u05e8\u05e0\u05d8 \u05d1\u05d9\u05d8\u05d5\u05d7"],
+    en: ["insurance", "insurance representative", "claims specialist"],
+  },
+  communication: {
+    he: ["\u05ea\u05e7\u05e9\u05d5\u05e8\u05ea", "\u05de\u05d5\u05e7\u05d3 \u05e9\u05d9\u05e8\u05d5\u05ea", "\u05e0\u05e6\u05d9\u05d2 \u05e9\u05d9\u05e8\u05d5\u05ea"],
+    en: ["telecommunications", "call center representative", "customer service representative"],
+  },
+  medical: {
+    he: ["\u05e8\u05e4\u05d5\u05d0\u05d4", "\u05de\u05e8\u05e4\u05d0\u05d4", "\u05e1\u05d9\u05d9\u05e2\u05ea"],
+    en: ["medical", "clinic", "healthcare"],
+  },
+  education: {
+    he: ["\u05d7\u05d9\u05e0\u05d5\u05da", "\u05d4\u05d5\u05e8\u05d0\u05d4", "\u05e1\u05d9\u05d9\u05e2\u05ea"],
+    en: ["education", "teaching assistant", "school administration"],
+  },
+  construction: {
+    he: ["\u05d1\u05e0\u05d9\u05d9\u05d4", "\u05e2\u05d5\u05d1\u05d3 \u05d1\u05e0\u05d9\u05d9\u05d4", "\u05de\u05e0\u05d4\u05dc \u05e2\u05d1\u05d5\u05d3\u05d4"],
+    en: ["construction", "site manager", "field worker"],
+  },
+  daily: {
+    he: ["\u05de\u05e9\u05e8\u05d4 \u05d9\u05d5\u05de\u05d9\u05ea", "\u05de\u05e9\u05de\u05e8\u05d5\u05ea", "\u05e2\u05d5\u05d1\u05d3 \u05db\u05dc\u05dc\u05d9"],
+    en: ["shift work", "daily job", "general worker"],
+  },
+};
+
 const TECH_INDUSTRIES = new Set(["tech", "technology"]);
 const SOURCE_PRIORITY = {
   tech: ["linkedin", "glassdoor", "indeed", "ziprecruiter", "remotive", "jobmaster", "alljobs", "drushim", "jsearch", "monster"],
@@ -311,6 +386,16 @@ function getQueryAlias(value, locale) {
   return normalized;
 }
 
+function getMatchedQueryAlias(value) {
+  const normalized = normalizeText(value);
+  if (!normalized) return null;
+
+  const lower = normalized.toLowerCase();
+  return QUERY_VARIANT_ALIASES.find((item) =>
+    item.terms.some((term) => lower.includes(term.toLowerCase()))
+  ) || null;
+}
+
 function getIndustryAlias(value, locale) {
   const normalized = normalizeText(value);
   if (!normalized) return "";
@@ -353,16 +438,129 @@ function resolveIndustryVariants(value) {
   return [normalized];
 }
 
-function buildSearchTerms(filters, locale, options = {}) {
-  const { includeIndustry = true } = options;
-  const primaryRole = getQueryAlias(filters.query, locale);
-  const industry = getIndustryAlias(filters.industry, locale);
+function buildQueryVariants(filters, locale, options = {}) {
+  const { maxVariants = 3 } = options;
+  const variants = [];
+  const exactQuery = normalizeText(filters.query);
+  const normalizedIndustry = normalizeText(filters.industry)?.toLowerCase();
 
-  if (includeIndustry && primaryRole && industry && !primaryRole.toLowerCase().includes(industry.toLowerCase())) {
-    return `${primaryRole} ${industry}`.trim();
+  if (exactQuery) {
+    variants.push(exactQuery);
   }
 
-  return primaryRole || industry || getJobTypeAlias(filters.jobType, locale) || "";
+  const localizedAlias = getQueryAlias(filters.query, locale);
+  if (localizedAlias) {
+    variants.push(localizedAlias);
+  }
+
+  const matchedAlias = getMatchedQueryAlias(filters.query);
+  if (matchedAlias) {
+    variants.push(...(matchedAlias[locale] || []));
+  }
+
+  if (!exactQuery && normalizedIndustry && INDUSTRY_QUERY_FALLBACKS[normalizedIndustry]) {
+    variants.push(...(INDUSTRY_QUERY_FALLBACKS[normalizedIndustry][locale] || []));
+  }
+
+  if (!variants.length) {
+    const industryAlias = getIndustryAlias(filters.industry, locale);
+    if (industryAlias) {
+      variants.push(industryAlias);
+    }
+  }
+
+  return [...new Set(variants.filter(Boolean))].slice(0, maxVariants);
+}
+
+function buildSearchTerms(filters, locale, options = {}) {
+  return (
+    buildQueryVariants(filters, locale, options)[0] ||
+    getIndustryAlias(filters.industry, locale) ||
+    getJobTypeAlias(filters.jobType, locale) ||
+    ""
+  );
+}
+
+function normalizeComparableText(value) {
+  return stripTags(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9\u0590-\u05ff\s-]/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function resolveLocationVariants(location) {
+  const normalized = normalizeText(location);
+  if (!normalized) return [];
+
+  const alias = NORMALIZED_LOCATION_ALIASES[normalized] || LOCATION_ALIASES[normalized];
+  const candidates = [normalized, alias?.he, alias?.en];
+
+  if (alias?.en?.includes("-")) {
+    candidates.push(alias.en.replace(/-/g, " "));
+  }
+
+  if (normalized.includes(" ")) {
+    candidates.push(normalized.replace(/\s+/g, ""));
+  }
+
+  return [...new Set(candidates.filter(Boolean).map(normalizeComparableText).filter(Boolean))];
+}
+
+function locationMatchesFilters(job, filters) {
+  const requestedLocation = normalizeText(filters.location);
+  if (!requestedLocation) {
+    return true;
+  }
+
+  const jobLocation = normalizeComparableText(job.location);
+  if (!jobLocation) {
+    return false;
+  }
+
+  const requestedVariants = resolveLocationVariants(requestedLocation);
+  if (requestedVariants.some((variant) => jobLocation.includes(variant))) {
+    return true;
+  }
+
+  const wantsIsraeliCity = /[\u0590-\u05ff]/.test(requestedLocation) || requestedVariants.some((variant) =>
+    ["tel aviv", "haifa", "jerusalem", "petah tikva", "beer sheva", "ashdod", "netanya", "ramat gan"].includes(variant)
+  );
+
+  const remoteInIsrael =
+    /remote|\u05de\u05d4\u05d1\u05d9\u05ea|\u05d4\u05d9\u05d1\u05e8\u05d9\u05d3/.test(jobLocation) &&
+    /israel|\u05d9\u05e9\u05e8\u05d0\u05dc/.test(jobLocation);
+
+  return wantsIsraeliCity && remoteInIsrael;
+}
+
+function roleMatchesFilters(job, filters) {
+  const requestedQuery = normalizeText(filters.query);
+  if (!requestedQuery) {
+    return true;
+  }
+
+  const haystack = normalizeComparableText([job.title, job.description, job.company].filter(Boolean).join(" "));
+  if (!haystack) {
+    return false;
+  }
+
+  const variants = [
+    ...buildQueryVariants(filters, "he", { maxVariants: 4 }),
+    ...buildQueryVariants(filters, "en", { maxVariants: 4 }),
+  ];
+
+  return [...new Set(variants.filter(Boolean))].some((variant) => {
+    const normalizedVariant = normalizeComparableText(variant);
+    if (!normalizedVariant) return false;
+    if (haystack.includes(normalizedVariant)) return true;
+
+    const tokens = normalizedVariant.split(" ").filter((token) => token.length > 2);
+    if (!tokens.length) return false;
+
+    const matchedTokens = tokens.filter((token) => haystack.includes(token));
+    return tokens.length === 1 ? matchedTokens.length === 1 : matchedTokens.length >= Math.min(2, tokens.length);
+  });
 }
 
 function getSourcePriorityOrder(filters = {}) {
@@ -734,7 +932,7 @@ function normalizeImportedJob(job, filters, sourceName) {
     job_type: normalizeText(job.job_type) || filters.jobType || null,
     industry: normalizeText(job.industry) || filters.industry || null,
     employment_type: normalizeText(job.employment_type),
-    description: normalizeText(job.description),
+    description: stripTags(job.description),
     apply_url: applyUrl,
     source_url: normalizeText(job.source_url),
     salary_min: coerceInteger(job.salary_min),
@@ -808,56 +1006,55 @@ async function upsertMarketJob(pool, job) {
 }
 
 async function scrapePublicSource(source, filters, limit) {
-  const query = buildSearchTerms(filters, source.locale, { includeIndustry: source.includeIndustry !== false });
   const location = getLocaleLocation(filters.location, source.locale);
+  const queryVariants = buildQueryVariants(filters, source.locale, { maxVariants: 3 });
+  const effectiveQueries = queryVariants.length
+    ? queryVariants
+    : [location ? "" : source.locale === "he" ? "עבודה" : "jobs"];
+  const jobs = [];
+  const seen = new Set();
+  const warnings = [];
 
-  // Bug 1 fix: instead of bailing on empty query, fall back to location-only or a broad default
-  let effectiveQuery = query;
-  if (!effectiveQuery) {
-    if (location) {
-      // Use location-only search — some sites support this
-      effectiveQuery = "";
-    } else {
-      // Last resort: broad default so we return something
-      effectiveQuery = source.locale === "he" ? "עבודה" : "jobs";
+  for (const query of effectiveQueries) {
+    const url = source.buildUrl({ query, location, filters });
+    let response;
+
+    try {
+      response = await fetchHtml(url);
+    } catch (error) {
+      warnings.push(error instanceof Error ? error.message : "Failed to fetch source HTML");
+      continue;
+    }
+
+    const { ok, status, text } = response;
+    if (!ok) {
+      warnings.push(`HTTP ${status}`);
+      continue;
+    }
+
+    try {
+      const parsedJobs = source.parser(text, { filters, limit, url });
+      for (const job of parsedJobs) {
+        const dedupeKey = `${job.apply_url || ""}:${job.title || ""}`;
+        if (!dedupeKey.trim() || seen.has(dedupeKey)) {
+          continue;
+        }
+        seen.add(dedupeKey);
+        jobs.push(job);
+      }
+    } catch (error) {
+      warnings.push(error instanceof Error ? error.message : "Failed to parse source HTML");
+    }
+
+    if (jobs.length >= limit) {
+      break;
     }
   }
 
-  const url = source.buildUrl({ query: effectiveQuery, location, filters });
-  let response;
-
-  try {
-    response = await fetchHtml(url);
-  } catch (error) {
-    return {
-      jobs: [],
-      warning: {
-        source: source.name,
-        message: error instanceof Error ? error.message : "Failed to fetch source HTML",
-      },
-    };
-  }
-
-  const { ok, status, text } = response;
-
-  if (!ok) {
-    return { jobs: [], warning: { source: source.name, message: `HTTP ${status}` } };
-  }
-
-  try {
-    return {
-      jobs: source.parser(text, { filters, limit, url }),
-      warning: null,
-    };
-  } catch (error) {
-    return {
-      jobs: [],
-      warning: {
-        source: source.name,
-        message: error instanceof Error ? error.message : "Failed to parse source HTML",
-      },
-    };
-  }
+  return {
+    jobs: jobs.slice(0, limit),
+    warning: warnings.length ? { source: source.name, message: warnings.join(" | ") } : null,
+  };
 }
 
 async function scrapePuppeteerSource(source, filters, limit) {
@@ -941,6 +1138,8 @@ async function importMarketJobs(pool, filters = {}) {
     for (const rawJob of result.jobs) {
       const normalizedJob = normalizeImportedJob(rawJob, normalizedFilters, source.name);
       if (!normalizedJob) continue;
+      if (!locationMatchesFilters(normalizedJob, normalizedFilters)) continue;
+      if (!roleMatchesFilters(normalizedJob, normalizedFilters)) continue;
       const dedupeKey = `${normalizedJob.source}:${normalizedJob.apply_url}`;
       if (seen.has(dedupeKey)) continue;
       seen.add(dedupeKey);
@@ -957,6 +1156,8 @@ async function importMarketJobs(pool, filters = {}) {
   for (const rawJob of jsearchResult.jobs) {
     const normalizedJob = normalizeImportedJob(rawJob, normalizedFilters, "jsearch");
     if (!normalizedJob) continue;
+    if (!locationMatchesFilters(normalizedJob, normalizedFilters)) continue;
+    if (!roleMatchesFilters(normalizedJob, normalizedFilters)) continue;
     const dedupeKey = `${normalizedJob.source}:${normalizedJob.apply_url}`;
     if (seen.has(dedupeKey)) continue;
     seen.add(dedupeKey);
@@ -971,6 +1172,8 @@ async function importMarketJobs(pool, filters = {}) {
   for (const rawJob of remotiveResult.jobs) {
     const normalizedJob = normalizeImportedJob(rawJob, normalizedFilters, "remotive");
     if (!normalizedJob) continue;
+    if (!locationMatchesFilters(normalizedJob, normalizedFilters)) continue;
+    if (!roleMatchesFilters(normalizedJob, normalizedFilters)) continue;
     const dedupeKey = `${normalizedJob.source}:${normalizedJob.apply_url}`;
     if (seen.has(dedupeKey)) continue;
     seen.add(dedupeKey);
@@ -988,6 +1191,8 @@ async function importMarketJobs(pool, filters = {}) {
     for (const rawJob of result.jobs) {
       const normalizedJob = normalizeImportedJob(rawJob, normalizedFilters, source.name);
       if (!normalizedJob) continue;
+      if (!locationMatchesFilters(normalizedJob, normalizedFilters)) continue;
+      if (!roleMatchesFilters(normalizedJob, normalizedFilters)) continue;
       const dedupeKey = `${normalizedJob.source}:${normalizedJob.apply_url}`;
       if (seen.has(dedupeKey)) continue;
       seen.add(dedupeKey);
