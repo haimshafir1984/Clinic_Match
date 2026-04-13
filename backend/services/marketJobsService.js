@@ -572,9 +572,163 @@ function getSourcePriorityMap(filters = {}) {
   return Object.fromEntries(getSourcePriorityOrder(filters).map((source, index) => [source, index]));
 }
 
+function buildUniqueVariants(values, maxItems = 8) {
+  return [...new Set((values || []).map(normalizeText).filter(Boolean))].slice(0, maxItems);
+}
+
+function semanticDedupeKey(job) {
+  const title = normalizeComparableText(job.title);
+  const company = normalizeComparableText(job.company);
+  const location = normalizeComparableText(job.location);
+  const sourceUrl = normalizeComparableText(job.apply_url || job.source_url);
+
+  if (title && company) {
+    return `${title}|${company}|${location || ""}`;
+  }
+
+  return sourceUrl || `${title}|${location || ""}`;
+}
+
+function inferWorkArrangement(job) {
+  const haystack = normalizeComparableText(
+    [job.location, job.job_type, job.employment_type, job.description, job.title].filter(Boolean).join(" ")
+  );
+
+  if (!haystack) return null;
+  if (/hybrid|היברידי|שילוב/.test(haystack)) return "hybrid";
+  if (/remote|remote only|מהבית|עבודה מהבית/.test(haystack)) return "remote";
+  if (/onsite|on site|במשרד|פרונטלי/.test(haystack)) return "onsite";
+  return null;
+}
+
+function getPostedAgoDays(job) {
+  const timestamp = job.posted_at || job.fetched_at;
+  if (!timestamp) return null;
+
+  const postedAt = new Date(timestamp).getTime();
+  if (!Number.isFinite(postedAt)) return null;
+
+  const days = Math.floor((Date.now() - postedAt) / (1000 * 60 * 60 * 24));
+  return days < 0 ? 0 : days;
+}
+
+function getFreshnessLabel(days) {
+  if (days === null || days === undefined) return null;
+  if (days <= 0) return "פורסם היום";
+  if (days === 1) return "פורסם אתמול";
+  if (days <= 6) return `פורסם לפני ${days} ימים`;
+  if (days <= 13) return "פורסם השבוע";
+  if (days <= 30) return "פורסם החודש";
+  return "פורסם לפני יותר מחודש";
+}
+
+function getPublisher(job) {
+  return normalizeText(job.raw_payload?.raw_publisher) || normalizeText(job.raw_payload?.publisher) || job.source;
+}
+
+function computeJobInsights(job, filters = {}) {
+  const reasons = [];
+  const reasonCodes = [];
+  let score = 0;
+
+  if (roleMatchesFilters(job, filters)) {
+    const requestedQuery = normalizeText(filters.query);
+    if (requestedQuery) {
+      reasons.push(`התפקיד תואם לחיפוש שלך: ${requestedQuery}`);
+      reasonCodes.push("matched_role");
+      score += 42;
+    }
+  }
+
+  if (locationMatchesFilters(job, filters)) {
+    const requestedLocation = normalizeText(filters.location);
+    if (requestedLocation) {
+      reasons.push(`המיקום תואם לאזור שביקשת: ${requestedLocation}`);
+      reasonCodes.push("matched_location");
+      score += 26;
+    }
+  }
+
+  const requestedIndustry = normalizeText(filters.industry);
+  if (requestedIndustry) {
+    const industryVariants = resolveIndustryVariants(requestedIndustry).map(normalizeComparableText);
+    const jobIndustry = normalizeComparableText([job.industry, job.description, job.title].filter(Boolean).join(" "));
+    if (industryVariants.some((variant) => variant && jobIndustry.includes(variant))) {
+      reasons.push("תחום הפעילות של המשרה מתאים לפרופיל שבחרת");
+      reasonCodes.push("matched_industry");
+      score += 14;
+    }
+  }
+
+  const requestedJobType = normalizeText(filters.jobType || filters.job_type);
+  if (requestedJobType) {
+    const requestedType = normalizeComparableText(getJobTypeAlias(requestedJobType, "he"));
+    const haystack = normalizeComparableText([job.job_type, job.employment_type, job.description].filter(Boolean).join(" "));
+    if (requestedType && haystack.includes(requestedType)) {
+      reasons.push("סוג המשרה תואם להעדפה שלך");
+      reasonCodes.push("matched_job_type");
+      score += 8;
+    }
+  }
+
+  const workArrangement = inferWorkArrangement(job);
+  if (workArrangement === "remote") {
+    reasons.push("כולל מתכונת עבודה מרחוק");
+    reasonCodes.push("remote");
+    score += 4;
+  } else if (workArrangement === "hybrid") {
+    reasons.push("כולל מתכונת עבודה היברידית");
+    reasonCodes.push("hybrid");
+    score += 3;
+  }
+
+  const postedAgoDays = getPostedAgoDays(job);
+  if (postedAgoDays !== null) {
+    if (postedAgoDays <= 3) {
+      reasons.push("המשרה פורסמה לאחרונה");
+      reasonCodes.push("fresh");
+      score += 10;
+    } else if (postedAgoDays <= 14) {
+      score += 6;
+    } else if (postedAgoDays <= 30) {
+      score += 3;
+    }
+  }
+
+  return {
+    matchScore: Math.min(score, 100),
+    fitReasons: buildUniqueVariants(reasons, 4),
+    reasonCodes: buildUniqueVariants(reasonCodes, 6),
+    workArrangement,
+    postedAgoDays,
+    freshnessLabel: getFreshnessLabel(postedAgoDays),
+  };
+}
+
+function decorateMarketJob(job, filters = {}) {
+  const insights = computeJobInsights(job, filters);
+  return {
+    ...job,
+    match_score: insights.matchScore,
+    fit_reasons: insights.fitReasons,
+    reason_codes: insights.reasonCodes,
+    work_arrangement: insights.workArrangement,
+    freshness_label: insights.freshnessLabel,
+    posted_ago_days: insights.postedAgoDays,
+    source_rank: getSourcePriorityMap(filters)[job.source] ?? null,
+    publisher: getPublisher(job),
+  };
+}
+
 function prioritizeJobs(jobs, filters = {}) {
   const priorityMap = getSourcePriorityMap(filters);
   return [...jobs].sort((left, right) => {
+    const leftScore = Number(left.match_score ?? 0);
+    const rightScore = Number(right.match_score ?? 0);
+    if (leftScore !== rightScore) {
+      return rightScore - leftScore;
+    }
+
     const leftPriority = priorityMap[left.source] ?? 999;
     const rightPriority = priorityMap[right.source] ?? 999;
     if (leftPriority !== rightPriority) {
@@ -1099,6 +1253,7 @@ async function importMarketJobs(pool, filters = {}) {
   const importedJobs = [];
   const warnings = [];
   const seen = new Set();
+  const semanticSeen = new Set();
 
   // Run public HTML sources + JSearch API + Puppeteer sources in parallel
   const [publicResults, jsearchResult, remotiveResult, puppeteerResults] = await Promise.all([
@@ -1141,10 +1296,12 @@ async function importMarketJobs(pool, filters = {}) {
       if (!locationMatchesFilters(normalizedJob, normalizedFilters)) continue;
       if (!roleMatchesFilters(normalizedJob, normalizedFilters)) continue;
       const dedupeKey = `${normalizedJob.source}:${normalizedJob.apply_url}`;
-      if (seen.has(dedupeKey)) continue;
+      const semanticKey = semanticDedupeKey(normalizedJob);
+      if (seen.has(dedupeKey) || semanticSeen.has(semanticKey)) continue;
       seen.add(dedupeKey);
+      semanticSeen.add(semanticKey);
       const savedJob = await upsertMarketJob(pool, normalizedJob);
-      importedJobs.push(savedJob);
+      importedJobs.push(decorateMarketJob(savedJob, normalizedFilters));
     }
   }
 
@@ -1159,10 +1316,12 @@ async function importMarketJobs(pool, filters = {}) {
     if (!locationMatchesFilters(normalizedJob, normalizedFilters)) continue;
     if (!roleMatchesFilters(normalizedJob, normalizedFilters)) continue;
     const dedupeKey = `${normalizedJob.source}:${normalizedJob.apply_url}`;
-    if (seen.has(dedupeKey)) continue;
+    const semanticKey = semanticDedupeKey(normalizedJob);
+    if (seen.has(dedupeKey) || semanticSeen.has(semanticKey)) continue;
     seen.add(dedupeKey);
+    semanticSeen.add(semanticKey);
     const savedJob = await upsertMarketJob(pool, normalizedJob);
-    importedJobs.push(savedJob);
+    importedJobs.push(decorateMarketJob(savedJob, normalizedFilters));
   }
 
   if (remotiveResult.warning) {
@@ -1175,10 +1334,12 @@ async function importMarketJobs(pool, filters = {}) {
     if (!locationMatchesFilters(normalizedJob, normalizedFilters)) continue;
     if (!roleMatchesFilters(normalizedJob, normalizedFilters)) continue;
     const dedupeKey = `${normalizedJob.source}:${normalizedJob.apply_url}`;
-    if (seen.has(dedupeKey)) continue;
+    const semanticKey = semanticDedupeKey(normalizedJob);
+    if (seen.has(dedupeKey) || semanticSeen.has(semanticKey)) continue;
     seen.add(dedupeKey);
+    semanticSeen.add(semanticKey);
     const savedJob = await upsertMarketJob(pool, normalizedJob);
-    importedJobs.push(savedJob);
+    importedJobs.push(decorateMarketJob(savedJob, normalizedFilters));
   }
 
   // Puppeteer sources
@@ -1194,10 +1355,12 @@ async function importMarketJobs(pool, filters = {}) {
       if (!locationMatchesFilters(normalizedJob, normalizedFilters)) continue;
       if (!roleMatchesFilters(normalizedJob, normalizedFilters)) continue;
       const dedupeKey = `${normalizedJob.source}:${normalizedJob.apply_url}`;
-      if (seen.has(dedupeKey)) continue;
+      const semanticKey = semanticDedupeKey(normalizedJob);
+      if (seen.has(dedupeKey) || semanticSeen.has(semanticKey)) continue;
       seen.add(dedupeKey);
+      semanticSeen.add(semanticKey);
       const savedJob = await upsertMarketJob(pool, normalizedJob);
-      importedJobs.push(savedJob);
+      importedJobs.push(decorateMarketJob(savedJob, normalizedFilters));
     }
   }
 
@@ -1232,90 +1395,105 @@ async function importMarketJobs(pool, filters = {}) {
 }
 
 async function searchMarketJobs(pool, filters = {}) {
+  const normalizedFilters = {
+    query: normalizeText(filters.query) || "",
+    location: normalizeText(filters.location) || "",
+    industry: normalizeText(filters.industry) || "",
+    jobType: normalizeText(filters.jobType || filters.job_type) || "",
+  };
   const limit = Math.min(Math.max(coerceInteger(filters.limit) || 20, 1), 100);
-  const sourceOrder = getSourcePriorityOrder(filters);
-  const runSearch = async ({ includeQuery }) => {
-    const values = [];
-    const clauses = [];
+  const sourceOrder = getSourcePriorityOrder(normalizedFilters);
+  const candidateLimit = Math.max(limit * 5, 50);
+  const values = [];
+  const clauses = [];
 
-    const query = normalizeText(filters.query);
-    if (includeQuery && query) {
-      values.push(`%${query}%`);
-      clauses.push(`(title ILIKE $${values.length} OR company ILIKE $${values.length} OR description ILIKE $${values.length})`);
-    }
+  const addVariantClause = (variants, columns) => {
+    const uniqueVariants = buildUniqueVariants(variants, 10);
+    if (!uniqueVariants.length) return;
 
-    const location = normalizeText(filters.location);
-    if (location) {
-      values.push(`%${location}%`);
-      clauses.push(`location ILIKE $${values.length}`);
-    }
+    const variantClauses = uniqueVariants.map((variant) => {
+      values.push(`%${variant}%`);
+      const placeholder = `$${values.length}`;
+      return `(${columns.map((column) => `${column} ILIKE ${placeholder}`).join(" OR ")})`;
+    });
 
-    // Bug 5 fix: use ILIKE and search both Hebrew and English industry variants
-    const industry = normalizeText(filters.industry);
-    if (industry) {
-      const variants = resolveIndustryVariants(industry);
-      if (variants.length === 1) {
-        values.push(`%${variants[0]}%`);
-        clauses.push(`industry ILIKE $${values.length}`);
-      } else {
-        const industryConditions = variants.map((v) => {
-          values.push(`%${v}%`);
-          return `industry ILIKE $${values.length}`;
-        });
-        clauses.push(`(${industryConditions.join(" OR ")})`);
-      }
-    }
-
-    const jobType = normalizeText(filters.jobType || filters.job_type);
-    if (jobType) {
-      values.push(`%${jobType}%`);
-      clauses.push(`job_type ILIKE $${values.length}`);
-    }
-
-    values.push(limit);
-    const whereClause = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
-    const sourceCase = sourceOrder
-      .map((source, index) => `WHEN source = '${source}' THEN ${index}`)
-      .join(" ");
-
-    const result = await pool.query(
-      `
-        SELECT
-          id,
-          source,
-          external_id,
-          title,
-          company,
-          location,
-          job_type,
-          industry,
-          employment_type,
-          description,
-          apply_url,
-          source_url,
-          salary_min,
-          salary_max,
-          posted_at,
-          fetched_at,
-          created_at,
-          updated_at
-        FROM market_jobs
-        ${whereClause}
-        ORDER BY CASE ${sourceCase} ELSE 999 END, COALESCE(posted_at, fetched_at) DESC, id DESC
-        LIMIT $${values.length}
-      `,
-      values
-    );
-
-    return result.rows;
+    clauses.push(`(${variantClauses.join(" OR ")})`);
   };
 
-  const strictRows = await runSearch({ includeQuery: true });
-  if (strictRows.length > 0 || !normalizeText(filters.query)) {
-    return strictRows;
-  }
+  addVariantClause(
+    [
+      ...buildQueryVariants(normalizedFilters, "he", { maxVariants: 6 }),
+      ...buildQueryVariants(normalizedFilters, "en", { maxVariants: 6 }),
+    ],
+    ["title", "company", "description"]
+  );
 
-  return runSearch({ includeQuery: false });
+  addVariantClause(resolveLocationVariants(normalizedFilters.location), ["location"]);
+  addVariantClause(resolveIndustryVariants(normalizedFilters.industry), ["industry", "description", "title"]);
+  addVariantClause(
+    [
+      getJobTypeAlias(normalizedFilters.jobType, "he"),
+      getJobTypeAlias(normalizedFilters.jobType, "en"),
+      normalizedFilters.jobType,
+    ],
+    ["job_type", "employment_type", "description"]
+  );
+
+  values.push(candidateLimit);
+  const whereClause = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+  const sourceCase = sourceOrder
+    .map((source, index) => `WHEN source = '${source}' THEN ${index}`)
+    .join(" ");
+
+  const result = await pool.query(
+    `
+      SELECT
+        id,
+        source,
+        external_id,
+        title,
+        company,
+        location,
+        job_type,
+        industry,
+        employment_type,
+        description,
+        apply_url,
+        source_url,
+        salary_min,
+        salary_max,
+        posted_at,
+        fetched_at,
+        raw_payload,
+        created_at,
+        updated_at
+      FROM market_jobs
+      ${whereClause}
+      ORDER BY CASE ${sourceCase} ELSE 999 END, COALESCE(posted_at, fetched_at) DESC, id DESC
+      LIMIT $${values.length}
+    `,
+    values
+  );
+
+  const semanticSeen = new Set();
+  const filteredRows = result.rows.filter((job) => {
+    if (!locationMatchesFilters(job, normalizedFilters) || !roleMatchesFilters(job, normalizedFilters)) {
+      return false;
+    }
+
+    const semanticKey = semanticDedupeKey(job);
+    if (semanticSeen.has(semanticKey)) {
+      return false;
+    }
+
+    semanticSeen.add(semanticKey);
+    return true;
+  });
+
+  return prioritizeJobs(
+    filteredRows.map((job) => decorateMarketJob(job, normalizedFilters)),
+    normalizedFilters
+  ).slice(0, limit);
 }
 
 module.exports = {

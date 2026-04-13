@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
@@ -9,15 +9,18 @@ import {
   Heart,
   RefreshCw,
   SearchX,
+  Sparkles,
   Users,
 } from "lucide-react";
 
 import { AppLayout } from "@/components/layout/AppLayout";
-import { MatchCard } from "@/components/matches/MatchCard";
+import { ExternalJobDetailsDialog } from "@/components/matches/ExternalJobDetailsDialog";
 import { ExternalJobSwipeCard } from "@/components/matches/ExternalJobSwipeCard";
+import { MatchCard } from "@/components/matches/MatchCard";
 import { SwipeActions } from "@/components/swipe/SwipeActions";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMarketJobs } from "@/hooks/useMarketJobs";
@@ -61,6 +64,13 @@ function ExternalJobsSkeleton() {
   );
 }
 
+function getMatchTone(score: number | null | undefined) {
+  if (score === null || score === undefined) return "התאמה שנמצאה לפי הפרופיל שלך";
+  if (score >= 75) return "התאמה גבוהה מאוד לפרופיל שלך";
+  if (score >= 55) return "התאמה טובה לפרופיל שלך";
+  return "התאמה חלקית שכדאי לבדוק";
+}
+
 export default function Matches() {
   const { currentUser } = useAuth();
   const { matches, isLoading } = useMatches();
@@ -78,16 +88,25 @@ export default function Matches() {
   const isClinic = currentUser?.role === "clinic";
   const [externalJobIndex, setExternalJobIndex] = useState(0);
   const [externalSwipeDirection, setExternalSwipeDirection] = useState<"left" | "right" | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const activeMatches = matches.filter((match) => !match.isClosed);
   const closedMatches = matches.filter((match) => match.isClosed);
-  const currentExternalJob = marketJobs[externalJobIndex];
+  const currentExternalJob = marketJobs[externalJobIndex] || null;
   const hasMoreExternalJobs = externalJobIndex < marketJobs.length;
 
   useEffect(() => {
     setExternalJobIndex(0);
     setExternalSwipeDirection(null);
+    setIsDetailsOpen(false);
   }, [marketJobs.length, filters.query, filters.location, filters.industry, filters.jobType]);
+
+  const viewedExternalJobs = useMemo(() => {
+    if (marketJobs.length === 0) return 0;
+    return hasMoreExternalJobs ? Math.min(externalJobIndex + 1, marketJobs.length) : marketJobs.length;
+  }, [externalJobIndex, hasMoreExternalJobs, marketJobs.length]);
+
+  const progressValue = marketJobs.length > 0 ? Math.round((viewedExternalJobs / marketJobs.length) * 100) : 0;
 
   const handleSaveToTalentPool = async (match: Match) => {
     try {
@@ -116,6 +135,7 @@ export default function Matches() {
   const resetExternalJobsFlow = () => {
     setExternalJobIndex(0);
     setExternalSwipeDirection(null);
+    setIsDetailsOpen(false);
   };
 
   const handleRefreshMarketJobs = async () => {
@@ -129,7 +149,7 @@ export default function Matches() {
   };
 
   const advanceExternalJob = () => {
-    setTimeout(() => {
+    window.setTimeout(() => {
       setExternalSwipeDirection(null);
       setExternalJobIndex((prev) => prev + 1);
     }, 260);
@@ -225,7 +245,8 @@ export default function Matches() {
       </div>
       <h3 className="mb-2 text-xl font-semibold">עדיין לא נמצאו משרות חיצוניות</h3>
       <p className="mx-auto mb-6 max-w-sm text-muted-foreground">
-        נחפש לפי הפרופיל שלך באתרים חיצוניים. אפשר לרענן כדי למשוך משרות חדשות לפי התפקיד, המיקום וסוג העבודה שלך.
+        נחפש לפי הפרופיל שלך באתרים חיצוניים. אפשר לרענן כדי למשוך משרות חדשות לפי התפקיד, המיקום וסוג
+        העבודה שלך.
       </p>
       <Button onClick={handleRefreshMarketJobs} disabled={marketJobsRefreshing} className="gap-2">
         <RefreshCw className={`h-4 w-4 ${marketJobsRefreshing ? "animate-spin" : ""}`} />
@@ -240,37 +261,76 @@ export default function Matches() {
     <div className="space-y-4">
       {marketJobsWarnings}
 
-      <div className="flex items-start justify-between gap-4 rounded-xl border bg-card p-4">
-        <div>
-          <div className="mb-1 flex items-center gap-2 text-sm font-medium">
-            <BriefcaseBusiness className="h-4 w-4 text-primary" />
-            התאמות מאתרים
+      <div className="rounded-xl border bg-card p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <BriefcaseBusiness className="h-4 w-4 text-primary" />
+              התאמות מאתרים
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {`נמצאו ${marketJobs.length} משרות חיצוניות לפי ${filters.query || "הפרופיל שלך"}${
+                filters.location ? ` באזור ${filters.location}` : ""
+              }.`}
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {`נמצאו ${marketJobs.length} משרות חיצוניות לפי ${filters.query || "הפרופיל שלך"}${filters.location ? ` באזור ${filters.location}` : ""}.`}
-          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefreshMarketJobs}
+            disabled={marketJobsRefreshing}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${marketJobsRefreshing ? "animate-spin" : ""}`} />
+            רענון
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefreshMarketJobs}
-          disabled={marketJobsRefreshing}
-          className="gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${marketJobsRefreshing ? "animate-spin" : ""}`} />
-          רענון
-        </Button>
+
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium">{`משרה ${viewedExternalJobs} מתוך ${marketJobs.length}`}</span>
+            <span className="text-muted-foreground">{`נשארו ${Math.max(marketJobs.length - externalJobIndex - 1, 0)} משרות`}</span>
+          </div>
+          <Progress value={progressValue} className="h-2.5" />
+        </div>
       </div>
+
+      {currentExternalJob ? (
+        <div className="rounded-xl border bg-card p-4">
+          <div className="mb-3 flex items-center gap-2 text-sm font-medium">
+            <Sparkles className="h-4 w-4 text-primary" />
+            למה המשרה מתאימה
+          </div>
+          <p className="mb-3 text-sm text-muted-foreground">{getMatchTone(currentExternalJob.matchScore)}</p>
+          <div className="flex flex-wrap gap-2">
+            {(currentExternalJob.fitReasons || []).slice(0, 3).map((reason) => (
+              <span
+                key={reason}
+                className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs text-foreground"
+              >
+                {reason}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="rounded-2xl border bg-card/40 p-3 sm:p-4">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-medium">{`משרה ${Math.min(externalJobIndex + 1, marketJobs.length)} מתוך ${marketJobs.length}`}</p>
-            <p className="text-xs text-muted-foreground">החלקה ימינה תפתח את עמוד המשרה, שמאלה תדלג למשרה הבאה.</p>
+            <p className="text-xs text-muted-foreground">
+              החלקה ימינה תפתח את עמוד המשרה, שמאלה תדלג למשרה הבאה.
+            </p>
           </div>
+          {currentExternalJob ? (
+            <Button variant="outline" size="sm" onClick={() => setIsDetailsOpen(true)}>
+              פרטי משרה
+            </Button>
+          ) : null}
         </div>
 
-        <div className="relative h-[520px] sm:h-[560px]">
+        <div className="relative h-[560px] sm:h-[620px]">
           <AnimatePresence mode="popLayout">
             {hasMoreExternalJobs && currentExternalJob ? (
               <ExternalJobSwipeCard
@@ -279,6 +339,7 @@ export default function Matches() {
                 direction={externalSwipeDirection}
                 onSwipeLeft={handleExternalJobPass}
                 onSwipeRight={handleExternalJobLike}
+                onOpenDetails={() => setIsDetailsOpen(true)}
               />
             ) : (
               <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed bg-background/70 px-6 text-center">
@@ -313,17 +374,11 @@ export default function Matches() {
 
   const workerTabs = !isClinic ? (
     <Tabs defaultValue="system" className="mt-6">
-      <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-xl bg-muted p-1">
-        <TabsTrigger
-          value="system"
-          className="min-h-[3rem] whitespace-normal px-2 py-2 text-center text-sm leading-tight"
-        >
+      <TabsList className="grid h-12 w-full grid-cols-2 rounded-xl bg-muted p-1">
+        <TabsTrigger value="system" className="h-full text-sm">
           התאמות במערכת
         </TabsTrigger>
-        <TabsTrigger
-          value="external"
-          className="min-h-[3rem] whitespace-normal px-2 py-2 text-center text-sm leading-tight"
-        >
+        <TabsTrigger value="external" className="h-full text-sm">
           התאמות מאתרים
         </TabsTrigger>
       </TabsList>
@@ -362,6 +417,13 @@ export default function Matches() {
 
         {isClinic ? matchesContent : workerTabs}
       </div>
+
+      <ExternalJobDetailsDialog
+        job={currentExternalJob}
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        onOpenJob={openExternalJob}
+      />
     </AppLayout>
   );
 }

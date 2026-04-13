@@ -126,6 +126,14 @@ export interface MarketJob {
   salaryMax: number | null;
   postedAt: string | null;
   fetchedAt: string;
+  matchScore?: number | null;
+  fitReasons?: string[];
+  reasonCodes?: string[];
+  workArrangement?: "remote" | "hybrid" | "onsite" | null;
+  freshnessLabel?: string | null;
+  postedAgoDays?: number | null;
+  sourceRank?: number | null;
+  publisher?: string | null;
 }
 
 export interface Match {

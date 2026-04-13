@@ -793,6 +793,14 @@ interface BackendMarketJob {
   salary_max?: number | null;
   posted_at?: string | null;
   fetched_at: string;
+  match_score?: number | null;
+  fit_reasons?: string[] | null;
+  reason_codes?: string[] | null;
+  work_arrangement?: "remote" | "hybrid" | "onsite" | null;
+  freshness_label?: string | null;
+  posted_ago_days?: number | null;
+  source_rank?: number | null;
+  publisher?: string | null;
 }
 
 function transformMarketJob(job: BackendMarketJob): MarketJob {
@@ -813,6 +821,14 @@ function transformMarketJob(job: BackendMarketJob): MarketJob {
     salaryMax: job.salary_max ?? null,
     postedAt: job.posted_at || null,
     fetchedAt: job.fetched_at,
+    matchScore: job.match_score ?? null,
+    fitReasons: job.fit_reasons || [],
+    reasonCodes: job.reason_codes || [],
+    workArrangement: job.work_arrangement ?? null,
+    freshnessLabel: job.freshness_label ?? null,
+    postedAgoDays: job.posted_ago_days ?? null,
+    sourceRank: job.source_rank ?? null,
+    publisher: job.publisher ?? null,
   };
 }
 
@@ -839,6 +855,8 @@ export async function searchMarketJobs(params: {
 export interface ImportMarketJobsResult {
   jobs: MarketJob[];
   warnings: Array<{ source: string; message: string }>;
+  sourceStats?: Array<{ source: string; fetched: number; imported: number; warning: string | null }>;
+  publisherStats?: Array<{ publisher: string; count: number }>;
 }
 
 export async function importMarketJobs(params: {
@@ -851,6 +869,8 @@ export async function importMarketJobs(params: {
   const response = await apiCall<{
     jobs: BackendMarketJob[];
     warnings: Array<{ source: string; message: string }>;
+    sourceStats?: Array<{ source: string; fetched: number; imported: number; warning: string | null }>;
+    publisherStats?: Array<{ publisher: string; count: number }>;
   }>("/market-jobs/import", {
     method: "POST",
     body: JSON.stringify(params),
@@ -859,5 +879,7 @@ export async function importMarketJobs(params: {
   return {
     jobs: (response.jobs || []).map(transformMarketJob),
     warnings: response.warnings || [],
+    sourceStats: response.sourceStats || [],
+    publisherStats: response.publisherStats || [],
   };
 }

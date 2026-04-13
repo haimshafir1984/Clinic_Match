@@ -1,14 +1,23 @@
 import { motion, PanInfo, useMotionValue, useTransform } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MarketJob } from "@/types";
-import { BriefcaseBusiness, Building2, ExternalLink, MapPin, RefreshCw } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  Building2,
+  ExternalLink,
+  MapPin,
+  RefreshCw,
+  Sparkles,
+} from "lucide-react";
 
 interface ExternalJobSwipeCardProps {
   job: MarketJob;
   direction: "left" | "right" | null;
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
+  onOpenDetails: () => void;
 }
 
 const sourceLabels: Record<string, string> = {
@@ -33,11 +42,25 @@ const jobTypeLabels: Record<string, string> = {
   contract: "חוזה",
 };
 
+const arrangementLabels: Record<string, string> = {
+  remote: "מרחוק",
+  hybrid: "היברידי",
+  onsite: "מהמשרד",
+};
+
+function getFitLabel(score: number | null | undefined) {
+  if (score === null || score === undefined) return null;
+  if (score >= 75) return "התאמה גבוהה";
+  if (score >= 55) return "התאמה טובה";
+  return "התאמה חלקית";
+}
+
 export function ExternalJobSwipeCard({
   job,
   direction,
   onSwipeLeft,
   onSwipeRight,
+  onOpenDetails,
 }: ExternalJobSwipeCardProps) {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-12, 12]);
@@ -61,8 +84,9 @@ export function ExternalJobSwipeCard({
           : { opacity: 0 },
   };
 
-  const sourceLabel = sourceLabels[job.source] || job.source;
+  const sourceLabel = sourceLabels[job.source] || job.publisher || job.source;
   const jobTypeLabel = job.jobType ? jobTypeLabels[job.jobType] || job.jobType : null;
+  const fitLabel = getFitLabel(job.matchScore);
 
   return (
     <motion.div
@@ -79,7 +103,7 @@ export function ExternalJobSwipeCard({
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
       <motion.div
-        className="absolute right-4 top-4 z-10 rounded-lg border-4 border-primary bg-primary px-4 py-2 text-sm font-bold text-primary-foreground rotate-12 sm:right-6 sm:top-6 sm:px-6 sm:text-xl"
+        className="absolute right-4 top-4 z-10 rotate-12 rounded-lg border-4 border-primary bg-primary px-4 py-2 text-sm font-bold text-primary-foreground sm:right-6 sm:top-6 sm:px-6 sm:text-xl"
         style={{ opacity: likeOpacity }}
       >
         פתח משרה
@@ -92,7 +116,7 @@ export function ExternalJobSwipeCard({
       </motion.div>
 
       <Card className="flex h-full flex-col overflow-hidden rounded-xl border-0 shadow-2xl">
-        <div className="relative flex min-h-[170px] items-center justify-center bg-gradient-to-br from-primary/15 via-accent/70 to-primary/5 p-5 sm:min-h-[180px] sm:p-6">
+        <div className="relative flex min-h-[180px] items-center justify-center bg-gradient-to-br from-primary/15 via-accent/70 to-primary/5 p-5 sm:min-h-[190px] sm:p-6">
           <div className="w-full">
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="bg-background/85 text-xs backdrop-blur">
@@ -103,9 +127,14 @@ export function ExternalJobSwipeCard({
                   {jobTypeLabel}
                 </Badge>
               ) : null}
-              {job.industry ? (
+              {job.workArrangement ? (
                 <Badge variant="secondary" className="text-xs">
-                  {job.industry}
+                  {arrangementLabels[job.workArrangement] || job.workArrangement}
+                </Badge>
+              ) : null}
+              {fitLabel ? (
+                <Badge variant="secondary" className="text-xs">
+                  {fitLabel}
                 </Badge>
               ) : null}
             </div>
@@ -129,6 +158,22 @@ export function ExternalJobSwipeCard({
               </div>
             ) : null}
 
+            {job.fitReasons && job.fitReasons.length > 0 ? (
+              <div className="rounded-xl border border-primary/15 bg-primary/5 p-3">
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  למה המשרה מתאימה לך
+                </div>
+                <div className="space-y-2">
+                  {job.fitReasons.slice(0, 3).map((reason) => (
+                    <p key={reason} className="text-sm text-muted-foreground">
+                      {reason}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             {job.description ? (
               <div className="rounded-xl border border-primary/15 bg-primary/5 p-3">
                 <div className="mb-2 flex items-center gap-2 text-sm font-medium">
@@ -141,10 +186,20 @@ export function ExternalJobSwipeCard({
           </div>
 
           <div className="mt-auto space-y-3 pt-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <RefreshCw className="h-3.5 w-3.5" />
-              <span>{`נמשך מהאתר ב-${new Date(job.fetchedAt).toLocaleDateString("he-IL")}`}</span>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-3.5 w-3.5" />
+                <span>{job.freshnessLabel || `נמשך מהאתר ב-${new Date(job.fetchedAt).toLocaleDateString("he-IL")}`}</span>
+              </div>
+              {job.matchScore !== null && job.matchScore !== undefined ? (
+                <span className="font-medium text-foreground">{`ציון התאמה ${job.matchScore}%`}</span>
+              ) : null}
             </div>
+
+            <Button variant="outline" className="w-full gap-2" onClick={onOpenDetails}>
+              פרטי משרה מלאים
+              <ExternalLink className="h-4 w-4" />
+            </Button>
 
             <div className="flex items-center gap-2 rounded-xl border border-dashed border-primary/30 bg-primary/5 p-3 text-sm text-muted-foreground">
               <ExternalLink className="h-4 w-4 text-primary" />
