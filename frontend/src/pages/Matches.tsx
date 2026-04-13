@@ -7,6 +7,7 @@ import { Heart, Users, ArrowLeft, Bookmark, BriefcaseBusiness, RefreshCw, Search
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTalentPool } from "@/hooks/useTalentPool";
 import { useMarketJobs } from "@/hooks/useMarketJobs";
@@ -195,6 +196,17 @@ export default function Matches() {
     </div>
   );
 
+  const workerTabs = !isClinic ? (
+    <Tabs defaultValue="system" className="mt-6">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="system">התאמות במערכת</TabsTrigger>
+        <TabsTrigger value="external">התאמות מאתרים</TabsTrigger>
+      </TabsList>
+      <TabsContent value="system">{matchesContent}</TabsContent>
+      <TabsContent value="external">{marketJobsContent}</TabsContent>
+    </Tabs>
+  ) : null;
+
   return (
     <AppLayout>
       <div className="mx-auto max-w-md p-4 pb-24">
@@ -216,17 +228,7 @@ export default function Matches() {
           </div>
         ) : null}
 
-        {matchesContent}
-
-        {!isClinic ? (
-          <section className="mt-8 space-y-4">
-            <div className="flex items-center gap-2">
-              <BriefcaseBusiness className="h-4 w-4 text-primary" />
-              <h2 className="text-sm font-medium text-muted-foreground">התאמות מאתרים</h2>
-            </div>
-            {marketJobsContent}
-          </section>
-        ) : null}
+        {isClinic ? matchesContent : workerTabs}
       </div>
     </AppLayout>
   );
