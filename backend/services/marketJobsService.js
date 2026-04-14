@@ -29,6 +29,8 @@ const DEFAULT_PUBLIC_SOURCES = [
     locale: "he",
     includeIndustry: false,
     browserFallback: true,
+    browserTimeoutMs: 9000,
+    maxBrowserVariants: 1,
     headers: {
       Referer: "https://www.drushim.co.il/",
       Origin: "https://www.drushim.co.il",
@@ -42,7 +44,8 @@ const DEFAULT_PUBLIC_SOURCES = [
     locale: "he",
     includeIndustry: false,
     useBrowser: true,
-    forceBrowser: true,
+    browserTimeoutMs: 9000,
+    maxBrowserVariants: 1,
     buildUrl: ({ query }) =>
       `https://www.alljobs.co.il/SearchResultsGuest.aspx?page=1&position=&type=&freetxt=${encodeURIComponent(query)}&city=&region=`,
     parser: parseAllJobs,
@@ -933,6 +936,10 @@ function buildExtractorScript({ sourceName, filters, limit }) {
   `;
 }
 
+function isBrowserScrapingEnabled() {
+  return String(process.env.ENABLE_PUPPETEER_SCRAPING || "").toLowerCase() === "true";
+}
+
 async function fetchHtml(url, source = {}) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 12_000);
@@ -1186,6 +1193,15 @@ async function upsertMarketJob(pool, job) {
 
 async function scrapePublicSource(source, filters, limit) {
   if (source.useBrowser) {
+    if (!isBrowserScrapingEnabled()) {
+      return {
+        jobs: [],
+        warning: {
+          source: source.name,
+          message: `Browser scraping disabled (set ENABLE_PUPPETEER_SCRAPING=true to enable) [source: ${source.name}]`,
+        },
+      };
+    }
     return scrapeBrowserSource(source, filters, limit);
   }
 
@@ -1234,12 +1250,15 @@ async function scrapePublicSource(source, filters, limit) {
     }
   }
 
-  if ((jobs.length === 0 || warnings.some((warning) => /403/i.test(warning))) && source.browserFallback) {
+  if (
+    isBrowserScrapingEnabled() &&
+    (jobs.length === 0 || warnings.some((warning) => /403/i.test(warning))) &&
+    source.browserFallback
+  ) {
     const browserResult = await scrapeBrowserSource(
       {
         ...source,
         useBrowser: true,
-        forceBrowser: true,
       },
       filters,
       limit
@@ -1261,7 +1280,9 @@ async function scrapePublicSource(source, filters, limit) {
 }
 
 async function scrapeBrowserSource(source, filters, limit) {
-  const queryVariants = buildQueryVariants(filters, source.locale || "he", { maxVariants: 3 });
+  const queryVariants = buildQueryVariants(filters, source.locale || "he", {
+    maxVariants: source.maxBrowserVariants || 1,
+  });
   const effectiveQueries = queryVariants.length ? queryVariants : [filters.query || ""];
   const jobs = [];
   const seen = new Set();
@@ -1329,7 +1350,7 @@ async function scrapePuppeteerSource(source, filters, limit, overrides = {}) {
       url,
       extractorScript,
       sourceName: source.name,
-      forceEnable: source.forceBrowser === true,
+      timeoutMs: source.browserTimeoutMs,
     });
     return { jobs, warning: null };
   } catch (error) {

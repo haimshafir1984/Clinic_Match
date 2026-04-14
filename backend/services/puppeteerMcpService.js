@@ -10,6 +10,7 @@ const DEFAULT_LAUNCH_OPTIONS = process.env.PUPPETEER_LAUNCH_OPTIONS
   ? safeParseJson(process.env.PUPPETEER_LAUNCH_OPTIONS, { headless: true })
   : { headless: true };
 const DEFAULT_TOOL_TIMEOUT_MS = Number.parseInt(process.env.PUPPETEER_MCP_TOOL_TIMEOUT_MS || "45000", 10);
+const DEFAULT_CONNECT_TIMEOUT_MS = Number.parseInt(process.env.PUPPETEER_MCP_CONNECT_TIMEOUT_MS || "12000", 10);
 const DEFAULT_CACHE_DIR =
   process.env.PUPPETEER_CACHE_DIR || path.join(__dirname, "..", ".cache", "puppeteer");
 
@@ -57,7 +58,12 @@ async function withPuppeteerClient(work) {
     },
   });
 
-  await client.connect(transport);
+  try {
+    await withTimeout(client.connect(transport), "puppeteer_connect", DEFAULT_CONNECT_TIMEOUT_MS);
+  } catch (error) {
+    await transport.close().catch(() => {});
+    throw error;
+  }
 
   try {
     return await work(client);
@@ -83,6 +89,7 @@ async function scrapeJobsWithPuppeteer({
   launchOptions = DEFAULT_LAUNCH_OPTIONS,
   sourceName = "puppeteer",
   forceEnable = false,
+  timeoutMs = DEFAULT_TOOL_TIMEOUT_MS,
 }) {
   if (!forceEnable && !process.env.ENABLE_PUPPETEER_SCRAPING) {
     throw new Error(`Puppeteer scraping disabled (set ENABLE_PUPPETEER_SCRAPING=true to enable) [source: ${sourceName}]`);
@@ -94,7 +101,8 @@ async function scrapeJobsWithPuppeteer({
         name: "puppeteer_navigate",
         arguments: { url, launchOptions },
       }),
-      "puppeteer_navigate"
+      "puppeteer_navigate",
+      timeoutMs
     );
 
     const result = await withTimeout(
@@ -102,7 +110,8 @@ async function scrapeJobsWithPuppeteer({
         name: "puppeteer_evaluate",
         arguments: { script: extractorScript },
       }),
-      "puppeteer_evaluate"
+      "puppeteer_evaluate",
+      timeoutMs
     );
 
     const text = getTextFromToolResult(result);
@@ -116,6 +125,7 @@ async function scrapeJobsWithPuppeteer({
 }
 
 module.exports = {
+  DEFAULT_CONNECT_TIMEOUT_MS,
   DEFAULT_LAUNCH_OPTIONS,
   scrapeJobsWithPuppeteer,
   withPuppeteerClient,
