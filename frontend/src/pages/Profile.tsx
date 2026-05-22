@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -118,24 +118,24 @@ export default function Profile() {
       <div className="mx-auto max-w-md p-4 pb-24">
         {needsCompletion && (
           <Alert className="mb-4 border-amber-500/50 bg-amber-500/10">
-            <AlertDescription className="text-amber-700">כדי להתחיל לקבל התאמות, חשוב להשלים את כל הפרטים החסרים בפרופיל.</AlertDescription>
+            <AlertDescription className="text-amber-300 font-medium">כדי להתחיל לקבל התאמות, חשוב להשלים את כל הפרטים החסרים בפרופיל.</AlertDescription>
           </Alert>
         )}
 
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">הפרופיל שלי</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-2xl font-bold text-white">הפרופיל שלי</h1>
+            <p className="text-sm text-slate-300">
               {completion.isComplete ? "הפרופיל מוכן לקבלת התאמות" : "השלימו את הפרטים כדי להתחיל לקבל התאמות"}
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="icon" onClick={() => setIsEditing(true)}><Edit2 className="h-4 w-4" /></Button>
+            <Button variant="outline" size="icon" onClick={() => setIsEditing(true)} className="border-white/20 text-white hover:bg-white/10"><Edit2 className="h-4 w-4" /></Button>
             <Button variant="outline" size="icon" onClick={handleSignOut} className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"><LogOut className="h-4 w-4" /></Button>
           </div>
         </div>
 
-        <Card className="mb-4">
+        <Card className="mb-4 glass-panel border-white/10 text-white shadow-lg">
           <CardContent className="pt-4">
             <ProfileProgress completion={completion} />
           </CardContent>
