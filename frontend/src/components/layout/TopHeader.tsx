@@ -17,11 +17,11 @@ export function TopHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full glass border-b shadow-lg">
       <div className="mx-auto flex h-14 max-w-md items-center justify-between px-4">
         <Link to="/swipe" className="flex items-center gap-2">
           <BrandMark size={30} className="h-8 w-8 rounded-md" />
-          <span className="text-lg font-bold text-foreground">ShiftMatch</span>
+          <span className="text-lg font-black text-white tracking-tight">ClinicMatch</span>
         </Link>
 
         <div className="flex items-center gap-1">

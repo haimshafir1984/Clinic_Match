@@ -7,6 +7,10 @@ import {
   SwipeRequest,
   SwipeResponse,
   UserRole,
+  RecruitmentPipeline,
+  InterviewSchedule,
+  TalentPoolEntry,
+  RecruitmentStage,
 } from "@/types";
 
 const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "");
@@ -148,6 +152,12 @@ interface BackendMatchFlat {
   role?: string;
   is_closed?: boolean;
   created_at?: string;
+  pipeline_stage?: string | null;
+  pipeline_summary?: string | null;
+  pipeline_next_step?: string | null;
+  pipeline_ai_notes?: string | null;
+  pipeline_saved_to_talent?: boolean | null;
+  pipeline_updated_at?: string | null;
 }
 
 interface BackendMatchNested {
@@ -162,6 +172,7 @@ interface BackendMatchNested {
     role?: string;
     location?: string | null;
   };
+  pipeline?: BackendPipeline | null;
 }
 
 type BackendMatch = BackendMatchFlat | BackendMatchNested;
@@ -172,6 +183,28 @@ function isFlatMatch(match: BackendMatch): match is BackendMatchFlat {
 
 function transformToMatch(match: BackendMatch): Match {
   if (isFlatMatch(match)) {
+    const pipeline: RecruitmentPipeline | null = match.pipeline_stage ? {
+      matchId: match.match_id,
+      clinicId: match.role === "CLINIC" ? match.profile_id : "",
+      candidateId: match.role === "STAFF" ? match.profile_id : "",
+      stage: match.pipeline_stage as RecruitmentStage,
+      summary: match.pipeline_summary || null,
+      nextStep: match.pipeline_next_step || null,
+      aiNotes: match.pipeline_ai_notes || null,
+      savedToTalent: match.pipeline_saved_to_talent ?? false,
+      updatedAt: match.pipeline_updated_at || match.created_at || new Date().toISOString(),
+    } : {
+      matchId: match.match_id,
+      clinicId: "",
+      candidateId: "",
+      stage: "matched",
+      summary: null,
+      nextStep: null,
+      aiNotes: null,
+      savedToTalent: false,
+      updatedAt: match.created_at || new Date().toISOString(),
+    };
+
     return {
       id: match.match_id,
       createdAt: match.created_at || new Date().toISOString(),
@@ -191,6 +224,7 @@ function transformToMatch(match: BackendMatch): Match {
         radiusKm: null,
         createdAt: null,
       },
+      pipeline,
     };
   }
 
@@ -213,6 +247,7 @@ function transformToMatch(match: BackendMatch): Match {
       radiusKm: null,
       createdAt: null,
     },
+    pipeline: match.pipeline ? transformPipeline(match.pipeline) : null,
   };
 }
 
@@ -661,6 +696,33 @@ function transformTalentPoolEntry(entry: BackendTalentPoolEntry): TalentPoolEntr
     createdAt: entry.created_at,
     updatedAt: entry.updated_at,
     candidate,
+  };
+}
+
+interface BackendPipeline {
+  match_id: string;
+  clinic_id: string;
+  candidate_id: string;
+  stage: string;
+  summary?: string | null;
+  next_step?: string | null;
+  ai_notes?: string | null;
+  saved_to_talent?: boolean;
+  updated_at: string;
+}
+
+function transformPipeline(pipeline: BackendPipeline | null): RecruitmentPipeline | null {
+  if (!pipeline) return null;
+  return {
+    matchId: pipeline.match_id,
+    clinicId: pipeline.clinic_id,
+    candidateId: pipeline.candidate_id,
+    stage: pipeline.stage as RecruitmentStage,
+    summary: pipeline.summary || null,
+    nextStep: pipeline.next_step || null,
+    aiNotes: pipeline.ai_notes || null,
+    savedToTalent: pipeline.saved_to_talent ?? false,
+    updatedAt: pipeline.updated_at,
   };
 }
 

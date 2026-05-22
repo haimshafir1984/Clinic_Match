@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -26,7 +26,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useMarketJobs } from "@/hooks/useMarketJobs";
 import { useMatches } from "@/hooks/useMatches";
 import { useTalentPool } from "@/hooks/useTalentPool";
-import { MarketJob, Match } from "@/types";
+import { MarketJob, Match, RecruitmentStage } from "@/types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { updateRecruitment, scheduleInterview } from "@/lib/api";
+import ATSBoard from "@/components/matches/ATSBoard";
 
 function MatchesSkeleton() {
   return (
@@ -89,6 +92,36 @@ export default function Matches() {
   const [externalJobIndex, setExternalJobIndex] = useState(0);
   const [externalSwipeDirection, setExternalSwipeDirection] = useState<"left" | "right" | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const updateStageMutation = useMutation({
+    mutationFn: async ({ matchId, stage, interviewDate }: { matchId: string; stage: RecruitmentStage; interviewDate?: string }) => {
+      if (stage === 'interview' && interviewDate) {
+        await scheduleInterview(matchId, {
+          scheduledFor: interviewDate,
+          interviewType: 'video',
+        });
+      }
+      return updateRecruitment(matchId, { stage });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["matches"] });
+      toast.success("סטטוס המועמד עודכן בהצלחה");
+    },
+    onError: () => {
+      toast.error("עדכון סטטוס המועמד נכשל");
+    }
+  });
+
+  const handleUpdateStage = async (matchId: string, stage: RecruitmentStage, interviewDate?: string) => {
+    await updateStageMutation.mutateAsync({ matchId, stage, interviewDate });
+  };
+
+  const handleOpenChat = (matchId: string) => {
+    navigate(`/chat/${matchId}`);
+  };
 
   const activeMatches = matches.filter((match) => !match.isClosed);
   const closedMatches = matches.filter((match) => match.isClosed);
@@ -393,7 +426,7 @@ export default function Matches() {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-md p-4 pb-24">
+      <div className={`mx-auto p-4 pb-24 transition-all duration-300 ${isClinic ? "max-w-6xl w-full" : "max-w-md"}`}>
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground">ההתאמות שלי</h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -406,16 +439,48 @@ export default function Matches() {
         </div>
 
         {isClinic ? (
-          <div className="mb-4 rounded-xl border bg-card p-4">
-            <div className="mb-2 flex items-center gap-2 text-sm font-medium">
-              <Bookmark className="h-4 w-4 text-primary" />
-              Talent Pool
+          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-xl border bg-white/5 border-white/10 backdrop-blur-md p-4 flex items-center justify-between">
+              <div>
+                <div className="mb-1 flex items-center gap-2 text-sm font-extrabold text-cyan-400 animate-pulse">
+                  <Bookmark className="h-4 w-4" />
+                  Talent Pool
+                </div>
+                <p className="text-xs text-white/70">כרגע שמורים מועמדים לעבודה עתידית במאגר שלכם.</p>
+              </div>
+              <span className="text-lg font-black text-white bg-white/10 border border-white/10 px-3 py-1 rounded-full font-mono">
+                {talentPool.length} מועמדים
+              </span>
             </div>
-            <p className="text-sm text-muted-foreground">כרגע שמורים {talentPool.length} מועמדים לעבודה עתידית.</p>
+
+            <div className="rounded-xl border bg-white/5 border-white/10 backdrop-blur-md p-4 flex items-center justify-between">
+              <div>
+                <div className="mb-1 flex items-center gap-2 text-sm font-extrabold text-emerald-400">
+                  <Users className="h-4 w-4" />
+                  התאמות פעילות
+                </div>
+                <p className="text-xs text-white/70">מועמדים שהתאימו למרפאה שלך ונמצאים בתהליך הסינון.</p>
+              </div>
+              <span className="text-lg font-black text-white bg-white/10 border border-white/10 px-3 py-1 rounded-full font-mono">
+                {activeMatches.length} מועמדים
+              </span>
+            </div>
           </div>
         ) : null}
 
-        {isClinic ? matchesContent : workerTabs}
+        {isClinic ? (
+          isLoading ? (
+            <MatchesSkeleton />
+          ) : (
+            <ATSBoard
+              matches={matches}
+              onUpdateStage={handleUpdateStage}
+              onOpenChat={handleOpenChat}
+            />
+          )
+        ) : (
+          workerTabs
+        )}
       </div>
 
       <ExternalJobDetailsDialog

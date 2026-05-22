@@ -10,7 +10,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, showNav = true, showHeader = true }: AppLayoutProps) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-transparent">
       {showHeader && <TopHeader />}
       <main className={showNav ? "pb-20" : ""}>
         {children}

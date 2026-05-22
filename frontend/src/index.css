@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Rubik:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -125,14 +125,17 @@
 
   html {
     direction: rtl;
-    font-family: 'Heebo', sans-serif;
+    font-family: 'Rubik', 'Heebo', sans-serif;
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: 'Heebo', sans-serif;
+    background: radial-gradient(at 0% 0%, #0f172a 0%, transparent 50%), radial-gradient(at 100% 0%, #312e81 0%, transparent 50%), radial-gradient(at 50% 100%, #581c87 0%, transparent 50%), #020617;
+    background-attachment: fixed;
+    color: #ffffff;
+    font-family: 'Rubik', 'Heebo', sans-serif;
     min-height: 100vh;
     min-height: 100dvh;
+    @apply antialiased;
   }
 
   /* Fix for RTL input placeholder alignment */
@@ -178,11 +181,51 @@
 
   /* Glass Effect */
   .glass {
-    @apply bg-white/80 backdrop-blur-md border border-white/20;
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
   }
 
   .dark .glass {
-    @apply bg-black/40 backdrop-blur-md border-white/10;
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  /* Glass panel style */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .glass-panel-heavy {
+    background: rgba(255, 255, 255, 0.12) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  }
+
+  .glass-panel-interactive {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .glass-panel-interactive:hover {
+    background: rgba(255, 255, 255, 0.09) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    transform: translateY(-2px) !important;
+  }
+
+  /* RTL Helpers */
+  .rtl-grid {
+    direction: rtl;
   }
 }
 

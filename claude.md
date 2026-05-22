@@ -260,4 +260,77 @@ If Hebrew appears broken again after deploy, first suspect:
 - cached JS bundle
 - a newly edited file saved with the wrong encoding
 
-## Kn
+## Known limitations still worth improving
+
+These are known follow-up areas, not blockers for the current codebase:
+
+1. External jobs quality is currently strongest on `JobMaster` and `JSearch`
+2. `Drushim` and `AllJobs` can be unstable depending on the HTML they return — Cheerio parsers help but sites still change
+3. JSearch free tier is 500 req/month — consider upgrading if import runs frequently
+4. External jobs ranking is still simple and not yet personalized deeply
+5. The external jobs UI does not yet expose per-source warning details inline (warnings are logged server-side and available in `importWarnings` on the frontend hook, but not shown to the user yet)
+6. Analytics are still relatively lightweight compared to a full ATS
+
+## Recommended next steps
+
+If continuing from the current state, the best next work items are:
+
+1. Show `importWarnings` to the user in the UI so they can see which sources failed
+2. Add a `/api/market-jobs/debug` admin-only route that runs import with test filters and returns full warnings — useful for diagnosing source failures on Render
+3. Add match scoring between worker profile and external jobs
+4. Add filters in the external jobs section (by location, job type, source)
+5. Add background refresh / scheduled imports instead of relying only on on-demand fetches
+6. Upgrade JSearch plan if 500 req/month becomes a bottleneck
+
+## High-value files
+
+Core backend:
+
+- `backend/server.js`
+- `backend/services/marketJobsService.js`
+- `backend/services/jsearchService.js`
+- `backend/services/puppeteerMcpService.js`
+
+Core frontend:
+
+- `frontend/src/pages/Matches.tsx`
+- `frontend/src/pages/Swipe.tsx`
+- `frontend/src/pages/Chat.tsx`
+- `frontend/src/hooks/useProfile.ts`
+- `frontend/src/hooks/useMarketJobs.ts`
+- `frontend/src/lib/api.ts`
+- `frontend/src/components/auth/ProfileGuard.tsx`
+- `frontend/src/components/matches/ExternalJobCard.tsx`
+- `frontend/src/constants/domains.ts`
+
+## Summary
+
+This project is no longer just a local matching app.
+It now includes:
+
+- stabilized registration / matching / chat flow
+- richer recruitment capabilities
+- media support for workers and businesses
+- new industries
+- cleaned branding
+- external market jobs ingestion
+- multi-source public job search: JobMaster + Drushim + AllJobs (Cheerio) + JSearch API (LinkedIn/Indeed/Glassdoor) + Indeed via Puppeteer (optional)
+
+The current external jobs system is functional and intentionally pragmatic:
+it favors "show real results now" over perfect source coverage.
+
+## Changelog – Session 2 (2026-04-12)
+
+### External jobs – major overhaul
+
+Changes made in this session to fix zero-results bug:
+
+**Backend:**
+- `backend/services/jsearchService.js` — new file, JSearch RapidAPI integration (aggregates LinkedIn, Indeed, Glassdoor). Returns `{ jobs, warning }`. Requires `JSEARCH_API_KEY` env var.
+- `backend/services/marketJobsService.js` — rewrote all HTML parsers from regex to Cheerio for robustness. Removed `linkedin` from `DEFAULT_PUBLIC_SOURCES` (replaced by JSearch). Added `fetchJSearchJobs` call inside `importMarketJobs`. Fixed empty-query fallback in `scrapePublicSource`. Fixed `industry` DB filter from exact match to `ILIKE`. Added `ENABLE_PUPPETEER_SCRAPING` guard.
+- `backend/services/puppeteerMcpService.js` — added `ENABLE_PUPPETEER_SCRAPING` feature flag; Puppeteer is now disabled by default.
+- `backend/package.json` + `package-lock.json` — added `cheerio` dependency.
+
+**Frontend:**
+- `frontend/src/hooks/useMarketJobs.ts` — fixed truncated file (hook body was missing). Improved filter building: tries `required_position` → `positions[0]` → `position` → industry Hebrew fallback. Added `importWarnings` state. Auto-refresh logic preserved.
+- `frontend/src/lib/api.ts` — fixed truncated file (`importMarketJobs` function was entirely missing). Function now returns `{ jobs: MarketJob[], warnings: [...] }` matching `ImportMarketJobsResult` interface. CRLF → LF line endings normalized.

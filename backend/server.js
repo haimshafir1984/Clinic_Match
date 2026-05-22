@@ -844,9 +844,16 @@ app.get("/api/matches/:userId", authenticateToken, async (req, res) => {
         p.location,
         p.role,
         p.avatar_url,
-        p.logo_url
+        p.logo_url,
+        rp.stage AS pipeline_stage,
+        rp.summary AS pipeline_summary,
+        rp.next_step AS pipeline_next_step,
+        rp.ai_notes AS pipeline_ai_notes,
+        rp.saved_to_talent AS pipeline_saved_to_talent,
+        rp.updated_at AS pipeline_updated_at
       FROM matches m
       JOIN profiles p ON (p.id = m.user_one_id OR p.id = m.user_two_id)
+      LEFT JOIN recruitment_pipeline rp ON rp.match_id = m.id
       WHERE (m.user_one_id = $1 OR m.user_two_id = $1)
         AND p.id != $1
       ORDER BY m.created_at DESC
