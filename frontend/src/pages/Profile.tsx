@@ -124,18 +124,18 @@ export default function Profile() {
 
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">הפרופיל שלי</h1>
-            <p className="text-sm text-slate-300">
+            <h1 className="text-2xl font-bold text-foreground">הפרופיל שלי</h1>
+            <p className="text-sm text-muted-foreground">
               {completion.isComplete ? "הפרופיל מוכן לקבלת התאמות" : "השלימו את הפרטים כדי להתחיל לקבל התאמות"}
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="icon" onClick={() => setIsEditing(true)} className="border-white/20 text-white hover:bg-white/10"><Edit2 className="h-4 w-4" /></Button>
+            <Button variant="outline" size="icon" onClick={() => setIsEditing(true)} className="border-border text-foreground hover:bg-muted"><Edit2 className="h-4 w-4" /></Button>
             <Button variant="outline" size="icon" onClick={handleSignOut} className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"><LogOut className="h-4 w-4" /></Button>
           </div>
         </div>
 
-        <Card className="mb-4 glass-panel border-white/10 text-white shadow-lg">
+        <Card className="mb-4 glass-panel border-border text-foreground shadow-lg">
           <CardContent className="pt-4">
             <ProfileProgress completion={completion} />
           </CardContent>

@@ -56,10 +56,10 @@ export function ProfileView({ profile, highlights = [] }: ProfileViewProps) {
 
   return (
     <div className="space-y-4">
-      <Card className="glass-panel border-white/10 text-white shadow-lg overflow-hidden">
+      <Card className="glass-panel border-border text-foreground shadow-lg overflow-hidden">
         <CardContent className="pt-6">
           <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20 border border-white/15">
+            <Avatar className="h-20 w-20 border border-border">
               <AvatarImage src={imageUrl || undefined} />
               <AvatarFallback className="bg-primary/10">
                 <RoleIcon className="h-10 w-10 text-primary" />
@@ -67,30 +67,30 @@ export function ProfileView({ profile, highlights = [] }: ProfileViewProps) {
             </Avatar>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-white">{profile.name}</h2>
+                <h2 className="text-xl font-bold text-foreground">{profile.name}</h2>
                 <Badge variant={isClinic ? "default" : "secondary"}>{isClinic ? "בית עסק" : "עובד/ת"}</Badge>
               </div>
               {positions.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {positions.map((position) => (
-                    <Badge key={position} variant="outline" className="text-xs text-white border-white/20">
+                    <Badge key={position} variant="outline" className="text-xs text-foreground border-border">
                       <Briefcase className="ml-1 h-3 w-3" />
                       {position}
                     </Badge>
                   ))}
                 </div>
               )}
-              {!isClinic && profile.experience_years ? <p className="text-sm text-slate-300">{profile.experience_years} שנות ניסיון</p> : null}
+              {!isClinic && profile.experience_years ? <p className="text-sm text-muted-foreground">{profile.experience_years} שנות ניסיון</p> : null}
             </div>
           </div>
-          {profile.description ? <p className="mt-4 text-sm text-slate-200 leading-relaxed bg-white/5 p-3 rounded-lg border border-white/5">{profile.description}</p> : null}
+          {profile.description ? <p className="mt-4 text-sm text-muted-foreground leading-relaxed bg-muted/60 p-3 rounded-lg border border-border">{profile.description}</p> : null}
         </CardContent>
       </Card>
 
       {highlights.length > 0 ? (
-        <Card className="glass-panel border-white/10 text-white shadow-lg">
+        <Card className="glass-panel border-border text-foreground shadow-lg">
           <CardContent className="pt-6">
-            <h3 className="mb-3 flex items-center gap-2 font-semibold text-white"><Sparkles className="h-4 w-4 text-primary" />חוזקות בולטות</h3>
+            <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground"><Sparkles className="h-4 w-4 text-primary" />חוזקות בולטות</h3>
             <div className="flex flex-wrap gap-2">
               {highlights.map((highlight) => (
                 <Badge key={highlight} variant="secondary" className="text-xs">{highlight}</Badge>
@@ -101,32 +101,32 @@ export function ProfileView({ profile, highlights = [] }: ProfileViewProps) {
       ) : null}
 
       {(profile.city || profile.preferred_area) && (
-        <Card className="glass-panel border-white/10 text-white shadow-lg">
+        <Card className="glass-panel border-border text-foreground shadow-lg">
           <CardContent className="pt-6">
-            <h3 className="mb-3 flex items-center gap-2 font-semibold text-white"><MapPin className="h-4 w-4 text-primary" />מיקום</h3>
-            <p className="text-white">{profile.city || profile.preferred_area}</p>
-            {profile.radius_km ? <p className="text-sm text-slate-300 mt-1">רדיוס חיפוש: {profile.radius_km} ק"מ</p> : null}
+            <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground"><MapPin className="h-4 w-4 text-primary" />מיקום</h3>
+            <p className="text-foreground">{profile.city || profile.preferred_area}</p>
+            {profile.radius_km ? <p className="text-sm text-muted-foreground mt-1">רדיוס חיפוש: {profile.radius_km} ק"מ</p> : null}
           </CardContent>
         </Card>
       )}
 
       {(profile.availability_days?.length || profile.availability_hours || profile.availability_date) ? (
-        <Card className="glass-panel border-white/10 text-white shadow-lg">
+        <Card className="glass-panel border-border text-foreground shadow-lg">
           <CardContent className="pt-6">
-            <h3 className="mb-3 flex items-center gap-2 font-semibold text-white"><Calendar className="h-4 w-4 text-primary" />זמינות</h3>
-            {profile.availability_days?.length ? <p className="text-white">{profile.availability_days.map((day) => dayLabels[day] || day).join(", ")}</p> : null}
-            {profile.availability_hours ? <p className="mt-2 flex items-center gap-1 text-sm text-slate-300"><Clock className="h-3 w-3" />{profile.availability_hours}</p> : null}
-            {profile.availability_date ? <p className="mt-2 text-sm text-slate-300">תאריך התחלה: {new Date(profile.availability_date).toLocaleDateString("he-IL")}</p> : null}
+            <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground"><Calendar className="h-4 w-4 text-primary" />זמינות</h3>
+            {profile.availability_days?.length ? <p className="text-foreground">{profile.availability_days.map((day) => dayLabels[day] || day).join(", ")}</p> : null}
+            {profile.availability_hours ? <p className="mt-2 flex items-center gap-1 text-sm text-muted-foreground"><Clock className="h-3 w-3" />{profile.availability_hours}</p> : null}
+            {profile.availability_date ? <p className="mt-2 text-sm text-muted-foreground">תאריך התחלה: {new Date(profile.availability_date).toLocaleDateString("he-IL")}</p> : null}
           </CardContent>
         </Card>
       ) : null}
 
       {(profile.salary_min || profile.salary_max || profile.job_type) ? (
-        <Card className="glass-panel border-white/10 text-white shadow-lg">
+        <Card className="glass-panel border-border text-foreground shadow-lg">
           <CardContent className="pt-6">
-            <h3 className="mb-3 flex items-center gap-2 font-semibold text-white"><Banknote className="h-4 w-4 text-primary" />{isClinic ? "תנאי העסקה" : "ציפיות שכר"}</h3>
+            <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground"><Banknote className="h-4 w-4 text-primary" />{isClinic ? "תנאי העסקה" : "ציפיות שכר"}</h3>
             {(profile.salary_min || profile.salary_max) ? (
-              <p className="text-white">
+              <p className="text-foreground">
                 {profile.salary_min && profile.salary_max
                   ? `₪${profile.salary_min.toLocaleString()} - ₪${profile.salary_max.toLocaleString()}`
                   : profile.salary_min
@@ -134,7 +134,7 @@ export function ProfileView({ profile, highlights = [] }: ProfileViewProps) {
                   : `עד ₪${profile.salary_max?.toLocaleString()}`}
               </p>
             ) : null}
-            {profile.job_type ? <Badge variant="outline" className="mt-2 text-white border-white/20">{jobTypeLabels[profile.job_type]}</Badge> : null}
+            {profile.job_type ? <Badge variant="outline" className="mt-2 text-foreground border-border">{jobTypeLabels[profile.job_type]}</Badge> : null}
           </CardContent>
         </Card>
       ) : null}

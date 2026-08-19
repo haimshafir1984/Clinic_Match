@@ -440,28 +440,28 @@ export default function Matches() {
 
         {isClinic ? (
           <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-xl border bg-white/5 border-white/10 backdrop-blur-md p-4 flex items-center justify-between">
+            <div className="rounded-xl border bg-muted/60 border-border backdrop-blur-md p-4 flex items-center justify-between">
               <div>
-                <div className="mb-1 flex items-center gap-2 text-sm font-extrabold text-cyan-400 animate-pulse">
+                <div className="mb-1 flex items-center gap-2 text-sm font-extrabold text-primary animate-pulse">
                   <Bookmark className="h-4 w-4" />
                   Talent Pool
                 </div>
-                <p className="text-xs text-white/70">כרגע שמורים מועמדים לעבודה עתידית במאגר שלכם.</p>
+                <p className="text-xs text-muted-foreground">כרגע שמורים מועמדים לעבודה עתידית במאגר שלכם.</p>
               </div>
-              <span className="text-lg font-black text-white bg-white/10 border border-white/10 px-3 py-1 rounded-full font-mono">
+              <span className="text-lg font-black text-foreground bg-muted border border-border px-3 py-1 rounded-full font-mono">
                 {talentPool.length} מועמדים
               </span>
             </div>
 
-            <div className="rounded-xl border bg-white/5 border-white/10 backdrop-blur-md p-4 flex items-center justify-between">
+            <div className="rounded-xl border bg-muted/60 border-border backdrop-blur-md p-4 flex items-center justify-between">
               <div>
-                <div className="mb-1 flex items-center gap-2 text-sm font-extrabold text-emerald-400">
+                <div className="mb-1 flex items-center gap-2 text-sm font-extrabold text-success">
                   <Users className="h-4 w-4" />
                   התאמות פעילות
                 </div>
-                <p className="text-xs text-white/70">מועמדים שהתאימו למרפאה שלך ונמצאים בתהליך הסינון.</p>
+                <p className="text-xs text-muted-foreground">מועמדים שהתאימו למרפאה שלך ונמצאים בתהליך הסינון.</p>
               </div>
-              <span className="text-lg font-black text-white bg-white/10 border border-white/10 px-3 py-1 rounded-full font-mono">
+              <span className="text-lg font-black text-foreground bg-muted border border-border px-3 py-1 rounded-full font-mono">
                 {activeMatches.length} מועמדים
               </span>
             </div>
