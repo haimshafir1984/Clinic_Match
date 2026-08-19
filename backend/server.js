@@ -14,6 +14,10 @@ if (!process.env.ALLOWED_ORIGIN) {
 }
 
 const app = express();
+// Render (and most PaaS hosts) sit behind a reverse proxy that sets
+// X-Forwarded-For — without this, express-rate-limit can't safely
+// determine the real client IP and throws on every rate-limited request.
+app.set("trust proxy", 1);
 app.use(cors({ origin: process.env.ALLOWED_ORIGIN || "https://your-frontend.vercel.app" }));
 app.use(express.json({ limit: "5mb" }));
 
