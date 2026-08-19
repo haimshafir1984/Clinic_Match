@@ -836,7 +836,7 @@ app.get("/api/profiles/:id", authenticateToken, ensureOwnProfileOrAdmin, async (
     res.json(mapProfileRow(result.rows[0]));
   } catch (err) {
     console.error("GET PROFILE ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -913,7 +913,7 @@ app.put("/api/profiles/:id", authenticateToken, ensureOwnProfileOrAdmin, async (
     res.json({ user: mapProfileRow(result.rows[0]) });
   } catch (err) {
     console.error("UPDATE PROFILE ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -980,7 +980,7 @@ app.get("/api/feed/:userId", authenticateToken, async (req, res) => {
     res.json(feed.rows.map(mapFeedRow));
   } catch (err) {
     console.error("FEED ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1071,7 +1071,7 @@ app.post("/api/swipe", authenticateToken, async (req, res) => {
     res.json({ isMatch: false });
   } catch (err) {
     console.error("SWIPE ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1123,7 +1123,7 @@ app.get("/api/matches/:userId", authenticateToken, async (req, res) => {
     res.json(mapped);
   } catch (err) {
     console.error("MATCHES ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1183,7 +1183,7 @@ app.get("/api/matches/:userId/:matchId", authenticateToken, async (req, res) => 
     });
   } catch (err) {
     console.error("MATCH DETAILS ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1208,7 +1208,7 @@ app.post("/api/matches/:matchId/close", authenticateToken, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error("CLOSE MATCH ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1236,7 +1236,7 @@ app.get("/api/messages/:matchId", authenticateToken, async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     console.error("GET MESSAGES ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1272,7 +1272,7 @@ app.post("/api/messages", authenticateToken, async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error("SEND MESSAGE ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1302,7 +1302,7 @@ app.get("/api/recruitment/:matchId", authenticateToken, async (req, res) => {
     });
   } catch (err) {
     console.error("RECRUITMENT ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1347,7 +1347,7 @@ app.put("/api/recruitment/:matchId", authenticateToken, async (req, res) => {
     res.json(updated.rows[0]);
   } catch (err) {
     console.error("UPDATE RECRUITMENT ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1381,7 +1381,7 @@ app.get("/api/talent-pool/:clinicId", authenticateToken, async (req, res) => {
     })));
   } catch (err) {
     console.error("TALENT POOL ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1423,7 +1423,7 @@ app.post("/api/talent-pool", authenticateToken, async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error("SAVE TALENT POOL ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1462,7 +1462,7 @@ app.post("/api/interviews", authenticateToken, async (req, res) => {
     res.status(201).json(inserted.rows[0]);
   } catch (err) {
     console.error("CREATE INTERVIEW ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1503,7 +1503,7 @@ app.patch("/api/interviews/:id", authenticateToken, async (req, res) => {
     res.json(updated.rows[0]);
   } catch (err) {
     console.error("UPDATE INTERVIEW ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1580,7 +1580,7 @@ app.get("/api/analytics/:userId", authenticateToken, async (req, res) => {
     });
   } catch (err) {
     console.error("ANALYTICS ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1608,7 +1608,7 @@ app.post("/api/ai/parse-search", authenticateToken, async (req, res) => {
     res.json({ query });
   } catch (err) {
     console.error("PARSE SEARCH ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1646,7 +1646,7 @@ app.post("/api/ai/profile-highlights", authenticateToken, async (req, res) => {
     res.json({ highlights, suggestions });
   } catch (err) {
     console.error("PROFILE HIGHLIGHTS ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1674,7 +1674,7 @@ app.get("/api/market-jobs/search", authenticateToken, async (req, res) => {
     res.json({ jobs, refreshed: refresh });
   } catch (err) {
     console.error("MARKET JOB SEARCH ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1691,7 +1691,7 @@ app.post("/api/market-jobs/import", authenticateToken, async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("MARKET JOB IMPORT ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1720,7 +1720,7 @@ app.post("/api/market-jobs/debug", authenticateToken, async (req, res) => {
     });
   } catch (err) {
     console.error("MARKET JOB DEBUG ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1737,7 +1737,7 @@ app.post("/api/admin/stats", authenticateToken, verifyAdminRole, async (_req, re
     res.json(result.rows[0] || {});
   } catch (err) {
     console.error("ADMIN STATS ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1753,7 +1753,7 @@ app.post("/api/admin/users", authenticateToken, verifyAdminRole, async (_req, re
     res.json(result.rows);
   } catch (err) {
     console.error("ADMIN USERS ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
@@ -1763,7 +1763,7 @@ app.post("/api/admin/toggle-block", authenticateToken, verifyAdminRole, async (r
     res.json({ success: true });
   } catch (err) {
     console.error("ADMIN TOGGLE BLOCK ERROR:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });
 
