@@ -158,6 +158,26 @@ LinkedIn jobs now come through JSearch instead.
 
 - `JSEARCH_API_KEY` — RapidAPI key for JSearch (https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch). Free tier: 500 req/month, no credit card required.
 - `ENABLE_PUPPETEER_SCRAPING` — set to `true` to enable Indeed via Puppeteer MCP (disabled by default due to Render reliability issues)
+- `MARKET_JOBS_REFRESH_ENABLED` / `MARKET_JOBS_REFRESH_INTERVAL_MINUTES` / `MARKET_JOBS_REFRESH_SEEDS` — background refresh (see below)
+- `MARKET_JOBS_TTL_DAYS` — retention for imported listings (default 30)
+
+### Background refresh (`services/marketJobsScheduler.js`)
+
+`market_jobs` is kept warm by a scheduled refresh so the matches page is a plain DB
+read. Previously the table was only populated when a user hit the page with no cached
+results, and that user waited through a live scrape of every source (the frontend
+allows the import call 60s).
+
+- Runs every `MARKET_JOBS_REFRESH_INTERVAL_MINUTES` (default 360 = 6h), first run 30s
+  after boot, and only once `initializeSchemaWithRetry()` reports the schema is ready.
+- Iterates broad industry seeds (default: medical / communication / insurance,
+  country-wide), not any individual user's filters. Override with `MARKET_JOBS_REFRESH_SEEDS`.
+- **Scheduled runs pass `includeJSearch: false`.** One import spends up to 4 JSearch
+  requests (one per query variant) against a 500/month free tier, so an unattended loop
+  would drain the quota in days. JSearch is reserved for user-triggered imports.
+- Overlapping cycles are skipped; a failing seed does not abort the rest of the cycle.
+- `pruneStaleMarketJobs()` runs at the end of each cycle and once on boot, deleting rows
+  whose `posted_at` (falling back to `fetched_at`) is older than `MARKET_JOBS_TTL_DAYS`.
 
 ### Important behavior
 
@@ -275,12 +295,14 @@ These are known follow-up areas, not blockers for the current codebase:
 
 If continuing from the current state, the best next work items are:
 
-1. Show `importWarnings` to the user in the UI so they can see which sources failed
-2. Add a `/api/market-jobs/debug` admin-only route that runs import with test filters and returns full warnings — useful for diagnosing source failures on Render
-3. Add match scoring between worker profile and external jobs
+1. ~~Show `importWarnings` to the user in the UI~~ — done, rendered in `Matches.tsx`
+2. ~~Add a `/api/market-jobs/debug` admin-only route~~ — done, `POST /api/market-jobs/debug`
+3. Add match scoring between worker profile and external jobs (partially there via `computeJobInsights`; scores are computed per-request rather than stored)
 4. Add filters in the external jobs section (by location, job type, source)
-5. Add background refresh / scheduled imports instead of relying only on on-demand fetches
+5. ~~Add background refresh / scheduled imports~~ — done, see "Background refresh" above
 6. Upgrade JSearch plan if 500 req/month becomes a bottleneck
+7. Loosen `ProfileGuard` so a new user can browse jobs before completing every profile field — currently registration (6 steps) plus required profile fields gate all value behind a long funnel
+8. Code-split the frontend bundle (currently ~827 kB in a single chunk; Vite warns on every build)
 
 ## High-value files
 

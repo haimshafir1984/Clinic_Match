@@ -21,6 +21,12 @@ services:
         sync: false
       - key: ENABLE_PUPPETEER_SCRAPING
         value: "false"
+      - key: MARKET_JOBS_REFRESH_ENABLED
+        value: "true"
+      - key: MARKET_JOBS_REFRESH_INTERVAL_MINUTES
+        value: "360"
+      - key: MARKET_JOBS_TTL_DAYS
+        value: "30"
       - key: ADMIN_EMAIL
         value: haim.shafir.1@gmail.com
       - key: ADMIN_BOOTSTRAP_PASSWORD
