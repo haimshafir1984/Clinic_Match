@@ -93,38 +93,38 @@ export function SwipeCard({ profile, direction, onSwipeLeft, onSwipeRight, curre
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
       {/* Swipe Feedback Badges */}
-      <motion.div 
-        className="absolute right-8 top-8 z-20 rounded-xl border-4 border-emerald-500 bg-emerald-500/20 px-6 py-2 text-2xl font-black text-emerald-400 rotate-12 backdrop-blur-md" 
+      <motion.div
+        className="absolute right-8 top-8 z-20 rounded-xl border-4 border-success bg-success/10 px-6 py-2 text-2xl font-black text-success rotate-12 backdrop-blur-md"
         style={{ opacity: likeOpacity }}
       >
         מתאים 👍
       </motion.div>
-      <motion.div 
-        className="absolute left-8 top-8 z-20 -rotate-12 rounded-xl border-4 border-rose-500 bg-rose-500/20 px-6 py-2 text-2xl font-black text-rose-400 backdrop-blur-md" 
+      <motion.div
+        className="absolute left-8 top-8 z-20 -rotate-12 rounded-xl border-4 border-destructive bg-destructive/10 px-6 py-2 text-2xl font-black text-destructive backdrop-blur-md"
         style={{ opacity: passOpacity }}
       >
         דלג 👎
       </motion.div>
 
-      {/* Main Glassmorphic Card Container */}
-      <div 
-        className={`flex h-full flex-col overflow-hidden rounded-3xl shadow-2xl glass-panel border border-white/10 transition-all ${
-          isClinic && profile.isUrgent ? "ring-2 ring-red-500/30" : ""
+      {/* Main Card Container */}
+      <div
+        className={`flex h-full flex-col overflow-hidden rounded-3xl bg-card border border-border shadow-xl transition-all ${
+          isClinic && profile.isUrgent ? "ring-2 ring-warning/40" : ""
         }`}
       >
         {/* Card Cover & Image Area */}
-        <div className="relative w-full h-[45%] bg-slate-950/80 overflow-hidden flex-shrink-0">
+        <div className="relative w-full h-[45%] overflow-hidden flex-shrink-0 bg-gradient-to-br from-accent via-accent/60 to-secondary">
           {profile.imageUrl ? (
-            <img 
-              src={profile.imageUrl} 
-              alt={profile.name} 
+            <img
+              src={profile.imageUrl}
+              alt={profile.name}
               referrerPolicy="no-referrer"
-              className="h-full w-full object-cover pointer-events-none opacity-90 transition-transform duration-500 group-hover:scale-105" 
+              className="h-full w-full object-cover pointer-events-none opacity-95 transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-cyan-500/10">
-              <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white/5 border border-white/10 text-white/40">
-                <RoleIcon className="h-12 w-12 text-cyan-400" />
+            <div className="flex h-full w-full items-center justify-center">
+              <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white/60 border border-white/80 text-primary shadow-sm">
+                <RoleIcon className="h-12 w-12" />
               </div>
             </div>
           )}
@@ -132,81 +132,78 @@ export function SwipeCard({ profile, direction, onSwipeLeft, onSwipeRight, curre
           {/* Badges Overlay */}
           <div className="absolute top-4 right-4 flex flex-wrap gap-1.5 z-10">
             {isClinic && profile.isUrgent && (
-              <Badge className="gap-1 border-0 bg-red-600/90 text-white hover:bg-red-700 shadow-lg text-[10px] font-bold py-1 px-2.5 rounded-full backdrop-blur-sm animate-pulse">
+              <Badge className="gap-1 border-0 bg-warning text-warning-foreground hover:bg-warning shadow-lg text-[10px] font-bold py-1 px-2.5 rounded-full">
                 <Flame className="h-3 w-3" />
                 <span>דחוף ביותר</span>
               </Badge>
             )}
             {isNew && (
-              <Badge className="gap-1 border-0 bg-cyan-500/90 text-white hover:bg-cyan-600 shadow-lg text-[10px] font-bold py-1 px-2.5 rounded-full backdrop-blur-sm">
-                <Sparkles className="h-3 w-3 text-amber-300" />
+              <Badge className="gap-1 border-0 bg-primary text-primary-foreground hover:bg-primary shadow-lg text-[10px] font-bold py-1 px-2.5 rounded-full">
+                <Sparkles className="h-3 w-3" />
                 <span>חדש</span>
               </Badge>
             )}
             {hasSalaryMatch && (
-              <Badge className="gap-1 border-0 bg-emerald-500/90 text-white hover:bg-emerald-600 shadow-lg text-[10px] font-bold py-1 px-2.5 rounded-full backdrop-blur-sm">
+              <Badge className="gap-1 border-0 bg-success text-success-foreground hover:bg-success shadow-lg text-[10px] font-bold py-1 px-2.5 rounded-full">
                 <CheckCircle2 className="h-3 w-3" />
                 <span>התאמת שכר</span>
               </Badge>
             )}
           </div>
 
-          <Badge 
-            className="absolute left-4 top-4 border-0 bg-white/10 text-white/90 font-bold backdrop-blur-md py-1 px-3 rounded-full text-[10px]" 
+          <Badge
+            className="absolute left-4 top-4 border-0 bg-white/85 text-foreground font-bold backdrop-blur-md py-1 px-3 rounded-full text-[10px] shadow-sm"
             variant="outline"
           >
             {isClinic ? "בית עסק" : "עובד/ת"}
           </Badge>
 
           {!isClinic && profile.experienceYears && (
-            <Badge 
-              variant="outline" 
-              className="absolute left-4 bottom-4 bg-slate-900/80 backdrop-blur-md text-[10px] font-bold border-white/10 text-white/95"
+            <Badge
+              variant="outline"
+              className="absolute left-4 bottom-4 bg-white/85 backdrop-blur-md text-[10px] font-bold border-white/40 text-foreground shadow-sm"
             >
-              <Star className="ml-1 h-3 w-3 text-amber-400 fill-amber-400" />
+              <Star className="ml-1 h-3 w-3 text-warning fill-warning" />
               <span>{profile.experienceYears} שנות ניסיון</span>
             </Badge>
           )}
-
-          {/* Bottom Gradient overlay */}
-          <div className="absolute bottom-0 inset-x-0 h-20 bg-gradient-to-t from-slate-950 to-transparent pointer-events-none" />
         </div>
 
         {/* Detailed Info Area */}
-        <div className="flex flex-1 flex-col p-5 overflow-y-auto text-white">
+        <div className="flex flex-1 flex-col p-5 overflow-y-auto">
           <div className="text-right">
-            <h2 className="text-xl font-extrabold text-white tracking-tight">{profile.name}</h2>
+            <h2 className="text-xl font-extrabold text-foreground tracking-tight">{profile.name}</h2>
           </div>
 
           {/* Core metadata rows */}
           <div className="mt-4 space-y-2">
             {profile.position && (
-              <div className="flex items-center gap-3 bg-white/5 border border-white/10 p-3 rounded-2xl">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/20 text-cyan-400 flex-shrink-0">
+              <div className="flex items-center gap-3 bg-muted/60 border border-border p-3 rounded-2xl">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-accent-foreground flex-shrink-0">
                   <Briefcase className="h-5 w-5" />
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] text-white/40 font-medium">תפקיד מבוקש</p>
-                  <p className="text-xs font-bold text-white mt-0.5">{profile.position}</p>
+                  <p className="text-[10px] text-muted-foreground font-medium">תפקיד מבוקש</p>
+                  <p className="text-xs font-bold text-foreground mt-0.5">{profile.position}</p>
                 </div>
               </div>
             )}
 
             {(profile.availability.days.length > 0 || profile.availability.startDate) && (
-              <div className="flex items-center gap-3 bg-white/5 border border-white/10 p-3 rounded-2xl">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-400 flex-shrink-0">
+              <div className="flex items-center gap-3 bg-muted/60 border border-border p-3 rounded-2xl">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-accent-foreground flex-shrink-0">
                   <Calendar className="h-5 w-5" />
                 </div>
                 <div className="text-right flex-1">
-                  <p className="text-[10px] text-white/40 font-medium">זמינות וימי עבודה</p>
-                  <p className="text-xs font-bold text-white mt-0.5">
-                    {profile.availability.startDate 
-                      ? new Date(profile.availability.startDate).toLocaleDateString("he-IL", { day: "numeric", month: "short", year: "numeric" }) 
+                  <p className="text-[10px] text-muted-foreground font-medium">זמינות וימי עבודה</p>
+                  <p className="text-xs font-bold text-foreground mt-0.5">
+                    {profile.availability.startDate
+                      ? new Date(profile.availability.startDate).toLocaleDateString("he-IL", { day: "numeric", month: "short", year: "numeric" })
                       : profile.availability.days.map((day) => dayLabels[day] || day).join(" • ")
                     }
                   </p>
                   {profile.availability.hours && (
-                    <p className="mt-1 flex items-center gap-1 text-[10px] text-white/50 font-medium">
+                    <p className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground font-medium">
                       <Clock className="h-3 w-3" />
                       <span>{profile.availability.hours}</span>
                     </p>
@@ -216,15 +213,15 @@ export function SwipeCard({ profile, direction, onSwipeLeft, onSwipeRight, curre
             )}
 
             {salary && (
-              <div className="flex items-center gap-3 bg-white/5 border border-white/10 p-3 rounded-2xl">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 flex-shrink-0">
+              <div className="flex items-center gap-3 bg-success/5 border border-success/15 p-3 rounded-2xl">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success/15 text-success flex-shrink-0">
                   <Banknote className="h-5 w-5" />
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] text-white/40 font-medium">תנאי שכר</p>
-                  <p className="text-xs font-bold text-emerald-300 mt-0.5">{salary}</p>
+                  <p className="text-[10px] text-muted-foreground font-medium">תנאי שכר</p>
+                  <p className="text-xs font-bold text-success mt-0.5">{salary}</p>
                   {profile.jobType && (
-                    <p className="text-[10px] text-white/50 mt-0.5">{jobTypeLabels[profile.jobType] || profile.jobType}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{jobTypeLabels[profile.jobType] || profile.jobType}</p>
                   )}
                 </div>
               </div>
@@ -234,17 +231,17 @@ export function SwipeCard({ profile, direction, onSwipeLeft, onSwipeRight, curre
           {/* Location and BIO descriptions */}
           <div className="mt-5 space-y-2 text-right">
             {profile.location && (
-              <div className="flex items-center gap-1.5 text-xs text-white/60 font-semibold justify-start">
-                <MapPin className="h-4 w-4 text-cyan-400" />
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold justify-start">
+                <MapPin className="h-4 w-4 text-primary" />
                 <span>{profile.location}</span>
                 {profile.radiusKm ? (
-                  <span className="text-[10px] text-white/40 font-mono">({profile.radiusKm} ק"מ רדיוס)</span>
+                  <span className="text-[10px] text-muted-foreground/70 font-mono">({profile.radiusKm} ק"מ רדיוס)</span>
                 ) : null}
               </div>
             )}
-            
+
             {profile.description && (
-              <p className="text-xs text-white/70 leading-relaxed font-normal mt-2 line-clamp-3">
+              <p className="text-xs text-muted-foreground leading-relaxed font-normal mt-2 line-clamp-3">
                 {profile.description}
               </p>
             )}
