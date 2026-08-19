@@ -5,7 +5,12 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const rateLimit = require("express-rate-limit");
 const OpenAI = require("openai");
-const { ensureMarketJobsSchema, importMarketJobs, searchMarketJobs } = require("./services/marketJobsService");
+const {
+  ensureMarketJobsSchema,
+  importMarketJobs,
+  searchMarketJobs,
+  pruneStaleMarketJobs,
+} = require("./services/marketJobsService");
 const { sendOtpEmail } = require("./services/mailerService");
 require("dotenv").config();
 
@@ -250,6 +255,9 @@ async function ensureExtendedSchema() {
   `);
 
   await ensureMarketJobsSchema(pool);
+  await pruneStaleMarketJobs(pool).catch((err) => {
+    console.error("MARKET JOBS PRUNE ERROR:", err);
+  });
 }
 
 function wait(ms) {

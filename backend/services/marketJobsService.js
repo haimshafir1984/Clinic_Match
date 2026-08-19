@@ -1517,6 +1517,31 @@ async function importMarketJobs(pool, filters = {}) {
   };
 }
 
+// External listings go stale quickly — a job that was filled two weeks ago is
+// worse than no result at all, and market_jobs previously grew without bound
+// since nothing ever deleted from it. Prefer posted_at when the source gave us
+// one, otherwise fall back to when we fetched the row.
+const MARKET_JOBS_TTL_DAYS = Math.max(
+  1,
+  coerceInteger(process.env.MARKET_JOBS_TTL_DAYS) || 30
+);
+
+async function pruneStaleMarketJobs(pool, ttlDays = MARKET_JOBS_TTL_DAYS) {
+  const result = await pool.query(
+    `
+      DELETE FROM market_jobs
+      WHERE COALESCE(posted_at, fetched_at) < NOW() - make_interval(days => $1::int)
+    `,
+    [ttlDays]
+  );
+
+  const deleted = result.rowCount || 0;
+  if (deleted > 0) {
+    console.log(`[market-jobs] pruned ${deleted} listing(s) older than ${ttlDays} days`);
+  }
+  return deleted;
+}
+
 async function searchMarketJobs(pool, filters = {}) {
   const normalizedFilters = {
     query: normalizeText(filters.query) || "",
@@ -1623,4 +1648,6 @@ module.exports = {
   ensureMarketJobsSchema,
   importMarketJobs,
   searchMarketJobs,
+  pruneStaleMarketJobs,
+  MARKET_JOBS_TTL_DAYS,
 };
