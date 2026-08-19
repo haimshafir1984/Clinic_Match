@@ -391,51 +391,91 @@ function buildCreatePayload(data: ProfileCreateData) {
   };
 }
 
-export async function login(email: string): Promise<{ user: CurrentUser | null; error: string | null; needsRegistration?: boolean }> {
+function persistSession(response: BackendAuthResponse): CurrentUser {
+  if (response.token) {
+    localStorage.setItem("auth_token", response.token);
+  }
+  const user = transformToCurrentUser(response.user);
+  localStorage.setItem("current_user", JSON.stringify(user));
+  return user;
+}
+
+function toErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
+export type LoginStartMode = "password" | "otp" | "register";
+
+export async function startLogin(email: string): Promise<{ mode: LoginStartMode | null; error: string | null }> {
   try {
-    const response = await apiCall<BackendAuthResponse>("/auth/login", {
+    const response = await apiCall<{ mode: LoginStartMode }>("/auth/login/start", {
       method: "POST",
       body: JSON.stringify({ email }),
     });
-
-    if (response.token) {
-      localStorage.setItem("auth_token", response.token);
-    }
-
-    const user = transformToCurrentUser(response.user);
-    localStorage.setItem("current_user", JSON.stringify(user));
-    return { user, error: null };
+    return { mode: response.mode, error: null };
   } catch (error) {
-    if (error instanceof Error) {
-      const message = error.message.toLowerCase();
-      if (message.includes("not found")) {
-        return { user: null, error: "\u05d4\u05d0\u05d9\u05de\u05d9\u05d9\u05dc \u05dc\u05d0 \u05e0\u05de\u05e6\u05d0, \u05d0\u05e4\u05e9\u05e8 \u05dc\u05d4\u05d9\u05e8\u05e9\u05dd", needsRegistration: true };
-      }
-      return { user: null, error: error.message };
-    }
-    return { user: null, error: "\u05d4\u05d4\u05ea\u05d7\u05d1\u05e8\u05d5\u05ea \u05e0\u05db\u05e9\u05dc\u05d4" };
+    return { mode: null, error: toErrorMessage(error, "\u05d4\u05d4\u05ea\u05d7\u05d1\u05e8\u05d5\u05ea \u05e0\u05db\u05e9\u05dc\u05d4") };
   }
 }
 
-export async function createProfile(data: ProfileCreateData): Promise<{ user: CurrentUser | null; error: string | null }> {
+export async function loginWithPassword(email: string, password: string): Promise<{ user: CurrentUser | null; error: string | null }> {
+  try {
+    const response = await apiCall<BackendAuthResponse>("/auth/login/password", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+    return { user: persistSession(response), error: null };
+  } catch (error) {
+    return { user: null, error: toErrorMessage(error, "\u05d4\u05d4\u05ea\u05d7\u05d1\u05e8\u05d5\u05ea \u05e0\u05db\u05e9\u05dc\u05d4") };
+  }
+}
+
+export async function requestOtp(email: string, purpose: "login" | "register"): Promise<{ sent: boolean; error: string | null }> {
+  try {
+    await apiCall("/auth/otp/request", {
+      method: "POST",
+      body: JSON.stringify({ email, purpose }),
+    });
+    return { sent: true, error: null };
+  } catch (error) {
+    return { sent: false, error: toErrorMessage(error, "\u05e9\u05dc\u05d9\u05d7\u05ea \u05d4\u05e7\u05d5\u05d3 \u05e0\u05db\u05e9\u05dc\u05d4") };
+  }
+}
+
+export async function verifyLoginOtp(email: string, code: string): Promise<{ user: CurrentUser | null; error: string | null }> {
+  try {
+    const response = await apiCall<BackendAuthResponse>("/auth/otp/verify", {
+      method: "POST",
+      body: JSON.stringify({ email, code, purpose: "login" }),
+    });
+    return { user: persistSession(response), error: null };
+  } catch (error) {
+    return { user: null, error: toErrorMessage(error, "\u05d0\u05d9\u05de\u05d5\u05ea \u05d4\u05e7\u05d5\u05d3 \u05e0\u05db\u05e9\u05dc") };
+  }
+}
+
+export async function verifyRegisterOtp(email: string, code: string): Promise<{ emailToken: string | null; error: string | null }> {
+  try {
+    const response = await apiCall<{ verified: boolean; emailToken: string }>("/auth/otp/verify", {
+      method: "POST",
+      body: JSON.stringify({ email, code, purpose: "register" }),
+    });
+    return { emailToken: response.emailToken, error: null };
+  } catch (error) {
+    return { emailToken: null, error: toErrorMessage(error, "\u05d0\u05d9\u05de\u05d5\u05ea \u05d4\u05e7\u05d5\u05d3 \u05e0\u05db\u05e9\u05dc") };
+  }
+}
+
+export async function createProfile(data: ProfileCreateData, emailToken?: string): Promise<{ user: CurrentUser | null; error: string | null }> {
   try {
     const response = await apiCall<BackendAuthResponse>("/profiles", {
       method: "POST",
+      headers: emailToken ? { "X-Email-Verification": emailToken } : undefined,
       body: JSON.stringify(buildCreatePayload(data)),
     });
-
-    if (response.token) {
-      localStorage.setItem("auth_token", response.token);
-    }
-
-    const user = transformToCurrentUser(response.user);
-    localStorage.setItem("current_user", JSON.stringify(user));
-    return { user, error: null };
+    return { user: persistSession(response), error: null };
   } catch (error) {
-    if (error instanceof Error) {
-      return { user: null, error: error.message };
-    }
-    return { user: null, error: "\u05d9\u05e6\u05d9\u05e8\u05ea \u05d4\u05e4\u05e8\u05d5\u05e4\u05d9\u05dc \u05e0\u05db\u05e9\u05dc\u05d4" };
+    return { user: null, error: toErrorMessage(error, "\u05d9\u05e6\u05d9\u05e8\u05ea \u05d4\u05e4\u05e8\u05d5\u05e4\u05d9\u05dc \u05e0\u05db\u05e9\u05dc\u05d4") };
   }
 }
 export interface ProfileUpdateData {

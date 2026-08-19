@@ -189,7 +189,7 @@ export default function Chat() {
             <div className="absolute right-0 top-0 w-1.5 h-full bg-gradient-to-b from-orange-400 to-amber-500 animate-pulse" />
             <Sparkles className="h-4 w-4 text-orange-400 fill-current mt-0.5 flex-shrink-0 animate-bounce" />
             <div className="flex-1 min-w-0">
-              <h4 className="text-[11px] font-black text-orange-300">סיכום הערכת מועמד AI - ClinicMatch</h4>
+              <h4 className="text-[11px] font-black text-orange-300">סיכום הערכת מועמד AI - ShiftMatch</h4>
               <p className="text-[10px] text-white/80 leading-relaxed font-semibold mt-0.5">{pipeline.summary}</p>
             </div>
           </div>

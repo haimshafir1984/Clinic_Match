@@ -42,7 +42,7 @@ function getTextFromToolResult(result) {
 
 async function withPuppeteerClient(work) {
   const client = new Client(
-    { name: "clinic-match-market-jobs", version: "1.0.0" },
+    { name: "shiftmatch-market-jobs", version: "1.0.0" },
     { capabilities: {} }
   );
 

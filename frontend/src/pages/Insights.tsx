@@ -159,7 +159,7 @@ export default function Insights() {
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-cyan-400/10 border border-cyan-400/20">
             <Sparkles className="h-7 w-7 text-cyan-400 animate-pulse" />
           </div>
-          <h1 className="text-2xl font-black text-white">תובנות חכמות - ClinicMatch</h1>
+          <h1 className="text-2xl font-black text-white">תובנות חכמות - ShiftMatch</h1>
           <p className="text-xs text-white/60 mt-1">מבט מהיר על פעילות הגיוס, יחסי ההמרה והמלצות AI מותאמות אישית.</p>
         </motion.div>
 

@@ -30,10 +30,23 @@ CREATE TABLE IF NOT EXISTS profiles (
   is_blocked              BOOLEAN     NOT NULL DEFAULT FALSE,
   is_admin                BOOLEAN     NOT NULL DEFAULT FALSE,
   is_premium              BOOLEAN     NOT NULL DEFAULT FALSE,
+  password_hash           TEXT,
   created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- One-time login codes for the OTP login/registration flow (see backend/server.js).
+-- password_hash on profiles is only ever set for the single admin-exception
+-- account; every other account authenticates via this table.
+CREATE TABLE IF NOT EXISTS login_otps (
+  email       TEXT        PRIMARY KEY,
+  code_hash   TEXT        NOT NULL,
+  expires_at  TIMESTAMPTZ NOT NULL,
+  attempts    INTEGER     NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS password_hash TEXT;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS required_position TEXT;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS industry TEXT;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS description TEXT;

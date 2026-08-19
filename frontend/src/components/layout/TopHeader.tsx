@@ -21,7 +21,7 @@ export function TopHeader() {
       <div className="mx-auto flex h-14 max-w-md items-center justify-between px-4">
         <Link to="/swipe" className="flex items-center gap-2">
           <BrandMark size={30} className="h-8 w-8 rounded-md" />
-          <span className="text-lg font-black text-white tracking-tight">ClinicMatch</span>
+          <span className="text-lg font-black text-white tracking-tight">ShiftMatch</span>
         </Link>
 
         <div className="flex items-center gap-1">

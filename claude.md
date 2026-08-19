@@ -1,10 +1,10 @@
-# CLAUDE.md - ClinicMatch Project Notes
+# CLAUDE.md - ShiftMatch Project Notes
 
-Last updated: 2026-04-12 (session 2)
+Last updated: 2026-08-19 (session 3)
 
 ## Overview
 
-ClinicMatch is a hiring and matching platform that connects workers and businesses.
+ShiftMatch (formerly referred to as "ClinicMatch" in early planning docs — the product is not clinic-specific) is a hiring and matching platform that connects workers and businesses.
 The core flow is:
 
 1. Login or register
@@ -18,7 +18,7 @@ Current stack:
 
 - Frontend: React + TypeScript + Vite + TanStack Query + Tailwind + shadcn/ui
 - Backend: Express + PostgreSQL (`pg`)
-- Auth: JWT stored in `localStorage`
+- Auth: JWT stored in `localStorage`. Email OTP for all accounts except one hardcoded admin exception (`ADMIN_EMAIL`, default `haim.shafir.1@gmail.com`) which uses a bcrypt-hashed password set via `ADMIN_BOOTSTRAP_PASSWORD`. See "Changelog – Session 3" below.
 - AI: OpenAI-powered profile / screening helpers
 - Deployment: Render
 
@@ -334,3 +334,33 @@ Changes made in this session to fix zero-results bug:
 **Frontend:**
 - `frontend/src/hooks/useMarketJobs.ts` — fixed truncated file (hook body was missing). Improved filter building: tries `required_position` → `positions[0]` → `position` → industry Hebrew fallback. Added `importWarnings` state. Auto-refresh logic preserved.
 - `frontend/src/lib/api.ts` — fixed truncated file (`importMarketJobs` function was entirely missing). Function now returns `{ jobs: MarketJob[], warnings: [...] }` matching `ImportMarketJobsResult` interface. CRLF → LF line endings normalized.
+
+## Changelog – Session 3 (2026-08-19)
+
+### Critical security fixes: passwordless login closed, mojibake fixed, rebrand
+
+Starting point of this session was a full codebase audit (findings not repeated here). This session addressed the launch-blocking items from that audit.
+
+**Auth rework — passwordless login was the #1 finding, now closed:**
+- `backend/server.js` — replaced the old `POST /api/auth/login` (looked up a user by email only and issued a JWT, no credential check at all) with:
+  - `POST /api/auth/login/start` `{email}` — returns `{mode: "password"}` for the admin exception, `{mode: "otp"}` for existing accounts (and sends the code), `{mode: "register"}` if no account exists.
+  - `POST /api/auth/login/password` `{email, password}` — bcrypt-checked, valid **only** for the admin exception account (see below). No public route sets a password for any other account, so this can't be used to take over other users.
+  - `POST /api/auth/otp/request` `{email, purpose: "login"|"register"}` — issues/resends a 6-digit code, emailed via `services/mailerService.js` (or logged to the server console if SMTP isn't configured — see `.env.example`).
+  - `POST /api/auth/otp/verify` `{email, code, purpose}` — for `login`, verifies and returns a normal session JWT; for `register`, returns a short-lived (`15m`) `emailToken` proving the address was verified.
+  - `POST /api/profiles` (registration) now **requires** a valid `emailToken` (header `X-Email-Verification` or body field) matching the submitted email — closes the parallel hole where anyone could register with someone else's email and get an instant session for it.
+  - New tables/columns: `profiles.password_hash` (nullable, only ever set for the admin account), `login_otps` (email PK, bcrypt code hash, expiry, attempt counter, 5-attempt lockout).
+  - Rate limiting added via `express-rate-limit` on all `/api/auth/*` routes (`authLimiter`) plus a stricter per-email `otpRequestLimiter` on code requests.
+  - `err.message` is no longer leaked to the client on auth routes (generic Hebrew error messages instead; details still logged server-side).
+- **Admin exception**: `haim.shafir.1@gmail.com` (override via `ADMIN_EMAIL` env var) is the one account that logs in with a password instead of OTP. Set/rotate it by setting `ADMIN_BOOTSTRAP_PASSWORD` in the environment and restarting the server — `ensureAdminBootstrap()` runs on every boot, hashes it with bcrypt, and upserts the admin profile (`is_admin = true`). Remove/rotate the env var after it's applied if you don't want it reapplied on every future restart.
+- Frontend: `frontend/src/pages/Login.tsx` and `Register.tsx` were rewritten as multi-step flows (email → password-or-OTP for login; email → OTP → wizard for registration). `frontend/src/lib/api.ts` and `frontend/src/contexts/AuthContext.tsx` got new functions (`startLogin`, `loginWithPassword`, `requestOtp`, `verifyLoginOtp`, `verifyRegisterOtp`) replacing the old single-call `login(email)`.
+- **Still needed for full production readiness**: real SMTP credentials (`SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` in `.env`) — without them OTP codes only appear in server logs, which is fine for local dev but not for real users.
+
+**Corrupted Hebrew text fixed:**
+- `backend/server.js` — `buildStrengthHighlights()` and `buildConversationSuggestions()` contained severely mojibake-corrupted Hebrew string literals (re-encoded multiple times into garbage). Rewritten with clean, correct Hebrew. Also fixed a similarly corrupted default `next_step` value in the interview-creation route.
+
+**Rebrand: ClinicMatch → ShiftMatch:**
+- Updated remaining "ClinicMatch" strings in live UI/code: `frontend/src/components/layout/TopHeader.tsx`, `Chat.tsx`, `Insights.tsx`, `frontend/src/index.css` comment, `backend/services/puppeteerMcpService.js` MCP client name, `backend/package.json` / `frontend/package.json` names.
+- Old planning/presentation docs (`frontend/docs/ClinicMatch-Presentation.md`, `frontend/.lovable/plan.md`, `SHIFTMATCH_PROMPT.md`, `claude-code-market-jobs-fix.md`) were **not** touched — they're historical notes, not live product surface. Worth deleting in a later cleanup pass if they're no longer useful.
+- The Render deployment URL (`clinic-match.onrender.com`, referenced in `frontend/src/lib/api.ts` and `adminApi.ts`) was left as-is since renaming the actual Render service is an infrastructure decision outside this repo, not a code change.
+
+**Not done in this session (explicitly out of scope per user request):** payment/billing infrastructure. `profiles.is_premium` is still unwired.
