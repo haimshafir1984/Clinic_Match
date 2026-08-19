@@ -11,6 +11,7 @@ const {
   searchMarketJobs,
   pruneStaleMarketJobs,
 } = require("./services/marketJobsService");
+const { startMarketJobsScheduler } = require("./services/marketJobsScheduler");
 const { sendOtpEmail } = require("./services/mailerService");
 require("dotenv").config();
 
@@ -276,18 +277,21 @@ async function initializeSchemaWithRetry() {
       await ensureAdminBootstrap().catch((bootstrapErr) => {
         console.error("ADMIN BOOTSTRAP ERROR:", bootstrapErr);
       });
-      return;
+      return true;
     } catch (err) {
       console.error(`SCHEMA INIT ERROR (attempt ${attempt}/${SCHEMA_INIT_MAX_RETRIES}):`, err);
       if (attempt >= SCHEMA_INIT_MAX_RETRIES) {
         console.error("Schema initialization failed after maximum retries. The server will stay up, but database-backed features may fail until the database is reachable.");
-        return;
+        return false;
       }
 
       await wait(SCHEMA_INIT_RETRY_DELAY_MS * attempt);
     }
   }
+
+  return false;
 }
+
 function parseDateTime(value) {
   if (!value) return null;
   const date = new Date(value);
@@ -1779,8 +1783,19 @@ const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
   console.log(`ShiftMatch Backend Running on port ${PORT}`);
-  initializeSchemaWithRetry().catch((err) => {
-    console.error("UNEXPECTED SCHEMA INIT FAILURE:", err);
-  });
+  initializeSchemaWithRetry()
+    .then((schemaReady) => {
+      // Only start the background refresh once the schema is known-good —
+      // initializeSchemaWithRetry resolves either way, so check the result
+      // rather than assuming success.
+      if (schemaReady) {
+        startMarketJobsScheduler(pool);
+      } else {
+        console.warn("[market-jobs] background refresh not started — schema initialization failed");
+      }
+    })
+    .catch((err) => {
+      console.error("UNEXPECTED SCHEMA INIT FAILURE:", err);
+    });
 });
 

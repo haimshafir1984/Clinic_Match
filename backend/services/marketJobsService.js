@@ -1364,7 +1364,12 @@ async function scrapePuppeteerSource(source, filters, limit, overrides = {}) {
   }
 }
 
-async function importMarketJobs(pool, filters = {}) {
+// JSearch's free tier allows 500 requests/month and a single import spends up
+// to 4 of them (one per query variant), so callers that run on a schedule pass
+// includeJSearch: false and stay on the unmetered HTML sources. The quota is
+// reserved for user-triggered imports, which match a real person's filters.
+async function importMarketJobs(pool, filters = {}, options = {}) {
+  const { includeJSearch = true } = options;
   const normalizedFilters = {
     query: normalizeText(filters.query) || "",
     location: normalizeText(filters.location) || "",
@@ -1386,13 +1391,15 @@ async function importMarketJobs(pool, filters = {}) {
         result: await scrapePublicSource(source, normalizedFilters, limit),
       }))
     ),
-    fetchJSearchJobs({
-      query: normalizedFilters.query || undefined,
-      location: normalizedFilters.location || undefined,
-      jobType: normalizedFilters.jobType || undefined,
-      industry: normalizedFilters.industry || undefined,
-      limit,
-    }),
+    includeJSearch
+      ? fetchJSearchJobs({
+          query: normalizedFilters.query || undefined,
+          location: normalizedFilters.location || undefined,
+          jobType: normalizedFilters.jobType || undefined,
+          industry: normalizedFilters.industry || undefined,
+          limit,
+        })
+      : Promise.resolve({ jobs: [], warning: null }),
     TECH_INDUSTRIES.has((normalizedFilters.industry || "").toLowerCase())
       ? fetchRemotiveJobs({
           query: normalizedFilters.query || undefined,
