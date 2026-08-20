@@ -1,3 +1,16 @@
+# Render Blueprint for ShiftMatch. See DEPLOYMENT.md before applying.
+#
+# IMPORTANT: the services currently running were created by hand in the
+# dashboard and are named "Clinic_Match" (backend) and
+# "clinic-match-frontend-x4or" (static site). Render matches blueprint
+# services by NAME, so applying this file as-is creates a second pair of
+# services rather than adopting the existing ones. Either rename the
+# services in the dashboard to match the names below first, or change the
+# names here to match them — decide before clicking apply.
+#
+# Every secret is sync:false, meaning Render will not read a value from this
+# file; you still enter those in the dashboard. Nothing sensitive lives here.
+
 services:
   - type: web
     name: shiftmatch-backend
@@ -31,6 +44,10 @@ services:
         value: haim.shafir.1@gmail.com
       - key: ADMIN_BOOTSTRAP_PASSWORD
         sync: false
+      # Resend (HTTPS) is the working mail path. Raw SMTP below is kept only
+      # as a fallback for a paid instance or another host — Render's free
+      # tier blocks outbound ports 25/465/587 entirely, so SMTP cannot work
+      # there regardless of credentials.
       - key: RESEND_API_KEY
         sync: false
       - key: RESEND_FROM
