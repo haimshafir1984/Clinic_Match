@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Bookmark,
   BriefcaseBusiness,
+  FilterX,
   Heart,
   RefreshCw,
   SearchX,
@@ -15,6 +16,12 @@ import {
 
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ExternalJobDetailsDialog } from "@/components/matches/ExternalJobDetailsDialog";
+import {
+  ExternalJobFilters,
+  DEFAULT_EXTERNAL_JOB_FILTERS,
+  applyExternalJobFilters,
+  type ExternalJobFilterState,
+} from "@/components/matches/ExternalJobFilters";
 import { ExternalJobSwipeCard } from "@/components/matches/ExternalJobSwipeCard";
 import { MatchCard } from "@/components/matches/MatchCard";
 import { SwipeActions } from "@/components/swipe/SwipeActions";
@@ -79,7 +86,7 @@ export default function Matches() {
   const { matches, isLoading } = useMatches();
   const { talentPool, saveToTalentPool } = useTalentPool();
   const {
-    jobs: marketJobs,
+    jobs: allMarketJobs,
     isLoading: marketJobsLoading,
     isRefreshing: marketJobsRefreshing,
     refreshFromSites,
@@ -87,6 +94,15 @@ export default function Matches() {
     importWarnings,
     error: marketJobsError,
   } = useMarketJobs();
+
+  const [externalJobFilters, setExternalJobFilters] = useState<ExternalJobFilterState>(
+    DEFAULT_EXTERNAL_JOB_FILTERS
+  );
+
+  const marketJobs = useMemo(
+    () => applyExternalJobFilters(allMarketJobs, externalJobFilters),
+    [allMarketJobs, externalJobFilters]
+  );
 
   const isClinic = currentUser?.role === "clinic";
   const [externalJobIndex, setExternalJobIndex] = useState(0);
@@ -128,11 +144,24 @@ export default function Matches() {
   const currentExternalJob = marketJobs[externalJobIndex] || null;
   const hasMoreExternalJobs = externalJobIndex < marketJobs.length;
 
+  // Reset the deck whenever the visible list changes. Keyed on the filter
+  // state itself, not just the result count — switching sort order, or a
+  // filter that happens to return the same number of jobs, still reorders the
+  // deck and would otherwise leave the user mid-way through a different list.
+  const externalFilterSignature = JSON.stringify(externalJobFilters);
+
   useEffect(() => {
     setExternalJobIndex(0);
     setExternalSwipeDirection(null);
     setIsDetailsOpen(false);
-  }, [marketJobs.length, filters.query, filters.location, filters.industry, filters.jobType]);
+  }, [
+    marketJobs.length,
+    externalFilterSignature,
+    filters.query,
+    filters.location,
+    filters.industry,
+    filters.jobType,
+  ]);
 
   const viewedExternalJobs = useMemo(() => {
     if (marketJobs.length === 0) return 0;
@@ -271,7 +300,7 @@ export default function Matches() {
 
   const marketJobsContent = marketJobsLoading ? (
     <ExternalJobsSkeleton />
-  ) : marketJobs.length === 0 ? (
+  ) : allMarketJobs.length === 0 ? (
     <div className="py-16 text-center">
       <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
         <SearchX className="h-10 w-10 text-primary" />
@@ -294,6 +323,13 @@ export default function Matches() {
     <div className="space-y-4">
       {marketJobsWarnings}
 
+      <ExternalJobFilters
+        jobs={allMarketJobs}
+        value={externalJobFilters}
+        onChange={setExternalJobFilters}
+        resultCount={marketJobs.length}
+      />
+
       <div className="rounded-xl border bg-card p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-2">
@@ -302,7 +338,7 @@ export default function Matches() {
               התאמות מאתרים
             </div>
             <p className="text-sm text-muted-foreground">
-              {`נמצאו ${marketJobs.length} משרות חיצוניות לפי ${filters.query || "הפרופיל שלך"}${
+              {`נמצאו ${allMarketJobs.length} משרות חיצוניות לפי ${filters.query || "הפרופיל שלך"}${
                 filters.location ? ` באזור ${filters.location}` : ""
               }.`}
             </p>
@@ -377,16 +413,46 @@ export default function Matches() {
             ) : (
               <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed bg-background/70 px-6 text-center">
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                  <BriefcaseBusiness className="h-8 w-8 text-primary" />
+                  {marketJobs.length === 0 ? (
+                    <SearchX className="h-8 w-8 text-primary" />
+                  ) : (
+                    <BriefcaseBusiness className="h-8 w-8 text-primary" />
+                  )}
                 </div>
-                <h3 className="mb-2 text-lg font-semibold">סיימת לעבור על המשרות שמצאנו</h3>
-                <p className="mb-5 max-w-sm text-sm text-muted-foreground">
-                  אפשר לרענן כדי למשוך משרות חדשות מאתרים, או לחזור ללשונית ההתאמות במערכת.
-                </p>
-                <Button onClick={handleRefreshMarketJobs} disabled={marketJobsRefreshing} className="gap-2">
-                  <RefreshCw className={`h-4 w-4 ${marketJobsRefreshing ? "animate-spin" : ""}`} />
-                  מצא משרות נוספות
-                </Button>
+                {marketJobs.length === 0 ? (
+                  // Jobs exist, the current filter just excludes all of them —
+                  // offering "find more jobs" here would be the wrong fix.
+                  <>
+                    <h3 className="mb-2 text-lg font-semibold">אין משרות שתואמות לסינון</h3>
+                    <p className="mb-5 max-w-sm text-sm text-muted-foreground">
+                      {`יש ${allMarketJobs.length} משרות זמינות, אבל אף אחת מהן לא תואמת לסינון הנוכחי. נסה להרחיב אותו.`}
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        setExternalJobFilters({
+                          ...DEFAULT_EXTERNAL_JOB_FILTERS,
+                          sort: externalJobFilters.sort,
+                        })
+                      }
+                      className="gap-2"
+                    >
+                      <FilterX className="h-4 w-4" />
+                      נקה סינון
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="mb-2 text-lg font-semibold">סיימת לעבור על המשרות שמצאנו</h3>
+                    <p className="mb-5 max-w-sm text-sm text-muted-foreground">
+                      אפשר לרענן כדי למשוך משרות חדשות מאתרים, או לחזור ללשונית ההתאמות במערכת.
+                    </p>
+                    <Button onClick={handleRefreshMarketJobs} disabled={marketJobsRefreshing} className="gap-2">
+                      <RefreshCw className={`h-4 w-4 ${marketJobsRefreshing ? "animate-spin" : ""}`} />
+                      מצא משרות נוספות
+                    </Button>
+                  </>
+                )}
               </div>
             )}
           </AnimatePresence>
