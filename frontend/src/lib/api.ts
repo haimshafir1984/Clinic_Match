@@ -1,4 +1,5 @@
 import {
+  AnalyticsSummary,
   CurrentUser,
   Match,
   MatchCardData,
@@ -12,6 +13,7 @@ import {
   TalentPoolEntry,
   RecruitmentStage,
 } from "@/types";
+import { INDUSTRIES, type Industry } from "@/constants/domains";
 
 const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "");
 const API_BASE_URL = configuredApiBaseUrl || (import.meta.env.DEV ? "http://localhost:10000/api" : "https://clinic-match.onrender.com/api");
@@ -55,6 +57,19 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}, timeoutMs
 function normalizeUserRole(role: string | null | undefined): UserRole {
   const value = role?.toLowerCase();
   return value === "clinic" ? "clinic" : "worker";
+}
+
+const KNOWN_INDUSTRIES = new Set<string>(INDUSTRIES.map((entry) => entry.id));
+
+/**
+ * The backend stores `industry` as a free-text column, so a value that isn't
+ * one of the known industries (legacy row, manual DB edit) must not be blindly
+ * cast into the Industry union — that would let unrenderable values reach
+ * components that index into industry-keyed maps.
+ */
+function normalizeIndustry(industry: string | null | undefined): Industry | null {
+  if (!industry) return null;
+  return KNOWN_INDUSTRIES.has(industry) ? (industry as Industry) : null;
 }
 
 interface BackendFeedProfile {
@@ -312,7 +327,11 @@ function transformToCurrentUser(profile: BackendProfile): CurrentUser {
   const role = normalizeUserRole(profile.role);
   const position = role === "clinic" ? profile.required_position ?? profile.position ?? null : profile.position ?? null;
   const location = profile.location ?? null;
-  const isProfileComplete = Boolean(profile.name && position && location);
+  // Registration only fills `positions[]`, so a freshly registered user has no
+  // scalar position yet. Counting only `position` here marked them incomplete
+  // and made ProfileGuard distrust the cached session on every load.
+  const hasAnyPosition = Boolean(position || (profile.positions && profile.positions.length > 0));
+  const isProfileComplete = Boolean(profile.name && hasAnyPosition && location);
   const imageUrl = profile.image_url || (role === "clinic" ? profile.logo_url : profile.avatar_url) || null;
 
   return {
@@ -324,7 +343,7 @@ function transformToCurrentUser(profile: BackendProfile): CurrentUser {
     imageUrl,
     position,
     location,
-    industry: (profile.industry as CurrentUser["industry"]) || null,
+    industry: normalizeIndustry(profile.industry),
     isProfileComplete,
     isAdmin: profile.is_admin ?? false,
   };
@@ -589,11 +608,15 @@ export async function updateProfileApi(profileId: string, data: ProfileUpdateDat
         ...currentUser,
         name: profile.name,
         role: profile.role,
-        industry: profile.industry,
+        industry: normalizeIndustry(profile.industry),
         position: profile.role === "clinic" ? profile.required_position : profile.position,
         location: profile.city || profile.preferred_area,
         imageUrl: profile.role === "clinic" ? profile.logo_url || profile.avatar_url : profile.avatar_url || profile.logo_url,
-        isProfileComplete: Boolean(profile.name && (profile.required_position || profile.position) && (profile.city || profile.preferred_area)),
+        isProfileComplete: Boolean(
+          profile.name &&
+            (profile.required_position || profile.position || profile.positions?.length) &&
+            (profile.city || profile.preferred_area)
+        ),
       };
       localStorage.setItem("current_user", JSON.stringify(nextUser));
     }
