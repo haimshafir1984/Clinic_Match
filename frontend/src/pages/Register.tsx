@@ -21,11 +21,21 @@ type RegistrationStep = "email" | "otp" | "role" | "domain" | "positions" | "det
 
 const stepOrder: RegistrationStep[] = ["email", "otp", "role", "domain", "positions", "details"];
 
+// Marketing surfaces link in with ?role=worker / ?role=business so a visitor
+// who already declared which side they're on doesn't get asked again.
+export function readRoleFromQuery(search: string): UserRole | null {
+  const value = new URLSearchParams(search).get("role");
+  if (value === "worker" || value === "staff") return "STAFF";
+  if (value === "business" || value === "clinic") return "CLINIC";
+  return null;
+}
+
 export default function Register() {
   const location = useLocation();
   const navigate = useNavigate();
   const { requestOtp, verifyRegisterOtp, signUp } = useAuth();
   const initialEmail = (location.state as { email?: string } | null)?.email || "";
+  const presetRole = readRoleFromQuery(location.search);
 
   const [step, setStep] = useState<RegistrationStep>("email");
   const [email, setEmail] = useState(initialEmail);
@@ -36,7 +46,7 @@ export default function Register() {
   const [workplaceDomain, setWorkplaceDomain] = useState<WorkplaceDomain | null>(null);
   const [industry, setIndustry] = useState<Industry | null>(null);
   const [city, setCity] = useState("");
-  const [role, setRole] = useState<UserRole | null>(null);
+  const [role, setRole] = useState<UserRole | null>(presetRole);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [networkError, setNetworkError] = useState<string | null>(null);
@@ -99,7 +109,8 @@ export default function Register() {
         return;
       }
       setEmailToken(token);
-      goToNextStep();
+      // With the side already chosen on the way in, jump past the role step.
+      setStep(presetRole ? "domain" : "role");
     } catch {
       setNetworkError("שגיאה בתקשורת עם השרת. נסה שוב.");
     } finally {
