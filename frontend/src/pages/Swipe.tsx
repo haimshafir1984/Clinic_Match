@@ -190,7 +190,13 @@ export default function Swipe() {
                 onSwipeRight={handleLike}
               />
             ) : (
-              <EmptyState onRefresh={handleRefresh} />
+              <EmptyState
+                onRefresh={handleRefresh}
+                hasActiveFilters={Boolean(searchFilters)}
+                onClearFilters={() => handleFiltersChange(null)}
+                totalAvailable={profiles.length}
+                hasSwipedAny={currentIndex > 0}
+              />
             )}
           </AnimatePresence>
         </div>

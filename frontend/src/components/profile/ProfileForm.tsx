@@ -103,6 +103,15 @@ async function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+/** Marks the three fields that actually gate entry into the app. */
+function RequiredMark() {
+  return (
+    <span className="mx-0.5 font-bold text-primary" aria-label="שדה חובה" title="שדה חובה">
+      *
+    </span>
+  );
+}
+
 function MediaPicker({
   label,
   value,
@@ -294,6 +303,19 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
     <form onSubmit={handleSubmit(submit)} className="space-y-4 pb-8">
       <input type="hidden" {...register("role")} value={currentRole || ""} />
 
+      {/*
+        Only name, positions and area actually gate entry to the app (see
+        calculateProfileCompletion). The form has ~13 fields, so without
+        saying which three matter it reads as one long wall of required work.
+      */}
+      <div className="flex items-start gap-2.5 rounded-xl border border-primary/20 bg-primary/5 p-3.5">
+        <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+        <p className="text-sm text-muted-foreground">
+          רק שדות המסומנים ב<RequiredMark /> נדרשים כדי להתחיל.
+          את השאר אפשר להשלים בהמשך — ככל שהפרופיל מלא יותר, ההתאמות מדויקות יותר.
+        </p>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -336,7 +358,7 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name">{isClinic ? "שם בית העסק" : "שם מלא"}</Label>
+            <Label htmlFor="name">{isClinic ? "שם בית העסק" : "שם מלא"}<RequiredMark /></Label>
             <Input id="name" {...register("name")} />
             {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
           </div>
@@ -354,7 +376,7 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
 
           {selectedDomain && (
             <div className="space-y-2">
-              <Label>תפקידים</Label>
+              <Label>תפקידים<RequiredMark /></Label>
               <RoleMultiSelector domain={selectedDomain} selectedRoles={selectedPositions} onChange={setSelectedPositions} />
             </div>
           )}
@@ -382,7 +404,7 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>{isClinic ? "עיר" : "אזור מועדף"}</Label>
+            <Label>{isClinic ? "עיר" : "אזור מועדף"}<RequiredMark /></Label>
             <CityCombobox
               value={(isClinic ? watch("city") : watch("preferred_area")) || ""}
               onChange={(value) => setValue(isClinic ? "city" : "preferred_area", value, { shouldValidate: true })}
