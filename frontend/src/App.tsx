@@ -61,11 +61,18 @@ const App = () => (
                 </AuthGuard>
               }
             />
+            {/*
+              Matches carries the external-jobs feed, which is real value a
+              signed-in user can get before their profile is finished — so it
+              only needs a profile to exist, not to be complete. Swipe/chat
+              still require completeness since those put the user in front of
+              another person.
+            */}
             <Route
               path="/matches"
               element={
                 <AuthGuard>
-                  <ProfileGuard>
+                  <ProfileGuard requireComplete={false}>
                     <Matches />
                   </ProfileGuard>
                 </AuthGuard>

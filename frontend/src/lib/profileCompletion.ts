@@ -6,6 +6,7 @@ interface Profile {
   name?: string | null;
   role?: "clinic" | "worker" | null;
   position?: string | null;
+  positions?: string[] | null;
   required_position?: string | null;
   description?: string | null;
   city?: string | null;
@@ -94,8 +95,14 @@ export function calculateProfileCompletion(
     missingRequiredFields.push("name");
   }
 
-  // Required: position OR required_position (either one is fine)
-  const hasPosition = isFieldFilled(profile.position) || isFieldFilled(profile.required_position);
+  // Required: any of position / required_position / positions[].
+  // Registration only fills the `positions` array (the role multi-select in
+  // step 5), so omitting it here marked every freshly-registered worker as
+  // incomplete and bounced them straight back out of the app.
+  const hasPosition =
+    isFieldFilled(profile.position) ||
+    isFieldFilled(profile.required_position) ||
+    isFieldFilled(profile.positions);
   if (!hasPosition) {
     missingRequiredFields.push(isClinic ? "required_position" : "position");
   }
@@ -113,7 +120,12 @@ export function calculateProfileCompletion(
 
   const filledFields: string[] = [];
   for (const field of relevantFields) {
-    const value = profile[field as keyof Profile];
+    // The position slot is satisfied by any of the three shapes the app
+    // stores it in, so the progress bar matches the required-field check.
+    const value =
+      field === "position" || field === "required_position"
+        ? profile.position || profile.required_position || profile.positions
+        : profile[field as keyof Profile];
     if (isFieldFilled(value)) {
       filledFields.push(field);
     }
