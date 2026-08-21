@@ -144,6 +144,7 @@ const PROFILE_SELECT = `
   workplace_types,
   industry,
   location,
+  locations,
   description,
   radius_km,
   experience_years,
@@ -183,6 +184,12 @@ async function ensureExtendedSchema() {
     $$ LANGUAGE plpgsql;
 
     ALTER TABLE profiles ADD COLUMN IF NOT EXISTS password_hash TEXT;
+
+    -- Multi-location support: profiles.location (singular) is kept as a
+    -- backward-compat mirror of locations[0] — external job search and any
+    -- older client still reading a single "location" string keep working.
+    ALTER TABLE profiles ADD COLUMN IF NOT EXISTS locations TEXT[] NOT NULL DEFAULT '{}';
+    UPDATE profiles SET locations = ARRAY[location] WHERE location IS NOT NULL AND locations = '{}';
 
     CREATE TABLE IF NOT EXISTS login_otps (
       email TEXT PRIMARY KEY,
@@ -473,6 +480,7 @@ function mapFeedRow(row) {
     positions: row.positions || [],
     workplace_types: row.workplace_types || [],
     location: row.location,
+    locations: row.locations || [],
     salary_info: row.salary_min != null || row.salary_max != null
       ? { min: row.salary_min, max: row.salary_max }
       : row.salary_info,
@@ -503,6 +511,14 @@ function buildProfileValues(body, existingRole) {
   const avatarUrl = normalizeText(body.avatar_url);
   const logoUrl = normalizeText(body.logo_url);
 
+  // locations[] is the source of truth; a client that only ever sends the
+  // legacy single `location` field (or hasn't been rebuilt yet) still works,
+  // and `location` itself is kept as locations[0] for any code path that
+  // still reads a single string.
+  const locations = normalizeArray(body.locations).length > 0
+    ? normalizeArray(body.locations)
+    : (normalizeText(body.location) ? [normalizeText(body.location)] : []);
+
   return {
     email: normalizeEmail(body.email),
     role,
@@ -512,7 +528,8 @@ function buildProfileValues(body, existingRole) {
     positions,
     workplace_types: workplaceTypes,
     industry: normalizeText(body.industry),
-    location: normalizeText(body.location),
+    location: locations[0] || null,
+    locations,
     description: normalizeText(body.description),
     radius_km: coerceInteger(body.radius_km),
     experience_years: coerceInteger(body.experience_years),
@@ -785,18 +802,18 @@ app.post("/api/profiles", authLimiter, async (req, res) => {
     const result = await pool.query(
       `
         INSERT INTO profiles (
-          email, role, name, position, required_position, positions, workplace_types, industry, location,
+          email, role, name, position, required_position, positions, workplace_types, industry, location, locations,
           description, radius_km, experience_years, availability_date, availability_days, availability_hours,
           salary_min, salary_max, salary_info, availability, job_type,
           screening_questions, is_auto_screener_active, is_urgent,
           avatar_url, logo_url
         )
         VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9,
-          $10, $11, $12, $13, $14, $15,
-          $16, $17, $18, $19, $20,
-          $21, $22, $23,
-          $24, $25
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+          $11, $12, $13, $14, $15, $16,
+          $17, $18, $19, $20, $21,
+          $22, $23, $24,
+          $25, $26
         )
         RETURNING ${PROFILE_SELECT}
       `,
@@ -810,6 +827,7 @@ app.post("/api/profiles", authLimiter, async (req, res) => {
         profile.workplace_types,
         profile.industry,
         profile.location,
+        profile.locations,
         profile.description,
         profile.radius_km,
         profile.experience_years,
@@ -874,22 +892,23 @@ app.put("/api/profiles/:id", authenticateToken, ensureOwnProfileOrAdmin, async (
           workplace_types = $7,
           industry = $8,
           location = $9,
-          description = $10,
-          radius_km = $11,
-          experience_years = $12,
-          availability_date = $13,
-          availability_days = $14,
-          availability_hours = $15,
-          salary_min = $16,
-          salary_max = $17,
-          salary_info = $18,
-          availability = $19,
-          job_type = $20,
-          screening_questions = $21,
-          is_auto_screener_active = $22,
-          is_urgent = $23,
-          avatar_url = $24,
-          logo_url = $25
+          locations = $10,
+          description = $11,
+          radius_km = $12,
+          experience_years = $13,
+          availability_date = $14,
+          availability_days = $15,
+          availability_hours = $16,
+          salary_min = $17,
+          salary_max = $18,
+          salary_info = $19,
+          availability = $20,
+          job_type = $21,
+          screening_questions = $22,
+          is_auto_screener_active = $23,
+          is_urgent = $24,
+          avatar_url = $25,
+          logo_url = $26
         WHERE id = $1
         RETURNING ${PROFILE_SELECT}
       `,
@@ -903,6 +922,7 @@ app.put("/api/profiles/:id", authenticateToken, ensureOwnProfileOrAdmin, async (
         incoming.workplace_types,
         incoming.industry,
         incoming.location,
+        incoming.locations,
         incoming.description,
         incoming.radius_km,
         incoming.experience_years,
@@ -937,7 +957,7 @@ app.get("/api/feed/:userId", authenticateToken, async (req, res) => {
     }
 
     const userRes = await pool.query(
-      `SELECT role, positions, workplace_types, location, industry FROM profiles WHERE id = $1`,
+      `SELECT role, positions, workplace_types, location, locations, industry FROM profiles WHERE id = $1`,
       [userId]
     );
     if (userRes.rows.length === 0) {
@@ -946,6 +966,10 @@ app.get("/api/feed/:userId", authenticateToken, async (req, res) => {
 
     const user = userRes.rows[0];
     const targetRole = user.role === "STAFF" ? "CLINIC" : "STAFF";
+    // locations[] is kept in sync with legacy `location` on every write (see
+    // buildProfileValues / the boot-time backfill), so this is just a safety
+    // net for a row that predates both.
+    const userLocations = user.locations?.length ? user.locations : (user.location ? [user.location] : []);
 
     const query = `
       SELECT
@@ -958,6 +982,7 @@ app.get("/api/feed/:userId", authenticateToken, async (req, res) => {
         workplace_types,
         industry,
         location,
+        locations,
         salary_min,
         salary_max,
         salary_info,
@@ -972,7 +997,7 @@ app.get("/api/feed/:userId", authenticateToken, async (req, res) => {
       WHERE role = $1
         AND (cardinality($2::text[]) = 0 OR workplace_types && $2::text[])
         AND (cardinality($3::text[]) = 0 OR positions && $3::text[])
-        AND ($4::text IS NULL OR location = $4::text)
+        AND (cardinality($4::text[]) = 0 OR locations && $4::text[])
         AND ($6::text IS NULL OR industry = $6::text)
         AND id NOT IN (SELECT swiped_id FROM swipes WHERE swiper_id = $5)
         AND id != $5
@@ -984,7 +1009,7 @@ app.get("/api/feed/:userId", authenticateToken, async (req, res) => {
       targetRole,
       user.workplace_types || [],
       user.positions || [],
-      user.location,
+      userLocations,
       userId,
       user.industry || null,
     ]);

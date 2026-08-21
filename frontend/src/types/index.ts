@@ -31,6 +31,7 @@ export interface MatchCardData {
   name: string;
   position: string | null;
   location: string | null;
+  locations?: string[];
   availability: Availability;
   salaryRange: SalaryRange;
   experienceYears: number | null;
@@ -53,7 +54,9 @@ export interface CurrentUser {
   name: string | null;
   imageUrl: string | null;
   position?: string | null;
+  /** @deprecated use `locations` — kept as locations[0] for older call sites. */
   location?: string | null;
+  locations?: string[] | null;
   industry?: Industry | null;
   isProfileComplete: boolean;
   isAdmin: boolean;

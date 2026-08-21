@@ -77,6 +77,7 @@ interface BackendFeedProfile {
   name: string;
   position?: string | null;
   location?: string | null;
+  locations?: string[] | null;
   salary_info?: { min?: number | null; max?: number | null } | number | null;
   availability?: { days?: string[] | null; hours?: string | null; start_date?: string | null } | null;
   image_url?: string | null;
@@ -108,6 +109,7 @@ function transformToMatchCardData(profile: BackendFeedProfile): MatchCardData {
     name: profile.name,
     position: profile.position || null,
     location: profile.location || null,
+    locations: getProfileLocations(profile),
     availability: {
       days: profile.availability?.days || [],
       hours: profile.availability?.hours || null,
@@ -122,7 +124,7 @@ function transformToMatchCardData(profile: BackendFeedProfile): MatchCardData {
     radiusKm: profile.radius_km ?? null,
     createdAt: profile.created_at || null,
     isUrgent: profile.is_urgent ?? null,
-    industry: (profile.industry as MatchCardData["industry"]) || null,
+    industry: normalizeIndustry(profile.industry),
   };
 }
 
@@ -300,6 +302,7 @@ interface BackendProfile {
   workplace_types?: string[] | null;
   industry?: string | null;
   location?: string | null;
+  locations?: string[] | null;
   description?: string | null;
   radius_km?: number | null;
   experience_years?: number | null;
@@ -323,15 +326,24 @@ interface BackendProfile {
   is_blocked?: boolean;
 }
 
+/** Backend sends `locations[]` as the source of truth, with `location`
+ * (singular) mirrored as locations[0] for older clients. Prefer the array
+ * when present. */
+function getProfileLocations(profile: Pick<BackendProfile, "location" | "locations">): string[] {
+  if (profile.locations && profile.locations.length > 0) return profile.locations;
+  return profile.location ? [profile.location] : [];
+}
+
 function transformToCurrentUser(profile: BackendProfile): CurrentUser {
   const role = normalizeUserRole(profile.role);
   const position = role === "clinic" ? profile.required_position ?? profile.position ?? null : profile.position ?? null;
-  const location = profile.location ?? null;
+  const locations = getProfileLocations(profile);
+  const location = locations[0] || null;
   // Registration only fills `positions[]`, so a freshly registered user has no
   // scalar position yet. Counting only `position` here marked them incomplete
   // and made ProfileGuard distrust the cached session on every load.
   const hasAnyPosition = Boolean(position || (profile.positions && profile.positions.length > 0));
-  const isProfileComplete = Boolean(profile.name && hasAnyPosition && location);
+  const isProfileComplete = Boolean(profile.name && hasAnyPosition && locations.length > 0);
   const imageUrl = profile.image_url || (role === "clinic" ? profile.logo_url : profile.avatar_url) || null;
 
   return {
@@ -343,6 +355,7 @@ function transformToCurrentUser(profile: BackendProfile): CurrentUser {
     imageUrl,
     position,
     location,
+    locations,
     industry: normalizeIndustry(profile.industry),
     isProfileComplete,
     isAdmin: profile.is_admin ?? false,
@@ -364,7 +377,9 @@ export interface ProfileCreateData {
   required_position?: string;
   workplace_types?: string[];
   industry?: string | null;
+  /** @deprecated use `locations` — kept so any older caller still compiles. */
   location?: string;
+  locations?: string[];
   description?: string | null;
   radius_km?: number | null;
   experience_years?: number | null;
@@ -393,6 +408,7 @@ function buildCreatePayload(data: ProfileCreateData) {
     workplace_types: data.workplace_types,
     industry: data.industry || null,
     location: data.location,
+    locations: data.locations && data.locations.length > 0 ? data.locations : (data.location ? [data.location] : undefined),
     description: data.description || null,
     radius_km: data.radius_km ?? null,
     experience_years: data.experience_years ?? null,
@@ -506,8 +522,11 @@ export interface ProfileUpdateData {
   workplace_types?: string[] | null;
   required_position?: string | null;
   description?: string | null;
+  /** @deprecated use `cities` — kept so any older caller still compiles. */
   city?: string | null;
+  /** @deprecated use `cities` — kept so any older caller still compiles. */
   preferred_area?: string | null;
+  cities?: string[] | null;
   radius_km?: number | null;
   experience_years?: number | null;
   availability_date?: string | null;
@@ -544,6 +563,7 @@ export function transformToProfile(profile: FullBackendProfile) {
     description: profile.description || null,
     city: role === "clinic" ? profile.location || null : null,
     preferred_area: role === "worker" ? profile.location || null : null,
+    cities: getProfileLocations(profile),
     radius_km: profile.radius_km ?? null,
     experience_years: profile.experience_years ?? null,
     availability_date: profile.availability_date || profile.availability?.start_date || null,
@@ -578,7 +598,10 @@ export async function updateProfileApi(profileId: string, data: ProfileUpdateDat
       required_position: data.required_position,
       workplace_types: data.workplace_types,
       industry: data.industry ?? null,
-      location: data.city || data.preferred_area || null,
+      location: data.city || data.preferred_area || data.cities?.[0] || null,
+      locations: data.cities && data.cities.length > 0
+        ? data.cities
+        : (data.city || data.preferred_area ? [data.city || data.preferred_area!] : undefined),
       description: data.description || null,
       radius_km: data.radius_km ?? null,
       experience_years: data.experience_years ?? null,

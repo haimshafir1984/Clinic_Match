@@ -13,6 +13,7 @@ interface Profile {
   description?: string | null;
   city?: string | null;
   preferred_area?: string | null;
+  cities?: string[] | null;
   radius_km?: number | null;
   experience_years?: number | null;
   availability_date?: string | null;
@@ -100,11 +101,19 @@ export function ProfileView({ profile, highlights = [] }: ProfileViewProps) {
         </Card>
       ) : null}
 
-      {(profile.city || profile.preferred_area) && (
+      {(profile.cities?.length || profile.city || profile.preferred_area) && (
         <Card className="glass-panel border-border text-foreground shadow-lg">
           <CardContent className="pt-6">
             <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground"><MapPin className="h-4 w-4 text-primary" />מיקום</h3>
-            <p className="text-foreground">{profile.city || profile.preferred_area}</p>
+            {profile.cities && profile.cities.length > 1 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {profile.cities.map((city) => (
+                  <Badge key={city} variant="secondary" className="text-xs">{city}</Badge>
+                ))}
+              </div>
+            ) : (
+              <p className="text-foreground">{profile.cities?.[0] || profile.city || profile.preferred_area}</p>
+            )}
             {profile.radius_km ? <p className="text-sm text-muted-foreground mt-1">רדיוס חיפוש: {profile.radius_km} ק"מ</p> : null}
           </CardContent>
         </Card>

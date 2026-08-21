@@ -11,6 +11,7 @@ interface Profile {
   description?: string | null;
   city?: string | null;
   preferred_area?: string | null;
+  cities?: string[] | null;
   radius_km?: number | null;
   experience_years?: number | null;
   availability_date?: string | null;
@@ -107,16 +108,26 @@ export function calculateProfileCompletion(
     missingRequiredFields.push(isClinic ? "required_position" : "position");
   }
 
-  // Required: city OR preferred_area (either one is fine)
-  const hasLocation = isFieldFilled(profile.city) || isFieldFilled(profile.preferred_area);
+  // Required: any of city / preferred_area / cities[] — mirrors the
+  // position check above, for the same reason: `cities` is the multi-select
+  // field the form actually writes to now, city/preferred_area are the
+  // legacy single-value mirrors.
+  const hasLocation =
+    isFieldFilled(profile.city) ||
+    isFieldFilled(profile.preferred_area) ||
+    isFieldFilled(profile.cities);
   if (!hasLocation) {
     missingRequiredFields.push(isClinic ? "city" : "preferred_area");
   }
 
   // Calculate overall percentage
+  // city/preferred_area are the same underlying concept for opposite roles
+  // (mirrored from `cities`, see below) — excluding the role-inapplicable one
+  // here mirrors the existing position/required_position exclusion, and
+  // avoids counting one filled value as two separate completed fields.
   const relevantFields = isClinic
-    ? ALL_PROFILE_FIELDS.filter((f) => f !== "position" && f !== "experience_years")
-    : ALL_PROFILE_FIELDS.filter((f) => f !== "required_position");
+    ? ALL_PROFILE_FIELDS.filter((f) => f !== "position" && f !== "experience_years" && f !== "preferred_area")
+    : ALL_PROFILE_FIELDS.filter((f) => f !== "required_position" && f !== "city");
 
   const filledFields: string[] = [];
   for (const field of relevantFields) {
@@ -125,7 +136,9 @@ export function calculateProfileCompletion(
     const value =
       field === "position" || field === "required_position"
         ? profile.position || profile.required_position || profile.positions
-        : profile[field as keyof Profile];
+        : field === "city" || field === "preferred_area"
+          ? profile.city || profile.preferred_area || profile.cities
+          : profile[field as keyof Profile];
     if (isFieldFilled(value)) {
       filledFields.push(field);
     }

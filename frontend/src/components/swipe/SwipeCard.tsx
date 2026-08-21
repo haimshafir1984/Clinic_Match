@@ -230,10 +230,12 @@ export function SwipeCard({ profile, direction, onSwipeLeft, onSwipeRight, curre
 
           {/* Location and BIO descriptions */}
           <div className="mt-5 space-y-2 text-right">
-            {profile.location && (
+            {(profile.locations?.length || profile.location) && (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold justify-start">
                 <MapPin className="h-4 w-4 text-primary" />
-                <span>{profile.location}</span>
+                <span>
+                  {profile.locations?.length ? profile.locations.join(" • ") : profile.location}
+                </span>
                 {profile.radiusKm ? (
                   <span className="text-[10px] text-muted-foreground/70 font-mono">({profile.radiusKm} ק"מ רדיוס)</span>
                 ) : null}

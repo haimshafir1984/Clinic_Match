@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   workplace_types         TEXT[]      DEFAULT '{}',
   industry                TEXT,
   location                TEXT,
+  locations               TEXT[]      NOT NULL DEFAULT '{}',
   description             TEXT,
   radius_km               INTEGER,
   experience_years        INTEGER,
@@ -47,6 +48,8 @@ CREATE TABLE IF NOT EXISTS login_otps (
 );
 
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS password_hash TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS locations TEXT[] NOT NULL DEFAULT '{}';
+UPDATE profiles SET locations = ARRAY[location] WHERE location IS NOT NULL AND locations = '{}';
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS required_position TEXT;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS industry TEXT;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS description TEXT;

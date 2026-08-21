@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CityCombobox } from "@/components/ui/city-combobox";
+import { CityMultiCombobox } from "@/components/ui/city-combobox";
 import { DomainSelector } from "@/components/registration/DomainSelector";
 import { RoleMultiSelector } from "@/components/registration/RoleMultiSelector";
 import { BrandMark } from "@/components/branding/BrandMark";
@@ -45,7 +45,7 @@ export default function Register() {
   const [positions, setPositions] = useState<string[]>([]);
   const [workplaceDomain, setWorkplaceDomain] = useState<WorkplaceDomain | null>(null);
   const [industry, setIndustry] = useState<Industry | null>(null);
-  const [city, setCity] = useState("");
+  const [cities, setCities] = useState<string[]>([]);
   const [role, setRole] = useState<UserRole | null>(presetRole);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
@@ -136,7 +136,7 @@ export default function Register() {
     event.preventDefault();
     setNetworkError(null);
 
-    if (!name.trim() || !city.trim() || !role || !workplaceDomain || positions.length === 0 || !emailToken) {
+    if (!name.trim() || cities.length === 0 || !role || !workplaceDomain || positions.length === 0 || !emailToken) {
       toast.error("נא להשלים את כל השדות הנדרשים");
       return;
     }
@@ -151,7 +151,7 @@ export default function Register() {
         required_position: role === "CLINIC" ? positions[0] : undefined,
         workplace_types: [workplaceDomain],
         industry: industry || undefined,
-        location: city.trim(),
+        locations: cities,
       }, emailToken);
 
       if (error) {
@@ -293,7 +293,8 @@ export default function Register() {
                       </div>
                       <div className="space-y-2">
                         <Label>עיר / אזור</Label>
-                        <CityCombobox value={city} onChange={setCity} placeholder="בחר עיר" />
+                        <p className="text-xs text-muted-foreground">אפשר לבחור כמה אזורים שנוחים לך</p>
+                        <CityMultiCombobox value={cities} onChange={setCities} placeholder="הוסף עיר" />
                       </div>
                     </motion.div>
                   )}

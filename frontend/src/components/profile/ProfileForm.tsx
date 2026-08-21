@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CityCombobox } from "@/components/ui/city-combobox";
+import { CityMultiCombobox } from "@/components/ui/city-combobox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -39,8 +39,6 @@ const profileSchema = z.object({
   name: z.string().min(2, "שם חייב להכיל לפחות 2 תווים").max(50, "שם ארוך מדי"),
   role: z.enum(["clinic", "worker"]),
   description: z.string().max(500, "תיאור ארוך מדי").optional().or(z.literal("")),
-  city: z.string().optional(),
-  preferred_area: z.string().optional(),
   radius_km: z.number().min(1).max(100).nullable().optional(),
   experience_years: z.number().min(0).max(50).nullable().optional(),
   availability_date: z.string().optional(),
@@ -72,8 +70,11 @@ interface Profile {
   workplace_types?: string[] | null;
   required_position?: string | null;
   description?: string | null;
+  /** @deprecated use `cities` */
   city?: string | null;
+  /** @deprecated use `cities` */
   preferred_area?: string | null;
+  cities?: string[] | null;
   radius_km?: number | null;
   experience_years?: number | null;
   availability_date?: string | null;
@@ -181,6 +182,9 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
   const [role, setRole] = useState<UserRole | null>(initialData?.role || null);
   const [selectedDomain, setSelectedDomain] = useState<WorkplaceDomain | null>((initialData?.workplace_types?.[0] as WorkplaceDomain) || null);
   const [selectedPositions, setSelectedPositions] = useState<string[]>(initialData?.positions || (initialData?.position ? [initialData.position] : []));
+  const [selectedCities, setSelectedCities] = useState<string[]>(
+    initialData?.cities || (initialData?.city ? [initialData.city] : initialData?.preferred_area ? [initialData.preferred_area] : [])
+  );
   const [screeningQuestions, setScreeningQuestions] = useState<string[]>(initialData?.screening_questions || []);
   const [isAutoScreenerActive, setIsAutoScreenerActive] = useState(initialData?.is_auto_screener_active || false);
   const [isUrgent, setIsUrgent] = useState(initialData?.is_urgent || false);
@@ -204,8 +208,6 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
       name: initialData?.name || "",
       role: initialData?.role || undefined,
       description: initialData?.description || "",
-      city: initialData?.city || "",
-      preferred_area: initialData?.preferred_area || "",
       radius_km: initialData?.radius_km ?? 10,
       experience_years: initialData?.experience_years ?? 0,
       availability_date: initialData?.availability_date || "",
@@ -252,8 +254,9 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
       required_position: currentRole === "clinic" ? selectedPositions[0] || null : null,
       workplace_types: [selectedDomain],
       description: data.description || null,
-      city: isClinic ? watch("city") || null : null,
-      preferred_area: !isClinic ? watch("preferred_area") || null : null,
+      city: isClinic ? selectedCities[0] || null : null,
+      preferred_area: !isClinic ? selectedCities[0] || null : null,
+      cities: selectedCities,
       radius_km: isClinic ? data.radius_km ?? null : null,
       experience_years: !isClinic ? data.experience_years ?? null : null,
       availability_date: data.availability_date || null,
@@ -404,11 +407,12 @@ export function ProfileForm({ initialData, onSuccess }: ProfileFormProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>{isClinic ? "עיר" : "אזור מועדף"}<RequiredMark /></Label>
-            <CityCombobox
-              value={(isClinic ? watch("city") : watch("preferred_area")) || ""}
-              onChange={(value) => setValue(isClinic ? "city" : "preferred_area", value, { shouldValidate: true })}
-              placeholder={isClinic ? "בחר עיר" : "בחר אזור"}
+            <Label>{isClinic ? "ערים" : "אזורים מועדפים"}<RequiredMark /></Label>
+            <p className="text-xs text-muted-foreground">אפשר לבחור כמה {isClinic ? "ערים" : "אזורים"} שרלוונטיים</p>
+            <CityMultiCombobox
+              value={selectedCities}
+              onChange={setSelectedCities}
+              placeholder={isClinic ? "הוסף עיר" : "הוסף אזור"}
             />
           </div>
 

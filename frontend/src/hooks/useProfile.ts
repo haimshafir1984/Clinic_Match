@@ -19,8 +19,11 @@ export interface ProfileFormInput {
   workplace_types?: string[] | null;
   required_position?: string | null;
   description?: string | null;
+  /** @deprecated use `cities` — kept as cities[0] for older call sites. */
   city?: string | null;
+  /** @deprecated use `cities` — kept as cities[0] for older call sites. */
   preferred_area?: string | null;
+  cities?: string[] | null;
   radius_km?: number | null;
   experience_years?: number | null;
   availability_date?: string | null;
@@ -76,7 +79,10 @@ export function useCreateProfile() {
         required_position: profile.required_position || undefined,
         workplace_types: profile.workplace_types || undefined,
         industry: profile.industry || undefined,
-        location: profile.city || profile.preferred_area || undefined,
+        location: profile.city || profile.preferred_area || profile.cities?.[0] || undefined,
+        locations: profile.cities && profile.cities.length > 0
+          ? profile.cities
+          : ((profile.city || profile.preferred_area) ? [profile.city || profile.preferred_area!] : undefined),
         description: profile.description || undefined,
         radius_km: profile.radius_km ?? undefined,
         experience_years: profile.experience_years ?? undefined,
