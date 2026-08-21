@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { AlertCircle, ArrowLeft, ArrowRight, Building2, Loader2, UserRound } from "lucide-react";
+import { AlertCircle, ArrowRight, Building2, Loader2, UserRound } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,9 +17,9 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type UserRole = "CLINIC" | "STAFF";
-type RegistrationStep = "email" | "otp" | "role" | "domain" | "positions" | "details";
+type RegistrationStep = "email" | "otp" | "role" | "details";
 
-const stepOrder: RegistrationStep[] = ["email", "otp", "role", "domain", "positions", "details"];
+const stepOrder: RegistrationStep[] = ["email", "otp", "role", "details"];
 
 // Marketing surfaces link in with ?role=worker / ?role=business so a visitor
 // who already declared which side they're on doesn't get asked again.
@@ -30,26 +30,73 @@ export function readRoleFromQuery(search: string): UserRole | null {
   return null;
 }
 
+// Everything collected before the final signUp call except the OTP code and
+// email token (short-lived and re-verified on refresh anyway) — persisted so
+// a reload or an accidental tab close doesn't send someone back to a blank
+// form after they've already picked a domain, positions, and cities.
+export const DRAFT_KEY = "shiftmatch_register_draft";
+
+export interface RegistrationDraft {
+  email?: string;
+  role?: UserRole | null;
+  name?: string;
+  positions?: string[];
+  workplaceDomain?: WorkplaceDomain | null;
+  industry?: Industry | null;
+  cities?: string[];
+}
+
+export function loadRegistrationDraft(): RegistrationDraft | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    return raw ? (JSON.parse(raw) as RegistrationDraft) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveRegistrationDraft(draft: RegistrationDraft) {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  } catch {
+    // Storage can be full or disabled (private browsing) — losing the draft
+    // is a minor UX regression, not worth surfacing to the user.
+  }
+}
+
+export function clearRegistrationDraft() {
+  try {
+    localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    // Same as above.
+  }
+}
+
 export default function Register() {
   const location = useLocation();
   const navigate = useNavigate();
   const { requestOtp, verifyRegisterOtp, signUp } = useAuth();
   const initialEmail = (location.state as { email?: string } | null)?.email || "";
   const presetRole = readRoleFromQuery(location.search);
+  const [draft] = useState(loadRegistrationDraft);
 
   const [step, setStep] = useState<RegistrationStep>("email");
-  const [email, setEmail] = useState(initialEmail);
+  const [email, setEmail] = useState(initialEmail || draft?.email || "");
   const [code, setCode] = useState("");
   const [emailToken, setEmailToken] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [positions, setPositions] = useState<string[]>([]);
-  const [workplaceDomain, setWorkplaceDomain] = useState<WorkplaceDomain | null>(null);
-  const [industry, setIndustry] = useState<Industry | null>(null);
-  const [cities, setCities] = useState<string[]>([]);
-  const [role, setRole] = useState<UserRole | null>(presetRole);
+  const [name, setName] = useState(draft?.name || "");
+  const [positions, setPositions] = useState<string[]>(draft?.positions || []);
+  const [workplaceDomain, setWorkplaceDomain] = useState<WorkplaceDomain | null>(draft?.workplaceDomain || null);
+  const [industry, setIndustry] = useState<Industry | null>(draft?.industry || null);
+  const [cities, setCities] = useState<string[]>(draft?.cities || []);
+  const [role, setRole] = useState<UserRole | null>(presetRole || draft?.role || null);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [networkError, setNetworkError] = useState<string | null>(null);
+
+  useEffect(() => {
+    saveRegistrationDraft({ email, role, name, positions, workplaceDomain, industry, cities });
+  }, [email, role, name, positions, workplaceDomain, industry, cities]);
 
   const currentStepIndex = stepOrder.indexOf(step);
   const canGoBack = currentStepIndex > 0 && step !== "otp";
@@ -105,7 +152,7 @@ export default function Register() {
       }
       setEmailToken(token);
       // With the side already chosen on the way in, jump past the role step.
-      setStep(presetRole ? "domain" : "role");
+      setStep(presetRole ? "details" : "role");
     } catch {
       setNetworkError("שגיאה בתקשורת עם השרת. נסה שוב.");
     } finally {
@@ -176,6 +223,7 @@ export default function Register() {
       // through /profile first (as before) made every new user click a
       // second "start matching" button for a screen that had nothing left
       // to complete.
+      clearRegistrationDraft();
       toast.success("נרשמת בהצלחה! מוצאים לך התאמות...");
       navigate("/swipe", { replace: true });
     } catch {
@@ -295,36 +343,36 @@ export default function Register() {
                     </motion.div>
                   )}
 
-                  {step === "domain" && (
-                    <motion.div key="domain" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                      <DomainSelector value={workplaceDomain} onChange={(domain, nextIndustry) => { setWorkplaceDomain(domain); setIndustry(nextIndustry); setPositions([]); goToNextStep(); }} />
-                    </motion.div>
-                  )}
-
-                  {step === "positions" && workplaceDomain && (
-                    <motion.div key="positions" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                      <RoleMultiSelector domain={workplaceDomain} selectedRoles={positions} onChange={setPositions} />
-                      <Button type="button" className="w-full" disabled={positions.length === 0} onClick={goToNextStep}>
-                        המשך
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                      </Button>
-                    </motion.div>
-                  )}
-
                   {step === "details" && (
-                    <motion.div key="details" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                      <div className="flex flex-wrap justify-center gap-2">
-                        {positions.map((position) => <span key={position} className="rounded-full bg-primary/10 px-3 py-1 text-sm text-primary">{position}</span>)}
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="name">שם מלא / שם בית העסק</Label>
-                        <Input id="name" value={name} onChange={(event) => setName(event.target.value)} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>עיר / אזור</Label>
-                        <p className="text-xs text-muted-foreground">אפשר לבחור כמה אזורים שנוחים לך</p>
-                        <CityMultiCombobox value={cities} onChange={setCities} placeholder="הוסף עיר" />
-                      </div>
+                    <motion.div key="details" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
+                      <DomainSelector
+                        value={workplaceDomain}
+                        onChange={(domain, nextIndustry) => {
+                          setWorkplaceDomain(domain);
+                          setIndustry(nextIndustry);
+                          setPositions([]);
+                        }}
+                      />
+
+                      {workplaceDomain && (
+                        <div className="space-y-4 border-t pt-4">
+                          <RoleMultiSelector domain={workplaceDomain} selectedRoles={positions} onChange={setPositions} />
+                        </div>
+                      )}
+
+                      {workplaceDomain && positions.length > 0 && (
+                        <div className="space-y-4 border-t pt-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="name">שם מלא / שם בית העסק</Label>
+                            <Input id="name" value={name} onChange={(event) => setName(event.target.value)} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>עיר / אזור</Label>
+                            <p className="text-xs text-muted-foreground">אפשר לבחור כמה אזורים שנוחים לך</p>
+                            <CityMultiCombobox value={cities} onChange={setCities} placeholder="הוסף עיר" />
+                          </div>
+                        </div>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
