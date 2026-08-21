@@ -10,6 +10,7 @@ const {
   importMarketJobs,
   searchMarketJobs,
   pruneStaleMarketJobs,
+  sanitizeMarketJobWarningsForClient,
 } = require("./services/marketJobsService");
 const { startMarketJobsScheduler } = require("./services/marketJobsScheduler");
 const { sendOtpEmail } = require("./services/mailerService");
@@ -1725,7 +1726,7 @@ app.post("/api/market-jobs/import", authenticateToken, async (req, res) => {
       limit: req.body.limit,
     });
 
-    res.json(result);
+    res.json({ ...result, warnings: sanitizeMarketJobWarningsForClient(result.warnings) });
   } catch (err) {
     console.error("MARKET JOB IMPORT ERROR:", err);
     res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });

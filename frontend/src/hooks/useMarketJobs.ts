@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { importMarketJobs as importMarketJobsApi, searchMarketJobs as searchMarketJobsApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
+import { SOURCE_LABELS } from "@/components/matches/ExternalJobFilters";
 
 function cleanFilter(value: string | null | undefined) {
   return value && value.trim() ? value.trim() : undefined;
@@ -81,9 +82,13 @@ export function useMarketJobs() {
     mutationFn: async () => importMarketJobsApi(filters),
     onSuccess: (result) => {
       queryClient.setQueryData(queryKey, result.jobs || []);
+      // The backend already strips technical/English detail and permanently-
+      // disabled sources before this reaches the client (see
+      // sanitizeMarketJobWarningsForClient) — this only maps the source id
+      // to its Hebrew label.
       setImportWarnings(
         (result.warnings || []).map((warning) =>
-          warning.source ? `${warning.source}: ${warning.message}` : warning.message
+          warning.source ? `${SOURCE_LABELS[warning.source] || warning.source}: ${warning.message}` : warning.message
         )
       );
     },

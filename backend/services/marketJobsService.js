@@ -1651,10 +1651,60 @@ async function searchMarketJobs(pool, filters = {}) {
   ).slice(0, limit);
 }
 
+// Every source (HTML scrape, Puppeteer, JSearch, Remotive) throws its own
+// free-text error — HTTP status codes, "ENABLE_PUPPETEER_SCRAPING=true to
+// enable", "JSEARCH_API_KEY not set", raw fetch/network errors. That text is
+// fine in a server log; showing it verbatim to a pilot business owner (as an
+// English string with an env var name in it, no less) is exactly what
+// "clearer messages" means fixing. Classify centrally instead of touching
+// every warning call site.
+const DISABLED_MARKER_PATTERNS = [
+  /puppeteer scraping disabled/i,
+  /browser scraping disabled/i,
+  /api_key not set/i,
+  /api key not set/i,
+];
+const TIMEOUT_MARKER_PATTERNS = [/timeout/i, /timed out/i, /abort/i];
+const BLOCKED_MARKER_PATTERNS = [/403/, /forbidden/i, /blocked/i, /999/];
+
+const FRIENDLY_WARNING_TEXT = {
+  timeout: "המקור לא הגיב בזמן",
+  blocked: "המקור חסם זמנית את הגישה",
+  error: "המקור לא זמין כרגע",
+};
+
+function classifyMarketJobWarningMessage(rawMessage) {
+  const text = String(rawMessage || "");
+  if (DISABLED_MARKER_PATTERNS.some((re) => re.test(text))) return "disabled";
+  if (TIMEOUT_MARKER_PATTERNS.some((re) => re.test(text))) return "timeout";
+  if (BLOCKED_MARKER_PATTERNS.some((re) => re.test(text))) return "blocked";
+  return "error";
+}
+
+/**
+ * Turns the raw, source-specific warning list from importMarketJobs into
+ * something safe to show an end user: sources that are off by design
+ * (disabled feature flag, missing API key) are dropped entirely — they
+ * aren't a "failure" the user is waiting on, just a permanent config state —
+ * and every remaining warning gets a fixed, Hebrew, jargon-free message
+ * instead of whatever the underlying library/HTTP error actually said.
+ * The raw warnings (with full technical detail) are still returned as-is
+ * by importMarketJobs itself, for the admin-only /api/market-jobs/debug route.
+ */
+function sanitizeMarketJobWarningsForClient(warnings) {
+  return (warnings || [])
+    .map((warning) => {
+      const code = classifyMarketJobWarningMessage(warning?.message);
+      return code === "disabled" ? null : { source: warning.source, message: FRIENDLY_WARNING_TEXT[code] };
+    })
+    .filter(Boolean);
+}
+
 module.exports = {
   ensureMarketJobsSchema,
   importMarketJobs,
   searchMarketJobs,
   pruneStaleMarketJobs,
   MARKET_JOBS_TTL_DAYS,
+  sanitizeMarketJobWarningsForClient,
 };

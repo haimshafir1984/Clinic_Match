@@ -22,7 +22,9 @@ export const DEFAULT_EXTERNAL_JOB_FILTERS: ExternalJobFilterState = {
   sort: "relevance",
 };
 
-const SOURCE_LABELS: Record<string, string> = {
+// Exported so useMarketJobs can render a human source name in import
+// warnings instead of the raw backend source id (e.g. "jobmaster").
+export const SOURCE_LABELS: Record<string, string> = {
   indeed: "Indeed",
   linkedin: "LinkedIn",
   glassdoor: "Glassdoor",
