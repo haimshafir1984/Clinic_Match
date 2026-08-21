@@ -8,8 +8,8 @@ source of truth (see "Adopting the blueprint" below).
 
 | Piece | Where | Notes |
 |---|---|---|
-| Backend (Express) | Render web service `shiftmatch-backend` | `https://clinic-match.onrender.com` |
-| Frontend (Vite static) | Render static site `shiftmatch-frontend` | `https://clinic-match-frontend-x4or.onrender.com` |
+| Backend (Express) | Render web service `shiftmatch-backend` | `https://api.flowsbiz.com` (custom domain; `clinic-match.onrender.com` still resolves) |
+| Frontend (Vite static) | Render static site `shiftmatch-frontend` | `https://app.flowsbiz.com` (custom domain; `clinic-match-frontend-x4or.onrender.com` still resolves) |
 | Database | Neon (free tier) | Postgres; replaced the expired Render DB |
 | Transactional email | Resend | sends from the verified `send.flowsbiz.com` subdomain |
 | DNS | Cloudflare (`flowsbiz.com`) | only the `send.*` records belong to ShiftMatch |
@@ -71,50 +71,40 @@ otherwise serves the previous build.
 - **Neon free tier scales to zero**, adding a short delay on the first query
   after idle — on top of Render's own cold start.
 
-## Moving to a custom domain
+## Custom domain
 
-The `*.onrender.com` hostnames are not something to market. `flowsbiz.com` is
-already on Cloudflare, so subdomains of it are the quickest route.
+Live since 2026-08-21. `app.flowsbiz.com` (frontend) and `api.flowsbiz.com`
+(backend) are CNAMEs on the existing Cloudflare zone for `flowsbiz.com`,
+independent of that domain's other records and of the `send.*` records used
+by Resend. Both are Render custom domains with certificates issued, added
+with proxy status **DNS only** (a proxied record blocks Render's certificate
+validation).
 
-Suggested split:
+To add another one later: Render service -> Settings -> Custom Domains ->
+Add, copy the exact CNAME target Render gives you (use its copy icon — it's
+truncated on screen), add it in Cloudflare as CNAME / DNS only, then Verify
+in Render once DNS propagates (usually minutes, can take longer).
 
-| Subdomain | Points at | Render service |
-|---|---|---|
-| `app.flowsbiz.com` | frontend | `shiftmatch-frontend` (static) |
-| `api.flowsbiz.com` | backend | `shiftmatch-backend` (web service) |
+The old `*.onrender.com` hostnames keep working — Render doesn't remove them
+when a custom domain is added — so this was a zero-downtime change; nothing
+had to be cut over.
 
-For each one:
+### What still points here and needed updating
 
-1. Render -> the service -> **Settings -> Custom Domains -> Add**, enter the
-   subdomain. Render shows the CNAME target to use.
-2. Cloudflare -> `flowsbiz.com` -> **DNS -> Add record**: type `CNAME`,
-   name `app` (or `api`), content = the target Render gave.
-3. **Set proxy status to "DNS only" (grey cloud), not proxied (orange).**
-   With the Cloudflare proxy on, Render cannot complete certificate
-   validation and the domain stays stuck as unverified. It can be switched
-   to proxied later, once the certificate has been issued.
-4. Wait for Render to show the domain as verified with a certificate issued.
+- `ALLOWED_ORIGIN` (backend env, Render dashboard) -> `https://app.flowsbiz.com`
+- `VITE_API_BASE_URL` (frontend env, Render dashboard) -> `https://api.flowsbiz.com/api`
+  — this is baked in at build time, so setting it requires a rebuild, not just
+  a restart.
+- `frontend/src/lib/api.ts` and `adminApi.ts` — the fallback used when
+  `VITE_API_BASE_URL` is unset, now `https://api.flowsbiz.com/api`.
+- `frontend/index.html` — `og:url`, `og:image`, `twitter:image` are absolute
+  URLs (crawlers fetch them server-side, won't resolve relative paths), now
+  pointing at `app.flowsbiz.com`.
+- The marketing landing page (published as a Claude Artifact, not in this
+  repo) — its CTAs point at `app.flowsbiz.com/register`.
 
-These records are independent of the existing `send.*` records used by
-Resend, and of whatever else `flowsbiz.com` already serves.
-
-### Then update, or things break quietly
-
-- `ALLOWED_ORIGIN` (backend env) -> `https://app.flowsbiz.com`, exactly, no
-  trailing slash. Wrong value = every browser request fails CORS while curl
-  still works, which is a confusing way to lose an afternoon.
-- `VITE_API_BASE_URL` (frontend env) -> `https://api.flowsbiz.com/api`.
-- **`frontend/index.html`** — the `og:url`, `og:image` and `twitter:image`
-  tags contain absolute `*.onrender.com` URLs, because social crawlers fetch
-  them server-side and do not resolve relative paths. They will keep pointing
-  at the old host until edited by hand.
-- `frontend/src/lib/api.ts` and `adminApi.ts` fall back to the onrender
-  backend URL when `VITE_API_BASE_URL` is unset; worth updating that default
-  at the same time.
-
-After switching, re-check the link preview with Facebook's Sharing Debugger
-or by pasting the link into a WhatsApp chat with yourself — crawlers cache
-aggressively and may need to be forced to re-scrape.
+Re-check the link preview after this ships — WhatsApp/Facebook crawlers
+cache aggressively and may still show the old host until forced to re-scrape.
 
 ## Adopting the blueprint
 
