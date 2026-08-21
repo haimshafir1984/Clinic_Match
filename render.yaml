@@ -2,7 +2,7 @@
 #
 # IMPORTANT: the services currently running were created by hand in the
 # dashboard and are named "Clinic_Match" (backend) and
-# "clinic-match-frontend-x4or" (static site). Render matches blueprint
+# "clinic_match_frontend" (static site). Render matches blueprint
 # services by NAME, so applying this file as-is creates a second pair of
 # services rather than adopting the existing ones. Either rename the
 # services in the dashboard to match the names below first, or change the

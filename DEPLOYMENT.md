@@ -9,15 +9,17 @@ source of truth (see "Adopting the blueprint" below).
 | Piece | Where | Notes |
 |---|---|---|
 | Backend (Express) | Render web service `Clinic_Match` | `https://clinic-match.onrender.com` |
-| Frontend (Vite static) | Render static site `clinic-match-frontend-x4or` | `https://clinic-match-frontend-x4or.onrender.com` |
+| Frontend (Vite static) | Render static site `clinic_match_frontend` | `https://clinic-match-frontend-x4or.onrender.com` |
 | Database | Neon (free tier) | Postgres; replaced the expired Render DB |
 | Transactional email | Resend | sends from the verified `send.flowsbiz.com` subdomain |
 | DNS | Cloudflare (`flowsbiz.com`) | only the `send.*` records belong to ShiftMatch |
 
-Both Render services are on the **free** plan, which means the backend spins
-down after roughly 15 minutes idle and the next request pays a 30–60s cold
-start. That is the single biggest thing standing between the landing page and
-a usable first impression.
+Only the **backend** is affected by the free plan. Render static sites are
+free with no spin-down, so `clinic_match_frontend` needs no upgrade. The
+free *web service* (`Clinic_Match`) spins down after ~15 minutes idle and
+the next request pays a 30-60s cold start — that is the single biggest thing
+standing between the landing page and a usable first impression, and the
+only service worth paying for.
 
 ## Required environment variables (backend)
 
@@ -69,12 +71,57 @@ otherwise serves the previous build.
 - **Neon free tier scales to zero**, adding a short delay on the first query
   after idle — on top of Render's own cold start.
 
+## Moving to a custom domain
+
+The `*.onrender.com` hostnames are not something to market. `flowsbiz.com` is
+already on Cloudflare, so subdomains of it are the quickest route.
+
+Suggested split:
+
+| Subdomain | Points at | Render service |
+|---|---|---|
+| `app.flowsbiz.com` | frontend | `clinic_match_frontend` (static) |
+| `api.flowsbiz.com` | backend | `Clinic_Match` (web service) |
+
+For each one:
+
+1. Render -> the service -> **Settings -> Custom Domains -> Add**, enter the
+   subdomain. Render shows the CNAME target to use.
+2. Cloudflare -> `flowsbiz.com` -> **DNS -> Add record**: type `CNAME`,
+   name `app` (or `api`), content = the target Render gave.
+3. **Set proxy status to "DNS only" (grey cloud), not proxied (orange).**
+   With the Cloudflare proxy on, Render cannot complete certificate
+   validation and the domain stays stuck as unverified. It can be switched
+   to proxied later, once the certificate has been issued.
+4. Wait for Render to show the domain as verified with a certificate issued.
+
+These records are independent of the existing `send.*` records used by
+Resend, and of whatever else `flowsbiz.com` already serves.
+
+### Then update, or things break quietly
+
+- `ALLOWED_ORIGIN` (backend env) -> `https://app.flowsbiz.com`, exactly, no
+  trailing slash. Wrong value = every browser request fails CORS while curl
+  still works, which is a confusing way to lose an afternoon.
+- `VITE_API_BASE_URL` (frontend env) -> `https://api.flowsbiz.com/api`.
+- **`frontend/index.html`** — the `og:url`, `og:image` and `twitter:image`
+  tags contain absolute `*.onrender.com` URLs, because social crawlers fetch
+  them server-side and do not resolve relative paths. They will keep pointing
+  at the old host until edited by hand.
+- `frontend/src/lib/api.ts` and `adminApi.ts` fall back to the onrender
+  backend URL when `VITE_API_BASE_URL` is unset; worth updating that default
+  at the same time.
+
+After switching, re-check the link preview with Facebook's Sharing Debugger
+or by pasting the link into a WhatsApp chat with yourself — crawlers cache
+aggressively and may need to be forced to re-scrape.
+
 ## Adopting the blueprint
 
 `render.yaml` currently only documents the setup. To make it authoritative:
 
 1. Decide on names. Render matches blueprint services **by name**; the live
-   services are `Clinic_Match` and `clinic-match-frontend-x4or`, while the
+   services are `Clinic_Match` and `clinic_match_frontend`, while the
    blueprint declares `shiftmatch-backend` and `shiftmatch-frontend`. Applying
    without reconciling creates a duplicate pair instead of adopting.
 2. In Render, create a Blueprint pointing at this repo.
