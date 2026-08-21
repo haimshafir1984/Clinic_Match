@@ -42,6 +42,9 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Google Identity Services — loaded once, globally, so GoogleSignInButton
+         doesn't need to inject/await a script tag on every mount. -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

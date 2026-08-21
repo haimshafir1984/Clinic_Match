@@ -6,11 +6,13 @@ import {
   requestOtp as apiRequestOtp,
   verifyLoginOtp as apiVerifyLoginOtp,
   verifyRegisterOtp as apiVerifyRegisterOtp,
+  loginWithGoogle as apiLoginWithGoogle,
   createProfile as apiCreateProfile,
   getCurrentUser,
   logout as apiLogout,
   LoginStartMode,
   ProfileCreateData,
+  GoogleSignInResult,
 } from "@/lib/api";
 
 interface AuthContextType {
@@ -22,6 +24,7 @@ interface AuthContextType {
   requestOtp: (email: string, purpose: "login" | "register") => Promise<{ error: Error | null }>;
   verifyLoginOtp: (email: string, code: string) => Promise<{ error: Error | null }>;
   verifyRegisterOtp: (email: string, code: string) => Promise<{ emailToken: string | null; error: Error | null }>;
+  loginWithGoogle: (credential: string) => Promise<GoogleSignInResult>;
   signUp: (data: ProfileCreateData, emailToken: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshCurrentUser: () => Promise<void>;
@@ -99,6 +102,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { emailToken, error: error ? new Error(error) : null };
   };
 
+  const loginWithGoogle = async (credential: string) => {
+    const result = await apiLoginWithGoogle(credential);
+    if (result.status === "logged_in" && result.user) {
+      setUser(result.user);
+    }
+    return result;
+  };
+
   const signOut = async () => {
     await apiLogout();
     setUser(null);
@@ -118,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       requestOtp,
       verifyLoginOtp,
       verifyRegisterOtp,
+      loginWithGoogle,
       signUp,
       signOut,
       refreshCurrentUser

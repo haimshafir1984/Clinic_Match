@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const rateLimit = require("express-rate-limit");
 const OpenAI = require("openai");
+const { OAuth2Client } = require("google-auth-library");
 const {
   ensureMarketJobsSchema,
   importMarketJobs,
@@ -44,6 +45,15 @@ if (!JWT_SECRET) {
 // The only account that authenticates with a password instead of a one-time
 // email code. Password is set/rotated server-side via ensureAdminBootstrap().
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "haim.shafir.1@gmail.com").toLowerCase().trim();
+
+// Google Identity Services sign-in. Unset means the /api/auth/google route
+// rejects everything — there's no reasonable partial-config fallback since
+// verifyIdToken() requires an audience to check the token against.
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || null;
+const googleAuthClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
+if (!GOOGLE_CLIENT_ID) {
+  console.warn("GOOGLE_CLIENT_ID not set — Google sign-in is disabled.");
+}
 
 const OTP_TTL_MS = 10 * 60 * 1000;
 const OTP_MAX_ATTEMPTS = 5;
@@ -769,6 +779,60 @@ app.post("/api/auth/otp/verify", authLimiter, async (req, res) => {
     res.json({ success: true, user: mapProfileRow(user), token });
   } catch (err) {
     console.error("OTP VERIFY ERROR:", err);
+    res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
+  }
+});
+
+// Google Identity Services sign-in. The client posts the ID token credential
+// straight from the button's callback — we verify it against Google's public
+// keys (no API call, no cost) and trust the email it carries the same way we
+// already trust an OTP: Google confirmed the person controls that address.
+// An existing profile logs straight in; a new one gets the same short-lived
+// emailToken the OTP register flow issues, so the client can skip straight to
+// the registration wizard's role step instead of asking for email + code again.
+app.post("/api/auth/google", authLimiter, async (req, res) => {
+  const credential = typeof req.body.credential === "string" ? req.body.credential : "";
+  if (!credential) {
+    return res.status(400).json({ error: "חסר אישור מגוגל" });
+  }
+  if (!googleAuthClient) {
+    return res.status(503).json({ error: "ההתחברות עם Google אינה זמינה כרגע" });
+  }
+
+  let payload;
+  try {
+    const ticket = await googleAuthClient.verifyIdToken({ idToken: credential, audience: GOOGLE_CLIENT_ID });
+    payload = ticket.getPayload();
+  } catch (err) {
+    console.error("GOOGLE TOKEN VERIFY ERROR:", err);
+    return res.status(401).json({ error: "אימות מול Google נכשל, נסה שוב" });
+  }
+
+  if (!payload || !payload.email || !payload.email_verified) {
+    return res.status(401).json({ error: "לא ניתן לאמת את כתובת המייל מול Google" });
+  }
+
+  const email = normalizeEmail(payload.email);
+  if (email === ADMIN_EMAIL) {
+    return res.status(400).json({ error: "לחשבון זה יש להתחבר עם סיסמה" });
+  }
+
+  try {
+    const result = await pool.query(`SELECT ${PROFILE_SELECT} FROM profiles WHERE email = $1`, [email]);
+    const user = result.rows[0];
+
+    if (!user) {
+      const emailToken = jwt.sign({ email, purpose: "register" }, JWT_SECRET, { expiresIn: EMAIL_VERIFICATION_TTL });
+      return res.json({ mode: "register", emailToken, email, name: payload.name || null });
+    }
+    if (user.is_blocked) {
+      return res.status(403).json({ error: "החשבון מושהה" });
+    }
+
+    const token = jwt.sign({ id: user.id, role: user.role, is_admin: user.is_admin }, JWT_SECRET, { expiresIn: "7d" });
+    res.json({ mode: "login", success: true, user: mapProfileRow(user), token });
+  } catch (err) {
+    console.error("GOOGLE LOGIN ERROR:", err);
     res.status(500).json({ error: "אירעה שגיאה, נסה שוב" });
   }
 });

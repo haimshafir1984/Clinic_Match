@@ -44,6 +44,8 @@ services:
         value: haim.shafir.1@gmail.com
       - key: ADMIN_BOOTSTRAP_PASSWORD
         sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
       # Resend (HTTPS) is the working mail path. Raw SMTP below is kept only
       # as a fallback for a paid instance or another host — Render's free
       # tier blocks outbound ports 25/465/587 entirely, so SMTP cannot work
@@ -71,6 +73,8 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_BASE_URL
+        sync: false
+      - key: VITE_GOOGLE_CLIENT_ID
         sync: false
     routes:
       - type: rewrite

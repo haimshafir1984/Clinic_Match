@@ -5,6 +5,7 @@ import {
   requestOtp,
   verifyLoginOtp,
   verifyRegisterOtp,
+  loginWithGoogle,
   createProfile,
   getCurrentUser,
   logout,
@@ -118,6 +119,38 @@ describe("OTP requests", () => {
     const result = await verifyRegisterOtp("dana@example.com", "123456");
     expect(result.emailToken).toBe("email-jwt");
     expect(JSON.parse(String(lastCall().init.body)).purpose).toBe("register");
+  });
+});
+
+describe("Google sign-in", () => {
+  it("logs an existing profile straight in", async () => {
+    fetchMock.mockResolvedValue(mockJson({ mode: "login", success: true, user: PROFILE, token: "jwt-google" }));
+    const result = await loginWithGoogle("id-token-abc");
+
+    expect(result.status).toBe("logged_in");
+    expect(result.user?.email).toBe("dana@example.com");
+    expect(localStorage.getItem("auth_token")).toBe("jwt-google");
+  });
+
+  it("hands back the emailToken for an address with no profile yet", async () => {
+    fetchMock.mockResolvedValue(mockJson({ mode: "register", emailToken: "email-jwt", email: "new@example.com", name: "נועה" }));
+    const result = await loginWithGoogle("id-token-xyz");
+
+    expect(result.status).toBe("needs_registration");
+    expect(result.user).toBeNull();
+    expect(result.emailToken).toBe("email-jwt");
+    expect(result.name).toBe("נועה");
+    // Nothing should be persisted — there's no session yet, just a
+    // short-lived token to hand to the registration wizard.
+    expect(localStorage.getItem("auth_token")).toBeNull();
+  });
+
+  it("surfaces a server error instead of throwing", async () => {
+    fetchMock.mockResolvedValue(mockJson({ error: "אימות מול Google נכשל, נסה שוב" }, false, 401));
+    const result = await loginWithGoogle("bad-token");
+
+    expect(result.status).toBeNull();
+    expect(result.error).toBe("אימות מול Google נכשל, נסה שוב");
   });
 });
 

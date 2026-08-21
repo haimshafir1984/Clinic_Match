@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CityMultiCombobox } from "@/components/ui/city-combobox";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { DomainSelector } from "@/components/registration/DomainSelector";
 import { RoleMultiSelector } from "@/components/registration/RoleMultiSelector";
 import { BrandMark } from "@/components/branding/BrandMark";
@@ -75,21 +76,32 @@ export function clearRegistrationDraft() {
 export default function Register() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { requestOtp, verifyRegisterOtp, signUp } = useAuth();
-  const initialEmail = (location.state as { email?: string } | null)?.email || "";
+  const { requestOtp, verifyRegisterOtp, loginWithGoogle, signUp } = useAuth();
+  // Login.tsx hands off here with an emailToken already in hand when Google
+  // confirmed the email but no profile exists yet — same shape as what
+  // handleGoogleCredential below produces when the button is used directly
+  // on this page, so both paths skip the email + OTP steps identically.
+  const locationState = location.state as { email?: string; emailToken?: string; name?: string } | null;
   const presetRole = readRoleFromQuery(location.search);
   const [draft] = useState(loadRegistrationDraft);
 
-  const [step, setStep] = useState<RegistrationStep>("email");
-  const [email, setEmail] = useState(initialEmail || draft?.email || "");
+  const [step, setStep] = useState<RegistrationStep>(() =>
+    locationState?.emailToken ? (presetRole ? "details" : "role") : "email"
+  );
+  const [email, setEmail] = useState(locationState?.email || draft?.email || "");
   const [code, setCode] = useState("");
-  const [emailToken, setEmailToken] = useState<string | null>(null);
-  const [name, setName] = useState(draft?.name || "");
+  const [emailToken, setEmailToken] = useState<string | null>(locationState?.emailToken || null);
+  const [name, setName] = useState(locationState?.name || draft?.name || "");
   const [positions, setPositions] = useState<string[]>(draft?.positions || []);
   const [workplaceDomain, setWorkplaceDomain] = useState<WorkplaceDomain | null>(draft?.workplaceDomain || null);
   const [industry, setIndustry] = useState<Industry | null>(draft?.industry || null);
   const [cities, setCities] = useState<string[]>(draft?.cities || []);
   const [role, setRole] = useState<UserRole | null>(presetRole || draft?.role || null);
+  // Google verification skips the email + OTP steps entirely, so there is no
+  // OTP step to go "back" to — goToPreviousStep below sends these users
+  // straight to "email" instead of a phantom OTP screen for a code that was
+  // never sent.
+  const [verifiedViaGoogle, setVerifiedViaGoogle] = useState(Boolean(locationState?.emailToken));
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [networkError, setNetworkError] = useState<string | null>(null);
@@ -108,6 +120,12 @@ export default function Register() {
   };
 
   const goToPreviousStep = () => {
+    if (step === "role" && verifiedViaGoogle) {
+      setEmailToken(null);
+      setVerifiedViaGoogle(false);
+      setStep("email");
+      return;
+    }
     const previousStep = stepOrder[currentStepIndex - 1];
     if (previousStep) setStep(previousStep);
   };
@@ -170,6 +188,27 @@ export default function Register() {
       return;
     }
     await submitOtpCode(code.trim());
+  };
+
+  const handleGoogleCredential = async (credential: string) => {
+    setNetworkError(null);
+    const result = await loginWithGoogle(credential);
+    if (result.status === "logged_in") {
+      // The email already has a profile — this page was reached without
+      // realizing an account exists, so just complete the sign-in.
+      toast.success("כבר יש לך חשבון, התחברת בהצלחה");
+      navigate("/swipe", { replace: true });
+      return;
+    }
+    if (result.status === "needs_registration" && result.emailToken) {
+      setEmail(result.email || "");
+      setEmailToken(result.emailToken);
+      setVerifiedViaGoogle(true);
+      if (result.name) setName(result.name);
+      setStep(presetRole ? "details" : "role");
+      return;
+    }
+    toast.error("ההתחברות עם Google נכשלה", { description: result.error || undefined });
   };
 
   const handleResend = async () => {
@@ -273,6 +312,12 @@ export default function Register() {
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "שלח קוד אימות"}
                 </Button>
+                <div className="flex w-full items-center gap-3 text-xs text-muted-foreground">
+                  <div className="h-px flex-1 bg-border" />
+                  או
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+                <GoogleSignInButton onCredential={handleGoogleCredential} text="signin_with" />
                 <p className="text-center text-sm text-muted-foreground">
                   כבר יש חשבון? <Link to="/login" className="font-medium text-primary hover:underline">להתחברות</Link>
                 </p>

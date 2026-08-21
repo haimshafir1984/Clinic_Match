@@ -501,6 +501,53 @@ export async function verifyRegisterOtp(email: string, code: string): Promise<{ 
   }
 }
 
+interface GoogleAuthResponse {
+  mode: "login" | "register";
+  success?: boolean;
+  user?: BackendProfile;
+  token?: string;
+  emailToken?: string;
+  email?: string;
+  name?: string;
+}
+
+export interface GoogleSignInResult {
+  status: "logged_in" | "needs_registration" | null;
+  user: CurrentUser | null;
+  email?: string;
+  name?: string;
+  emailToken?: string;
+  error: string | null;
+}
+
+// The server tells us which of two very different next steps applies: an
+// existing profile logs straight in (mode "login"), a new address gets the
+// same short-lived emailToken the OTP register flow issues so the caller can
+// jump straight to the registration wizard instead of asking for a code.
+export async function loginWithGoogle(credential: string): Promise<GoogleSignInResult> {
+  try {
+    const response = await apiCall<GoogleAuthResponse>("/auth/google", {
+      method: "POST",
+      body: JSON.stringify({ credential }),
+    });
+
+    if (response.mode === "login" && response.user) {
+      return { status: "logged_in", user: persistSession(response as BackendAuthResponse), error: null };
+    }
+
+    return {
+      status: "needs_registration",
+      user: null,
+      email: response.email,
+      name: response.name || undefined,
+      emailToken: response.emailToken,
+      error: null,
+    };
+  } catch (error) {
+    return { status: null, user: null, error: toErrorMessage(error, "ההתחברות עם Google נכשלה") };
+  }
+}
+
 export async function createProfile(data: ProfileCreateData, emailToken?: string): Promise<{ user: CurrentUser | null; error: string | null }> {
   try {
     const response = await apiCall<BackendAuthResponse>("/profiles", {

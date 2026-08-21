@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BrandMark } from "@/components/branding/BrandMark";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -21,7 +22,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [networkError, setNetworkError] = useState<string | null>(null);
-  const { startLogin, loginWithPassword, verifyLoginOtp, requestOtp } = useAuth();
+  const { startLogin, loginWithPassword, verifyLoginOtp, requestOtp, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -112,6 +113,22 @@ export default function Login() {
     await submitOtpCode(code.trim());
   };
 
+  const handleGoogleCredential = async (credential: string) => {
+    setNetworkError(null);
+    const result = await loginWithGoogle(credential);
+    if (result.status === "logged_in") {
+      toast.success("התחברת בהצלחה");
+      navigate(from, { replace: true });
+      return;
+    }
+    if (result.status === "needs_registration") {
+      toast.info("לא מצאנו חשבון עם המייל הזה, נעביר להרשמה");
+      navigate("/register", { state: { email: result.email, emailToken: result.emailToken, name: result.name } });
+      return;
+    }
+    toast.error("ההתחברות עם Google נכשלה", { description: result.error || undefined });
+  };
+
   const handleResend = async () => {
     setResending(true);
     try {
@@ -167,6 +184,12 @@ export default function Login() {
                   <Button type="submit" className="w-full" size="lg" disabled={loading}>
                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "המשך"}
                   </Button>
+                  <div className="flex w-full items-center gap-3 text-xs text-muted-foreground">
+                    <div className="h-px flex-1 bg-border" />
+                    או
+                    <div className="h-px flex-1 bg-border" />
+                  </div>
+                  <GoogleSignInButton onCredential={handleGoogleCredential} text="signin_with" />
                   <p className="text-center text-sm text-muted-foreground">
                     עדיין אין חשבון? <Link to="/register" className="font-medium text-primary hover:underline">להרשמה</Link>
                   </p>
