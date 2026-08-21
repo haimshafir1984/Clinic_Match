@@ -1,7 +1,15 @@
-﻿export type UserRole = "clinic" | "worker";
+﻿import type { Industry } from "@/constants/domains";
+
+export type UserRole = "clinic" | "worker";
 export type JobType = "daily" | "temporary" | "permanent";
 export type SwipeType = "LIKE" | "PASS";
-export type Industry = "medical" | "tech" | "education" | "construction" | "daily" | "communication" | "insurance";
+// Re-exported so existing `import { Industry } from "@/types"` call sites
+// keep working — constants/domains.ts is the single source of truth for
+// which industries exist. Previously this file defined its own separate
+// 7-value Industry union that had silently drifted out of sync with the
+// domain selector's real options (medical/tech/education/construction/
+// daily/communication/insurance vs. whatever domains.ts actually offered).
+export type { Industry };
 export type RecruitmentStage = "matched" | "screening" | "interview" | "offer" | "hired" | "archived";
 export type TalentPoolStatus = "saved" | "contacted" | "future_fit" | "archived";
 export type InterviewStatus = "pending" | "confirmed" | "completed" | "cancelled";

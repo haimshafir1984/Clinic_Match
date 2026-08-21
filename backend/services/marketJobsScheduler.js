@@ -18,10 +18,16 @@ const STARTUP_DELAY_MS = 30_000;
 // Broad, high-traffic combinations rather than any one user's filters. Location
 // is left empty so sources return country-wide results, which is what a shared
 // warm cache wants.
+// Matches the pilot-scoped verticals in frontend/src/constants/domains.ts
+// (2026-08): daily-shift work, medical, service/call-center, plus
+// substitute-teaching within education. Warming the cache for a vertical no
+// registration flow can select would just waste scrape/API budget on jobs
+// nobody sees — update both together if the scope changes again.
 const DEFAULT_SEEDS = [
   { industry: "medical", query: "" },
+  { industry: "daily", query: "" },
   { industry: "communication", query: "" },
-  { industry: "insurance", query: "" },
+  { query: "מורה מחליפה" },
 ];
 
 let timer = null;
