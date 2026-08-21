@@ -84,17 +84,12 @@ export default function Login() {
     }
   };
 
-  const handleOtpSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+  const submitOtpCode = async (codeValue: string) => {
+    if (codeValue.length !== 6 || loading) return;
     setNetworkError(null);
-    if (code.trim().length !== 6) {
-      toast.error("נא להזין קוד בן 6 ספרות");
-      return;
-    }
-
     setLoading(true);
     try {
-      const { error } = await verifyLoginOtp(email.trim(), code.trim());
+      const { error } = await verifyLoginOtp(email.trim(), codeValue);
       if (error) {
         toast.error("שגיאה באימות הקוד", { description: error.message });
         return;
@@ -106,6 +101,15 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOtpSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (code.trim().length !== 6) {
+      toast.error("נא להזין קוד בן 6 ספרות");
+      return;
+    }
+    await submitOtpCode(code.trim());
   };
 
   const handleResend = async () => {
@@ -194,7 +198,20 @@ export default function Login() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="code">קוד בן 6 ספרות</Label>
-                    <Input id="code" inputMode="numeric" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} dir="ltr" className="text-center text-lg tracking-[0.5em]" autoFocus />
+                    <Input
+                      id="code"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={code}
+                      onChange={(event) => {
+                        const digits = event.target.value.replace(/\D/g, "").slice(0, 6);
+                        setCode(digits);
+                        if (digits.length === 6) submitOtpCode(digits);
+                      }}
+                      dir="ltr"
+                      className="text-center text-lg tracking-[0.5em]"
+                      autoFocus
+                    />
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col gap-3">

@@ -93,17 +93,12 @@ export default function Register() {
     }
   };
 
-  const handleOtpSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+  const submitOtpCode = async (codeValue: string) => {
+    if (codeValue.length !== 6 || loading) return;
     setNetworkError(null);
-    if (code.trim().length !== 6) {
-      toast.error("נא להזין קוד בן 6 ספרות");
-      return;
-    }
-
     setLoading(true);
     try {
-      const { emailToken: token, error } = await verifyRegisterOtp(email.trim(), code.trim());
+      const { emailToken: token, error } = await verifyRegisterOtp(email.trim(), codeValue);
       if (error || !token) {
         toast.error("שגיאה באימות הקוד", { description: error?.message });
         return;
@@ -116,6 +111,18 @@ export default function Register() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // The form's onSubmit still runs this for Enter/button-click, but typing
+  // the 6th digit (see the input's onChange below) submits on its own —
+  // pasting or typing a code shouldn't also require a separate tap.
+  const handleOtpSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (code.trim().length !== 6) {
+      toast.error("נא להזין קוד בן 6 ספרות");
+      return;
+    }
+    await submitOtpCode(code.trim());
   };
 
   const handleResend = async () => {
@@ -163,8 +170,14 @@ export default function Register() {
         return;
       }
 
-      toast.success("נרשמת בהצלחה");
-      navigate("/profile", { state: { isNew: true } });
+      // Registration always collects name + positions + cities, which are
+      // exactly the fields calculateProfileCompletion requires — so the
+      // profile is already complete the moment signUp succeeds. Routing
+      // through /profile first (as before) made every new user click a
+      // second "start matching" button for a screen that had nothing left
+      // to complete.
+      toast.success("נרשמת בהצלחה! מוצאים לך התאמות...");
+      navigate("/swipe", { replace: true });
     } catch {
       setNetworkError("שגיאה בתקשורת עם השרת. נסה שוב.");
     } finally {
@@ -224,7 +237,20 @@ export default function Register() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="code">קוד בן 6 ספרות</Label>
-                  <Input id="code" inputMode="numeric" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} dir="ltr" className="text-center text-lg tracking-[0.5em]" autoFocus />
+                  <Input
+                    id="code"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={code}
+                    onChange={(event) => {
+                      const digits = event.target.value.replace(/\D/g, "").slice(0, 6);
+                      setCode(digits);
+                      if (digits.length === 6) submitOtpCode(digits);
+                    }}
+                    dir="ltr"
+                    className="text-center text-lg tracking-[0.5em]"
+                    autoFocus
+                  />
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col gap-3">
@@ -246,6 +272,9 @@ export default function Register() {
           {step !== "email" && step !== "otp" && (
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-4">
+                <p className="mb-1 text-center text-xs text-muted-foreground">
+                  שלב {currentStepIndex - 1} מתוך {stepOrder.length - 2}
+                </p>
                 <div className="mb-2 flex justify-center gap-2">
                   {stepOrder.slice(2).map((item, index) => (
                     <div key={item} className={cn("h-2 w-2 rounded-full", index <= currentStepIndex - 2 ? "bg-primary" : "bg-muted")} />
