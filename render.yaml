@@ -1,12 +1,12 @@
 # Render Blueprint for ShiftMatch. See DEPLOYMENT.md before applying.
 #
-# IMPORTANT: the services currently running were created by hand in the
-# dashboard and are named "Clinic_Match" (backend) and
-# "clinic_match_frontend" (static site). Render matches blueprint
-# services by NAME, so applying this file as-is creates a second pair of
-# services rather than adopting the existing ones. Either rename the
-# services in the dashboard to match the names below first, or change the
-# names here to match them — decide before clicking apply.
+# The live services (created by hand in the dashboard) were renamed to
+# shiftmatch-backend / shiftmatch-frontend to match the names below, so
+# applying this blueprint should adopt them rather than create a duplicate
+# pair — Render matches blueprint services by name. Still worth confirming
+# in a Render support ticket or a dry run before relying on it, since
+# dashboard-created and blueprint-managed services aren't always identical
+# under the hood.
 #
 # Every secret is sync:false, meaning Render will not read a value from this
 # file; you still enter those in the dashboard. Nothing sensitive lives here.

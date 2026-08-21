@@ -8,15 +8,15 @@ source of truth (see "Adopting the blueprint" below).
 
 | Piece | Where | Notes |
 |---|---|---|
-| Backend (Express) | Render web service `Clinic_Match` | `https://clinic-match.onrender.com` |
-| Frontend (Vite static) | Render static site `clinic_match_frontend` | `https://clinic-match-frontend-x4or.onrender.com` |
+| Backend (Express) | Render web service `shiftmatch-backend` | `https://clinic-match.onrender.com` |
+| Frontend (Vite static) | Render static site `shiftmatch-frontend` | `https://clinic-match-frontend-x4or.onrender.com` |
 | Database | Neon (free tier) | Postgres; replaced the expired Render DB |
 | Transactional email | Resend | sends from the verified `send.flowsbiz.com` subdomain |
 | DNS | Cloudflare (`flowsbiz.com`) | only the `send.*` records belong to ShiftMatch |
 
 Only the **backend** is affected by the free plan. Render static sites are
-free with no spin-down, so `clinic_match_frontend` needs no upgrade. The
-free *web service* (`Clinic_Match`) spins down after ~15 minutes idle and
+free with no spin-down, so `shiftmatch-frontend` needs no upgrade. The
+free *web service* (`shiftmatch-backend`) spins down after ~15 minutes idle and
 the next request pays a 30-60s cold start — that is the single biggest thing
 standing between the landing page and a usable first impression, and the
 only service worth paying for.
@@ -80,8 +80,8 @@ Suggested split:
 
 | Subdomain | Points at | Render service |
 |---|---|---|
-| `app.flowsbiz.com` | frontend | `clinic_match_frontend` (static) |
-| `api.flowsbiz.com` | backend | `Clinic_Match` (web service) |
+| `app.flowsbiz.com` | frontend | `shiftmatch-frontend` (static) |
+| `api.flowsbiz.com` | backend | `shiftmatch-backend` (web service) |
 
 For each one:
 
@@ -118,14 +118,16 @@ aggressively and may need to be forced to re-scrape.
 
 ## Adopting the blueprint
 
-`render.yaml` currently only documents the setup. To make it authoritative:
+`render.yaml` currently only documents the setup. The live services were
+renamed to `shiftmatch-backend` / `shiftmatch-frontend` to match it — Render
+matches blueprint services by name, so this should let it adopt them rather
+than create a duplicate pair, but confirm that (a support ticket or a
+careful dry run) before relying on it, since a dashboard-created service
+isn't guaranteed to be interchangeable with a blueprint-managed one.
 
-1. Decide on names. Render matches blueprint services **by name**; the live
-   services are `Clinic_Match` and `clinic_match_frontend`, while the
-   blueprint declares `shiftmatch-backend` and `shiftmatch-frontend`. Applying
-   without reconciling creates a duplicate pair instead of adopting.
-2. In Render, create a Blueprint pointing at this repo.
-3. Re-enter every `sync: false` value in the dashboard — secrets are
+1. In Render, create a Blueprint pointing at this repo.
+2. Re-enter every `sync: false` value in the dashboard — secrets are
    deliberately not stored in the repo.
-4. Confirm the old services are gone before sending traffic, so two backends
-   aren't writing to the same database.
+3. Confirm there's still exactly one backend and one frontend running
+   afterward — if the blueprint created new services instead of adopting the
+   existing ones, two backends would end up writing to the same database.
