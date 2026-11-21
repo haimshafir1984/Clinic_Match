@@ -1,5 +1,5 @@
 import { motion, PanInfo, useMotionValue, useTransform } from "framer-motion";
-import { Banknote, Briefcase, Building2, Calendar, CheckCircle2, Clock, Flame, MapPin, Sparkles, Star, UserRound } from "lucide-react";
+import { Banknote, Building2, Calendar, CheckCircle2, Clock, Flame, MapPin, Sparkles, Star, UserRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { MatchCardData, SalaryRange } from "@/types";
 
@@ -112,87 +112,72 @@ export function SwipeCard({ profile, direction, onSwipeLeft, onSwipeRight, curre
           isClinic && profile.isUrgent ? "ring-2 ring-warning/40" : ""
         }`}
       >
-        {/* Card Cover & Image Area */}
-        <div
-          className={`relative w-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-accent via-accent/60 to-secondary ${
-            profile.imageUrl ? "h-[45%]" : "h-28"
-          }`}
-        >
-          {profile.imageUrl ? (
-            <img
-              src={profile.imageUrl}
-              alt={profile.name}
-              referrerPolicy="no-referrer"
-              className="h-full w-full object-cover pointer-events-none opacity-95 transition-transform duration-500 group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/60 border border-white/80 text-primary shadow-sm">
+        {/* Header: compact logo + name row, no empty hero banner */}
+        <div className="flex items-start justify-between gap-3 p-5 pb-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-accent text-accent-foreground shadow-sm">
+              {profile.imageUrl ? (
+                <img src={profile.imageUrl} alt={profile.name} referrerPolicy="no-referrer" className="h-full w-full object-cover pointer-events-none" />
+              ) : (
                 <RoleIcon className="h-6 w-6" />
-              </div>
+              )}
             </div>
-          )}
+            <div className="min-w-0 text-right">
+              <p className="truncate text-sm font-bold text-foreground">{profile.name}</p>
+              <p className="text-[10px] font-medium text-muted-foreground">{isClinic ? "בית עסק" : "עובד/ת"}</p>
+            </div>
+          </div>
 
-          {/* Badges Overlay */}
-          <div className="absolute top-4 right-4 flex flex-wrap gap-1.5 z-10">
+          <div className="flex flex-shrink-0 flex-col items-end gap-1">
             {isClinic && profile.isUrgent && (
-              <Badge className="gap-1 border-0 bg-warning text-warning-foreground hover:bg-warning shadow-lg text-[10px] font-bold py-1 px-2.5 rounded-full">
+              <Badge className="gap-1 border-0 bg-warning text-warning-foreground hover:bg-warning shadow-sm text-[10px] font-bold py-1 px-2.5 rounded-full">
                 <Flame className="h-3 w-3" />
                 <span>דחוף ביותר</span>
               </Badge>
             )}
             {isNew && (
-              <Badge className="gap-1 border-0 bg-primary text-primary-foreground hover:bg-primary shadow-lg text-[10px] font-bold py-1 px-2.5 rounded-full">
+              <Badge className="gap-1 border-0 bg-primary text-primary-foreground hover:bg-primary shadow-sm text-[10px] font-bold py-1 px-2.5 rounded-full">
                 <Sparkles className="h-3 w-3" />
                 <span>חדש</span>
               </Badge>
             )}
             {hasSalaryMatch && (
-              <Badge className="gap-1 border-0 bg-success text-success-foreground hover:bg-success shadow-lg text-[10px] font-bold py-1 px-2.5 rounded-full">
+              <Badge className="gap-1 border-0 bg-success text-success-foreground hover:bg-success shadow-sm text-[10px] font-bold py-1 px-2.5 rounded-full">
                 <CheckCircle2 className="h-3 w-3" />
                 <span>התאמת שכר</span>
               </Badge>
             )}
           </div>
+        </div>
 
-          <Badge
-            className="absolute left-4 top-4 border-0 bg-white/85 text-foreground font-bold backdrop-blur-md py-1 px-3 rounded-full text-[10px] shadow-sm"
-            variant="outline"
-          >
-            {isClinic ? "בית עסק" : "עובד/ת"}
-          </Badge>
-
-          {!isClinic && profile.experienceYears && (
-            <Badge
-              variant="outline"
-              className="absolute left-4 bottom-4 bg-white/85 backdrop-blur-md text-[10px] font-bold border-white/40 text-foreground shadow-sm"
-            >
-              <Star className="ml-1 h-3 w-3 text-warning fill-warning" />
-              <span>{profile.experienceYears} שנות ניסיון</span>
-            </Badge>
-          )}
+        {/* Title + quick-glance pills, in the spot a job title + level/location pills sit */}
+        <div className="px-5 pt-3 text-right">
+          {profile.position && <h2 className="text-xl font-extrabold text-foreground tracking-tight">{profile.position}</h2>}
+          <div className="mt-2 flex flex-wrap justify-end gap-2">
+            {profile.jobType && (
+              <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-bold text-muted-foreground">
+                {jobTypeLabels[profile.jobType] || profile.jobType}
+              </span>
+            )}
+            {(profile.locations?.length || profile.location) && (
+              <span className="flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-[11px] font-bold text-muted-foreground">
+                <MapPin className="h-3 w-3 text-primary" />
+                {profile.locations?.length ? profile.locations.join(" • ") : profile.location}
+              </span>
+            )}
+            {!isClinic && profile.experienceYears && (
+              <span className="flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-[11px] font-bold text-muted-foreground">
+                <Star className="h-3 w-3 text-warning fill-warning" />
+                {profile.experienceYears} שנות ניסיון
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Detailed Info Area */}
-        <div className="flex flex-1 flex-col p-5 overflow-y-auto">
-          <div className="text-right">
-            <h2 className="text-xl font-extrabold text-foreground tracking-tight">{profile.name}</h2>
-          </div>
-
+        <div className="flex flex-1 flex-col p-5 pt-4 overflow-y-auto">
           {/* Core metadata rows */}
-          <div className="mt-4 space-y-2">
-            {profile.position && (
-              <div className="flex items-center gap-3 bg-muted/60 border border-border p-3 rounded-2xl">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-accent-foreground flex-shrink-0">
-                  <Briefcase className="h-5 w-5" />
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] text-muted-foreground font-medium">תפקיד מבוקש</p>
-                  <p className="text-xs font-bold text-foreground mt-0.5">{profile.position}</p>
-                </div>
-              </div>
-            )}
-
+          <div className="space-y-2">
             {(profile.availability.days.length > 0 || profile.availability.startDate) && (
               <div className="flex items-center gap-3 bg-muted/60 border border-border p-3 rounded-2xl">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-accent-foreground flex-shrink-0">
@@ -224,34 +209,20 @@ export function SwipeCard({ profile, direction, onSwipeLeft, onSwipeRight, curre
                 <div className="text-right">
                   <p className="text-[10px] text-muted-foreground font-medium">תנאי שכר</p>
                   <p className="text-xs font-bold text-success mt-0.5">{salary}</p>
-                  {profile.jobType && (
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{jobTypeLabels[profile.jobType] || profile.jobType}</p>
-                  )}
+                  {profile.radiusKm ? (
+                    <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">רדיוס {profile.radiusKm} ק"מ</p>
+                  ) : null}
                 </div>
               </div>
             )}
           </div>
 
-          {/* Location and BIO descriptions */}
-          <div className="mt-5 space-y-2 text-right">
-            {(profile.locations?.length || profile.location) && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold justify-start">
-                <MapPin className="h-4 w-4 text-primary" />
-                <span>
-                  {profile.locations?.length ? profile.locations.join(" • ") : profile.location}
-                </span>
-                {profile.radiusKm ? (
-                  <span className="text-[10px] text-muted-foreground/70 font-mono">({profile.radiusKm} ק"מ רדיוס)</span>
-                ) : null}
-              </div>
-            )}
-
-            {profile.description && (
-              <p className="text-xs text-muted-foreground leading-relaxed font-normal mt-2 line-clamp-3">
-                {profile.description}
-              </p>
-            )}
-          </div>
+          {/* Description */}
+          {profile.description && (
+            <p className="mt-4 text-right text-xs text-muted-foreground leading-relaxed font-normal line-clamp-4">
+              {profile.description}
+            </p>
+          )}
         </div>
       </div>
     </motion.div>
