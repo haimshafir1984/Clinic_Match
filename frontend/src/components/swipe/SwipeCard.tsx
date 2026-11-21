@@ -55,9 +55,15 @@ export function SwipeCard({ profile, direction, onSwipeLeft, onSwipeRight, curre
   const passOpacity = useTransform(x, [-100, 0], [1, 0]);
 
   const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const threshold = typeof window !== "undefined" ? window.innerWidth * 0.28 : 100;
-    if (info.offset.x > threshold) onSwipeRight();
-    if (info.offset.x < -threshold) onSwipeLeft();
+    const distanceThreshold = typeof window !== "undefined" ? window.innerWidth * 0.2 : 80;
+    // A fast flick commits the swipe even over a short distance — dragging
+    // slowly still needs to clear distanceThreshold, matching how swipe
+    // gestures feel in other swipe-card apps.
+    const velocityThreshold = 500;
+    const passedRight = info.offset.x > distanceThreshold || (info.offset.x > 0 && info.velocity.x > velocityThreshold);
+    const passedLeft = info.offset.x < -distanceThreshold || (info.offset.x < 0 && info.velocity.x < -velocityThreshold);
+    if (passedRight) onSwipeRight();
+    else if (passedLeft) onSwipeLeft();
   };
 
   const variants = {
@@ -83,8 +89,8 @@ export function SwipeCard({ profile, direction, onSwipeLeft, onSwipeRight, curre
       className="absolute inset-0 select-none"
       style={{ x, rotate, touchAction: "pan-y" }}
       drag="x" 
-      dragConstraints={{ left: 0, right: 0 }} 
-      dragElastic={0.7} 
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={1}
       onDragEnd={handleDragEnd} 
       variants={variants} 
       initial="initial" 
