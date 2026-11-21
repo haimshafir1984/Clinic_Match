@@ -79,9 +79,9 @@ export function SwipeCard({ profile, direction, onSwipeLeft, onSwipeRight, curre
     : null;
 
   return (
-    <motion.div 
-      className="absolute inset-0 select-none" 
-      style={{ x, rotate }} 
+    <motion.div
+      className="absolute inset-0 select-none"
+      style={{ x, rotate, touchAction: "pan-y" }}
       drag="x" 
       dragConstraints={{ left: 0, right: 0 }} 
       dragElastic={0.7} 
@@ -113,7 +113,11 @@ export function SwipeCard({ profile, direction, onSwipeLeft, onSwipeRight, curre
         }`}
       >
         {/* Card Cover & Image Area */}
-        <div className="relative w-full h-[45%] overflow-hidden flex-shrink-0 bg-gradient-to-br from-accent via-accent/60 to-secondary">
+        <div
+          className={`relative w-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-accent via-accent/60 to-secondary ${
+            profile.imageUrl ? "h-[45%]" : "h-28"
+          }`}
+        >
           {profile.imageUrl ? (
             <img
               src={profile.imageUrl}
@@ -123,8 +127,8 @@ export function SwipeCard({ profile, direction, onSwipeLeft, onSwipeRight, curre
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white/60 border border-white/80 text-primary shadow-sm">
-                <RoleIcon className="h-12 w-12" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/60 border border-white/80 text-primary shadow-sm">
+                <RoleIcon className="h-6 w-6" />
               </div>
             </div>
           )}
