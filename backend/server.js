@@ -29,9 +29,16 @@ app.set("trust proxy", 1);
 app.use(cors({ origin: process.env.ALLOWED_ORIGIN || "https://your-frontend.vercel.app" }));
 app.use(express.json({ limit: "5mb" }));
 
+// DB_SSL_ENABLED=false is for a Postgres reached over a private network with no
+// TLS at all (e.g. a Dokploy-internal service) — unset preserves the original
+// always-on behavior needed for Neon/Render. Note: a `sslmode=...` query param
+// in DATABASE_URL is parsed by pg-connection-string and overrides this `ssl`
+// value, so DATABASE_URL must have no sslmode param (or sslmode=disable) for
+// DB_SSL_ENABLED=false to actually take effect.
+const dbSslEnabled = process.env.DB_SSL_ENABLED !== "false";
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: dbSslEnabled ? { rejectUnauthorized: false } : false,
 });
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
