@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BrandMark } from "@/components/branding/BrandMark";
@@ -221,20 +222,29 @@ export default function Login() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="code">קוד בן 6 ספרות</Label>
-                    <Input
+                    <InputOTP
                       id="code"
-                      inputMode="numeric"
                       maxLength={6}
                       value={code}
-                      onChange={(event) => {
-                        const digits = event.target.value.replace(/\D/g, "").slice(0, 6);
+                      onChange={(value) => {
+                        const digits = value.replace(/\D/g, "").slice(0, 6);
                         setCode(digits);
                         if (digits.length === 6) submitOtpCode(digits);
                       }}
                       dir="ltr"
-                      className="text-center text-lg tracking-[0.5em]"
                       autoFocus
-                    />
+                      containerClassName="justify-center"
+                    >
+                      <InputOTPGroup>
+                        {Array.from({ length: 6 }).map((_, index) => (
+                          <InputOTPSlot
+                            key={index}
+                            index={index}
+                            className="h-12 w-9 rounded-none border-0 border-b-2 border-border text-xl font-bold first:rounded-none last:rounded-none"
+                          />
+                        ))}
+                      </InputOTPGroup>
+                    </InputOTP>
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col gap-3">

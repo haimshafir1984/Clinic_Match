@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Banknote, Briefcase, Building2, Calendar, Clock, MapPin, Sparkles, UserRound } from "lucide-react";
+import { calculateProfileCompletion } from "@/lib/profileCompletion";
 
 interface Profile {
   id?: string;
@@ -54,18 +55,37 @@ export function ProfileView({ profile, highlights = [] }: ProfileViewProps) {
   const positions = profile.positions && profile.positions.length > 0
     ? profile.positions
     : [isClinic ? profile.required_position : profile.position].filter(Boolean) as string[];
+  const { percentage, isComplete } = calculateProfileCompletion(profile);
+  // Circumference of the r=38 ring below, used to turn the completion % into a dash offset.
+  const ringCircumference = 2 * Math.PI * 38;
 
   return (
     <div className="space-y-4">
       <Card className="glass-panel border-border text-foreground shadow-lg overflow-hidden">
         <CardContent className="pt-6">
           <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20 border border-border">
-              <AvatarImage src={imageUrl || undefined} />
-              <AvatarFallback className="bg-primary/10">
-                <RoleIcon className="h-10 w-10 text-primary" />
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative h-20 w-20 flex-shrink-0">
+              <svg viewBox="0 0 84 84" className="absolute inset-0 h-full w-full -rotate-90">
+                <circle cx="42" cy="42" r="38" fill="none" stroke="hsl(var(--border))" strokeWidth="4" />
+                <circle
+                  cx="42"
+                  cy="42"
+                  r="38"
+                  fill="none"
+                  stroke={isComplete ? "hsl(var(--success))" : "hsl(var(--primary))"}
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeDasharray={ringCircumference}
+                  strokeDashoffset={ringCircumference * (1 - percentage / 100)}
+                />
+              </svg>
+              <Avatar className="absolute inset-[6px] h-[68px] w-[68px] border border-border">
+                <AvatarImage src={imageUrl || undefined} />
+                <AvatarFallback className="bg-primary/10">
+                  <RoleIcon className="h-9 w-9 text-primary" />
+                </AvatarFallback>
+              </Avatar>
+            </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold text-foreground">{profile.name}</h2>

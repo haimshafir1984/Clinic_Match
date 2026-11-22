@@ -23,14 +23,31 @@ const stageLabels: Record<string, string> = {
   archived: "בארכיון",
 };
 
+// A quick visual read of pipeline stage at a glance, without having to read the badge text.
+const stageStripeClass: Record<string, string> = {
+  matched: "bg-primary",
+  screening: "bg-slate-400",
+  interview: "bg-warning",
+  offer: "bg-violet-500",
+  hired: "bg-success",
+  archived: "bg-muted-foreground/40",
+};
+
 export function MatchCard({ match, canSave = false, onSaveToTalentPool }: MatchCardProps) {
   const { otherProfile } = match;
   const isBusiness = otherProfile.role === "clinic";
   const RoleIcon = isBusiness ? Building2 : UserRound;
   const secondaryLine = [otherProfile.position, otherProfile.location].filter(Boolean).join(" • ");
+  const stage = match.pipeline?.stage;
 
   return (
-    <Card className="p-4 transition-colors hover:bg-accent/50">
+    <Card className="relative overflow-hidden p-4 transition-colors hover:bg-accent/50">
+      {stage ? (
+        <span
+          className={`absolute inset-y-0 start-0 w-1 ${stageStripeClass[stage] || "bg-primary"}`}
+          aria-hidden="true"
+        />
+      ) : null}
       <div className="flex items-start gap-4">
         <Link to={`/chat/${match.id}`} className="flex flex-1 items-start gap-4">
           <Avatar className="h-14 w-14">

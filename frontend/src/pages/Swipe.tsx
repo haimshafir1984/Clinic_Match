@@ -180,6 +180,12 @@ export default function Swipe() {
         </div>
 
         <div className="relative flex-1">
+          {hasMoreProfiles && filteredProfiles[currentIndex + 1] ? (
+            <div
+              className="absolute inset-0 scale-[0.96] translate-y-2 rounded-3xl border border-border bg-card shadow-md"
+              aria-hidden="true"
+            />
+          ) : null}
           <AnimatePresence mode="popLayout">
             {hasMoreProfiles && currentProfile ? (
               <SwipeCard
